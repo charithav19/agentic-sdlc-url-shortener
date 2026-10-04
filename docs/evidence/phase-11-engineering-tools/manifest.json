@@ -1,0 +1,51 @@
+{
+  "phase": 11,
+  "scope": "Requested bounded engineering tools",
+  "recorded_at": "2026-10-04",
+  "base_commit": "82f4fdf84e276894f46eeddd38a09c36412dc8f2",
+  "status": "VERIFIED",
+  "runner_image_id": "sha256:ad65203bd80f88425b2844dd1d574f175ae06d994660a916151fbbacc2cf99af",
+  "checks": {
+    "unit_tests": 134,
+    "postgres_tests": 18,
+    "docker_runner_tests": 7,
+    "live_smoke": "not enabled; skipped"
+  },
+  "commands": [
+    "cd apps/orchestrator && .venv/bin/python -m pytest -p no:cacheprovider -m 'not integration and not runner' -q",
+    "BUILDX_CONFIG=/tmp/schwab-buildx UV_CACHE_DIR=/tmp/schwab-uv-cache make test-runner",
+    "UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db"
+  ],
+  "passed": 159,
+  "failed": 0,
+  "skipped": 1,
+  "isolation": {
+    "network": "none",
+    "host_mounts": 0,
+    "user": "10001:10001",
+    "cpus": 1,
+    "memory_mib": 768,
+    "pids": 128,
+    "read_only_root": true,
+    "capabilities": "ALL dropped"
+  },
+  "limits": {
+    "file_bytes": 256000,
+    "workspace_bytes": 8000000,
+    "files": 512,
+    "entries": 1024,
+    "depth": 16,
+    "command_seconds": 30,
+    "raw_output_bytes": 64000
+  },
+  "reports": [
+    "assertions.md"
+  ],
+  "limitations": [
+    "Offline dependency cache only",
+    "Build products ephemeral",
+    "Tool receipts returned but not durably stored",
+    "Single writer per workflow; no scheduler or parallel overlays",
+    "Live OpenAI workflow not run"
+  ]
+}

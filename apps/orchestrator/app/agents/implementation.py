@@ -14,12 +14,22 @@ class ImplementationAgent(Specialist[ImplementationOutput]):
                 "Analyze the approved design and supplied candidate/change evidence. Describe "
                 "created and changed files only when supplied evidence shows those effects. "
                 "Request the needed unit and integration tests, summarize engineering work "
-                "and list risks. Snapshot tools cannot edit files: with no change evidence "
-                "report empty file lists and explain the limitation; never invent an "
-                "implementation. "
+                "and list risks. Implement the design using authorized write_file/apply_patch "
+                "tools. Report only files supported by tool receipts; run allowed validation "
+                "commands when granted and report failures honestly. "
             ),
             output_type=ImplementationOutput,
-            allowed_tools=("read_artifact", "list_files", "read_file", "search_code"),
+            allowed_tools=(
+                "read_artifact",
+                "list_files",
+                "read_file",
+                "search_code",
+                "write_file",
+                "apply_patch",
+                "run_build",
+                "run_tests",
+            ),
+            instruction_version="2",
             max_turns=8,
             timeout_seconds=60,
         )

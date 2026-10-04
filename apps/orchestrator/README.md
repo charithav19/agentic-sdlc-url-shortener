@@ -82,12 +82,40 @@ responses. Application callers can select `AGENT_PROVIDER=fake` and supply
 `fake_outputs` to the factory. Missing fixtures fail; real failures never
 fall back to fake output.
 
-The current tool surface reads immutable supplied artifact/code snapshots.
+The SDK exposes bounded engineering tools over `workspaces/<workflow-UUID>/`.
 Per-specialist allowlists and per-run grants determine which tools are exposed.
-No tool edits a workspace, executes a command, accesses a database or grants
-approval. Implementation output describes supplied change evidence; without it,
-file lists must be empty and missing implementation evidence reported.
-The broader isolated candidate runner remains pending.
+Implementation can write/patch/build/test, testing can write/patch/test, and
+documentation can write/patch. Requirement/release agents remain artifact-only.
+No tool accesses a database, changes workflow status or grants approval.
+Provider results attach file/command receipts created by the trusted tools.
+
+The seven engineering tools are `list_files()`, `read_file(path)`,
+`search_code(text)`, `write_file(path, content)`,
+`apply_patch(path, old_text, new_text)`, `run_build(command, project)` and
+`run_tests(command, project)`. Patches require a unique exact match.
+`project` is a workspace-relative directory or `.`; commands must exactly
+match `mvn package` for builds, or `mvn test`/`pytest` for tests.
+There is no arbitrary shell or extra-argument interface.
+
+The creation service allocates the UUID directory. The SDK provider derives
+workspace ownership from context, never from a model-supplied root. Existing
+`workspace_ref` values are not used to authorize paths. Traversal, other
+workspaces, secrets, symlinks, hardlinks and sockets are denied.
+
+Prepare and verify the trusted runner from the repository root:
+
+```sh
+make runner-image
+make test-runner
+```
+
+Docker must be available. Building the image downloads trusted dependencies;
+candidate runs are offline. The image supplies Java 21/Maven, Python/pytest
+and a small Maven cache; projects needing other dependencies require a trusted
+image rebuild. Runs receive only a bounded file archive, no host mounts,
+network or credentials. Build output is ephemeral; receipts record actual
+exit codes, hashes, timestamps and failures. See [SECURITY.md](../../docs/SECURITY.md)
+for file/command limits and the tested isolation boundary.
 
 Ordinary offline verification and the explicitly paid live smoke:
 

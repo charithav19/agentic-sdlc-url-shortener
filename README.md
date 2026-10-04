@@ -8,9 +8,10 @@ artifacts, lineage, decisions, approval requests and audit events. Its SDLC
 graph is configurable and validated, a pure dependency resolver computes stage
 readiness, and a transactional orchestrator owns legal state changes with
 atomic audit events. Eight typed specialists now use an OpenAI Agents SDK
-provider or an explicit deterministic test provider. Agent tools read supplied
-snapshots; workspace editing, build execution and workflow scheduling remain
-pending. Offline SDK tests pass; a live API run has not been verified.
+provider or an explicit deterministic test provider. Bounded engineering tools
+edit only the assigned workflow workspace and run fixed Maven/pytest commands
+in disposable isolated containers. Workflow scheduling remains pending.
+Offline SDK and real runner tests pass; a live API run has not been verified.
 
 ## Repository layout
 

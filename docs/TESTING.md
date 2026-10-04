@@ -1,5 +1,33 @@
 # Testing and verification
 
+## Phase 11 bounded tools — verified on 2026-10-04
+
+**159 tests passed:** 134 unit tests, 18 PostgreSQL tests and seven real
+Docker runner tests. One opt-in live OpenAI smoke was skipped.
+
+```sh
+cd apps/orchestrator
+.venv/bin/python -m pytest -p no:cacheprovider -m 'not integration and not runner' -q
+cd ../..
+BUILDX_CONFIG=/tmp/schwab-buildx UV_CACHE_DIR=/tmp/schwab-uv-cache make test-runner
+UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db
+```
+
+The temporary cache variables above accommodate this desktop sandbox; on
+an ordinary checkout, `make test-runner` and `make test-db` suffice.
+Runner tests fail when explicitly enabled and Docker/image execution fails;
+they only skip when `RUN_RUNNER_TESTS` is not enabled. No agent API calls
+are involved in Docker verification.
+
+The new tests cover actual file edits/patches/searches, credential/traversal/
+link/special-file denial, SDK grants/context boundaries, command and project
+injection, successful Maven test/package and pytest runs, real assertion
+failure, host-secret exclusion, disabled network, non-root/capability/resource
+settings, time/output limits, cancellation and cleanup.
+Ruff lint/format (including the trusted runner entry point), structure and
+diff checks passed. See [SECURITY.md](SECURITY.md) and
+[the evidence manifest](evidence/phase-11-engineering-tools/manifest.json).
+
 ## Phases 10–11 — agent contracts verified offline on 2026-10-04
 
 The orchestrator suite passed **105 tests**: 87 non-DB tests and 18 real
@@ -29,7 +57,7 @@ For a separately recorded live smoke, export a valid `OPENAI_API_KEY` and
 An opted-in run fails when credentials/model configuration are missing.
 See [the evidence manifest](evidence/phase-10-11-agents/manifest.json) and
 [runtime ADR](decisions/ADR-003-openai-agent-runtime.md) for verified scope
-and outstanding isolated-runner and durable-result integration work.
+and the scope at that delivery; the bounded-runner follow-up is recorded above.
 
 ## Phase 9 — verified on 2026-10-04
 

@@ -12,6 +12,8 @@ from app.agents.provider import validate_request
 def snapshot_tools(specialist: Specialist, context: AgentContext) -> list[FunctionTool]:
     validate_request(specialist, context)
     allowed = frozenset(context.authorized_tools)
+    if not allowed <= {"read_artifact", "list_files", "read_file", "search_code"}:
+        raise AgentToolDenied("Snapshot tools cannot perform engineering operations")
 
     def authorize(wrapper: RunContextWrapper[AgentContext], name: str) -> AgentContext:
         if wrapper.context != context or name not in allowed:

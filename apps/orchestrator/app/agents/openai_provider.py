@@ -18,25 +18,43 @@ from app.agents.errors import (
     AgentTransientError,
 )
 from app.agents.provider import AgentProvider, validate_request, validated_result
-from app.tools.snapshots import snapshot_tools
+from app.tools.engineering import engineering_tools
+from app.tools.runner import DockerRunner
+from app.tools.workspaces import Workspace, WorkspaceManager
 
 
 class OpenAIAgentProvider(AgentProvider):
-    def __init__(self, *, model: str, api_key: str) -> None:
+    def __init__(
+        self,
+        *,
+        model: str,
+        api_key: str,
+        workspaces: WorkspaceManager | None = None,
+        runner: DockerRunner | None = None,
+    ) -> None:
         if not model.strip() or not api_key.strip():
             raise AgentConfigurationError("OPENAI_MODEL and OPENAI_API_KEY are required")
         self.model = model
         self._api_key = api_key
+        self.workspaces = workspaces or WorkspaceManager()
+        self.runner = runner or DockerRunner()
 
     async def run[T: BaseModel](
         self, specialist: Specialist[T], context: AgentContext
     ) -> AgentResult[T]:
         validate_request(specialist, context)
+        with self.workspaces.for_workflow(context.workflow_id) as workspace:
+            return await self._run(specialist, context, workspace)
+
+    async def _run[T: BaseModel](
+        self, specialist: Specialist[T], context: AgentContext, workspace: Workspace
+    ) -> AgentResult[T]:
+        receipts = []
         agent = Agent[AgentContext](
             name=specialist.name,
             instructions=specialist.instructions,
             output_type=specialist.output_type,
-            tools=snapshot_tools(specialist, context),
+            tools=engineering_tools(specialist, context, workspace, self.runner, receipts),
             handoffs=[],
             mcp_servers=[],
             model=self.model,
@@ -63,9 +81,10 @@ class OpenAIAgentProvider(AgentProvider):
                             tool_not_found_behavior="raise_error",
                         ),
                     )
-            return validated_result(
+            output = validated_result(
                 specialist, context, result.final_output, provider="openai", model=self.model
             )
+            return output.model_copy(update={"tool_receipts": tuple(receipts)})
         except MaxTurnsExceeded:
             raise AgentBudgetExceeded("Agent exhausted its turn budget") from None
         except (TimeoutError, APITimeoutError):

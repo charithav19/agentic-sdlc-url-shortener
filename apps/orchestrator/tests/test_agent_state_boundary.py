@@ -35,5 +35,7 @@ async def test_specialists_leave_state_and_audit_unchanged(
         workflow = await unit.workflows.get(workflow_id)
         stage = await unit.stages.get(stage_id)
         assert (workflow.status, workflow.version) == (WorkflowStatus.CREATED, 1)
+        assert workflow.workspace_ref == f"workspaces/{workflow_id}"
+        assert (persistence.workspaces.root / str(workflow_id)).is_dir()
         assert (stage.status, stage.version) == (StageStatus.PENDING, 1)
         assert [event.id for event in await unit.audit.page(workflow_id)] == before_events

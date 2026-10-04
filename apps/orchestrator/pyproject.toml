@@ -44,6 +44,7 @@ testpaths = ["tests"]
 addopts = "--strict-config --strict-markers -ra"
 asyncio_mode = "strict"
 markers = [
+    "runner: requires the built isolated Docker engineering runner",
     "integration: requires an explicitly configured PostgreSQL fixture",
     "live: opt-in paid OpenAI API call requiring RUN_LIVE_AGENT_TESTS=1",
 ]

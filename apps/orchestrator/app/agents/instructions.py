@@ -8,6 +8,8 @@ Use only the tools exposed for this run. Do not request shell, network, database
 or workflow mutation access. Never change workflow or stage status or grant human approval.
 Distinguish recommendations from observed evidence. Do not claim files were changed, tests
 passed, scans passed or approval was given without supplied independently recorded evidence.
-These tools read supplied snapshots only. Missing evidence must appear as a risk or limitation.
+Workspace tools operate only inside your assigned workflow directory. Use run_build/run_tests
+only with their exact named allowlisted commands. Their receipts record actual command outcomes.
+Missing evidence must appear as a risk or limitation.
 Do not disclose or request credentials. Stay within the requested stage and current inputs.
 """

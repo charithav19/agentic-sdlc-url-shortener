@@ -22,8 +22,8 @@ absent. Schemas reject extra keys; deterministic validators reject inconsistent
 blocking ambiguity and invalid task dependency/parallel groups.
 
 Inputs are frozen, versioned snapshots with size bounds and UUID context.
-Tools only read the supplied snapshots; they never open a host path. The
-trusted caller must select and sanitize snapshot content before invocation.
+Artifact reads use supplied snapshots; engineering tools use the single
+assigned workflow workspace. The trusted caller selects and sanitizes inputs.
 The agent receives no session, repository, state mutation callback, credential
 object or approval authority. Output metadata identifies provider, configured
 model, SDK version, schema/instruction/context hashes and invocation identity.
@@ -42,12 +42,14 @@ Ordinary tests use fake outputs; adapter tests use the actual SDK loop with
 a local inference stub and deny HTTP requests. The live smoke is separately
 opted in with `RUN_LIVE_AGENT_TESTS=1`.
 
-Scope limits: these specialists provide structured reasoning/reporting on
-supplied evidence. Candidate workspace edits, build/test execution, isolated
-runner provisioning, tool invocation persistence, durable provider result
-attachment and scheduler invocation are still outstanding full-plan work.
-The ImplementationAgent must not invent changed files when no change
-evidence was supplied. Model test/security/release prose is advisory and
-cannot become execution proof or human approval. This delivery does not
-satisfy the plan's live engineering demonstration requirement.
+The bounded-tools follow-up adds real workspace writes/patches and fixed
+build/test commands in a trusted disposable Docker runner. See
+[SECURITY.md](../SECURITY.md) for the implemented isolation and limits.
+Implementation/testing/documentation tool grants were expanded explicitly;
+workflow and approval authority remain unavailable.
 
+Scope limits: tool invocation persistence, durable provider result attachment,
+retained build products and scheduler invocation remain outstanding.
+Implementation reports must be supported by actual tool receipts.
+Model test/security/release prose is advisory and cannot become execution
+proof or human approval. Live engineering demonstration remains unverified.

@@ -33,6 +33,10 @@ def test_specialist_contract(specialist) -> None:
         "read_file",
         "list_files",
         "search_code",
+        "write_file",
+        "apply_patch",
+        "run_build",
+        "run_tests",
     }
 
 

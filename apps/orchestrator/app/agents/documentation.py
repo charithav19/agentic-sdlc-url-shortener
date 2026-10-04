@@ -17,7 +17,8 @@ class DocumentationAgent(Specialist[DocumentationOutput]):
                 "implementation and validation evidence; disclose gaps. "
             ),
             output_type=DocumentationOutput,
-            allowed_tools=("read_artifact", "list_files", "read_file"),
+            allowed_tools=("read_artifact", "list_files", "read_file", "write_file", "apply_patch"),
+            instruction_version="2",
             max_turns=6,
             timeout_seconds=60,
         )

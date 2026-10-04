@@ -6,7 +6,7 @@ COMPOSE ?= docker compose
 JAVA_APP := apps/url-shortener
 PYTHON_APP := apps/orchestrator
 
-.PHONY: help bootstrap build test test-java test-python test-db lint format structure compose-config up down health demo smoke
+.PHONY: help bootstrap build test test-java test-python test-db runner-image test-runner lint format structure compose-config up down health demo smoke
 
 help:
 	@printf '%s\n' 'Repository targets:' \
@@ -14,6 +14,7 @@ help:
 	  '  build           Build Spring Boot JAR and Python wheel/sdist' \
 	  '  test            Run Java unit/PostgreSQL tests and Python service unit tests' \
 	  '  test-db         Run Python PostgreSQL integration tests (requires Docker)' \
+	  '  test-runner     Build and security-test isolated engineering runner' \
 	  '  lint / format   Check / apply pinned Java and Python formatting' \
 	  '  structure       Verify monorepo layout and build configuration' \
 	  '  compose-config  Validate Compose with example configuration' \
@@ -39,15 +40,21 @@ test-python:
 test-db:
 	UV='$(UV)' scripts/test-postgres.sh
 
+runner-image:
+	docker build -t schwab-engineering-runner:local infra/runner
+
+test-runner: runner-image
+	cd $(PYTHON_APP) && RUN_RUNNER_TESTS=1 $(UV) run --locked python -m pytest -m runner
+
 lint:
 	cd $(JAVA_APP) && ./mvnw --batch-mode spotless:check
-	cd $(PYTHON_APP) && $(UV) run --locked ruff check . ../../scripts/verify-structure.py
-	cd $(PYTHON_APP) && $(UV) run --locked ruff format --check . ../../scripts/verify-structure.py
+	cd $(PYTHON_APP) && $(UV) run --locked ruff check . ../../scripts/verify-structure.py ../../infra/runner/entrypoint.py
+	cd $(PYTHON_APP) && $(UV) run --locked ruff format --check . ../../scripts/verify-structure.py ../../infra/runner/entrypoint.py
 
 format:
 	cd $(JAVA_APP) && ./mvnw --batch-mode spotless:apply
-	cd $(PYTHON_APP) && $(UV) run --locked ruff check --fix . ../../scripts/verify-structure.py
-	cd $(PYTHON_APP) && $(UV) run --locked ruff format . ../../scripts/verify-structure.py
+	cd $(PYTHON_APP) && $(UV) run --locked ruff check --fix . ../../scripts/verify-structure.py ../../infra/runner/entrypoint.py
+	cd $(PYTHON_APP) && $(UV) run --locked ruff format . ../../scripts/verify-structure.py ../../infra/runner/entrypoint.py
 
 structure:
 	$(PYTHON) scripts/verify-structure.py

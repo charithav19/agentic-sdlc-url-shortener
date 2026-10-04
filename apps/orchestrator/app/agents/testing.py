@@ -17,7 +17,16 @@ class TestAgent(Specialist[TestOutput]):
                 "test result; report missing execution evidence. "
             ),
             output_type=TestOutput,
-            allowed_tools=("read_artifact", "list_files", "read_file", "search_code"),
+            allowed_tools=(
+                "read_artifact",
+                "list_files",
+                "read_file",
+                "search_code",
+                "write_file",
+                "apply_patch",
+                "run_tests",
+            ),
+            instruction_version="2",
             max_turns=6,
             timeout_seconds=60,
         )

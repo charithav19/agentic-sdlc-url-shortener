@@ -9,7 +9,16 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
-ToolName = Literal["read_artifact", "list_files", "read_file", "search_code"]
+ToolName = Literal[
+    "read_artifact",
+    "list_files",
+    "read_file",
+    "search_code",
+    "write_file",
+    "apply_patch",
+    "run_build",
+    "run_tests",
+]
 
 
 class Snapshot(BaseModel):
@@ -94,6 +103,7 @@ class AgentResult[T: BaseModel](BaseModel):
     attempt: int
     max_turns: int
     timeout_seconds: float
+    tool_receipts: tuple[dict, ...] = ()
 
 
 def digest(value: object) -> str:

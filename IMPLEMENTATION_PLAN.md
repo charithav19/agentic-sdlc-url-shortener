@@ -360,15 +360,17 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** An allowlisted build still executes arbitrary candidate code; stage tools leaking credentials; model-generated fake test summaries. Runner isolation and independently attached invocation evidence are mandatory.
 
-**Status:** IN_PROGRESS for full-plan tooling; all eight requested specialists and output contracts are implemented and offline-verified on 2026-10-04.
+**Status:** IN_PROGRESS for full-plan acceptance. All eight specialist contracts and the user's seven bounded engineering tools are implemented and verified on 2026-10-04, including real isolated command execution.
 
 **Implementation record:** Added the eight named specialist classes, shared authority/evidence instructions, strict Pydantic schemas and graph-name bindings in `agents/registry.py`. Each has a fixed tool allowlist and a 4–8 turn / 60-second budget. Requirement, planning, architecture and implementation outputs contain the exact requested fields. Planning validates task IDs, edges, cycles and parallel groups; blocking ambiguity requires questions. All outputs reject unexpected fields, including status/approval injection.
 
-**Tools:** Added `tools/snapshots.py`: `read_artifact`, `list_files`, `read_file`, and `search_code` over bounded immutable supplied snapshots. Runtime grants must be a subset of the specialist allowlist. Tools cannot access the host filesystem, shell, network, database or workflow authority. Requirement/release agents receive artifact-reading permission only; other agents have the specific code-reading permissions listed in their definitions.
+**Tools:** Added `tools/workspaces.py`, `commands.py`, `runner.py`, `engineering.py`, and `infra/runner/`. The seven engineering tools operate only in the workflow UUID directory, allocated by the creation service and bound by the SDK adapter. File-descriptor traversal rejects symlinks, hardlinks, special files, secret paths and outside access. Writes are bounded and atomic; patches require one exact unique match. Commands use an exact allowlist (Maven test/package and pytest), and run in verified disposable containers with no host mounts, network or credentials. Runtime grants remain subsets of specialist allowlists. Original snapshot helpers remain available for read-only fixture use.
 
 **Verification:** All eight schemas validate through the SDK strict-output schema adapter and fake provider. Tests verify tool denial, path/context restrictions, bounded input, ambiguity and planning validation. PostgreSQL verifies that invoking all eight specialists preserves workflow/stage status, versions and audit events.
 
-**Remaining full-plan acceptance:** Host workspace editing, candidate generation, isolated build/test execution, tool invocation persistence and their runner-isolation evidence remain unimplemented. ImplementationAgent reports supplied change evidence; with no such evidence it must report no changed/created files and disclose the limitation. This delivery implements the user's provider/specialist contract scope, not the broader planned engineering runner or a live end-to-end workflow.
+**Engineering verification:** 134 unit tests, 18 PostgreSQL tests, and seven real Docker runner tests passed; one live SDK smoke skipped. Tests cover real writes/patches, credential/traversal/link/special-file denial, cross-workflow/context isolation, command injection, Maven test/package and pytest, host-secret/network/socket exclusion, resource settings, real failures, deadline/output caps, cancellation and cleanup. See `docs/evidence/phase-11-engineering-tools/`.
+
+**Remaining full-plan acceptance:** Durable tool-invocation storage, broader dependency inspection/redaction, stage overlays/candidate assembly, retained build artifacts and live end-to-end engineering remain pending. Current receipts attach to provider results; candidate build products are ephemeral. Offline dependencies must be prepared in a trusted image; no automatic download or host execution fallback is permitted. No Phase 12+ scheduling, gate or approval work was added.
 
 ## PHASE 12 — Entry and exit gates
 

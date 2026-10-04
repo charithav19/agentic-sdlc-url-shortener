@@ -7,11 +7,17 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from app.artifacts.schemas import ArtifactInput, ArtifactRef
 from app.orchestration.contracts import ScenarioType, WorkflowStatus
 from app.persistence.unit_of_work import UnitOfWork
+from app.tools.workspaces import WorkspaceManager
 
 
 class WorkflowPersistenceService:
-    def __init__(self, session_factory: async_sessionmaker[AsyncSession]) -> None:
+    def __init__(
+        self,
+        session_factory: async_sessionmaker[AsyncSession],
+        workspaces: WorkspaceManager | None = None,
+    ) -> None:
         self.session_factory = session_factory
+        self.workspaces = workspaces or WorkspaceManager()
 
     async def create_workflow(
         self, *, scenario_type: ScenarioType, provider_mode: str, workspace_ref: str
@@ -22,12 +28,16 @@ class WorkflowPersistenceService:
                 provider_mode=provider_mode,
                 workspace_ref=workspace_ref,
             )
+            # Caller-supplied workspace_ref is a seed label, never a filesystem path.
+            with self.workspaces.for_workflow(workflow.id):
+                workflow.workspace_ref = f"workspaces/{workflow.id}"
             await unit.audit.append(
                 workflow.id,
                 event_type="WORKFLOW_CREATED",
                 actor_type="SYSTEM",
                 actor_id="orchestrator",
                 after_state=WorkflowStatus.CREATED.value,
+                payload={"workspace": workflow.workspace_ref, "seed_ref": workspace_ref},
             )
             return workflow.id
 

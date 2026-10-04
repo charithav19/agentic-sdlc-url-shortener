@@ -144,6 +144,25 @@ Paths below are future run outputs. Store reports only after actual execution, s
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
 
+## Phase 11 bounded engineering tools follow-up
+
+The [bounded-tool evidence](evidence/phase-11-engineering-tools/manifest.json)
+records **159 passed tests** (134 unit, 18 PostgreSQL, seven real Docker runner)
+and one opt-in live smoke skip. This verifies the seven requested tools.
+
+| Requirement | Implementation | Test | Demonstration evidence |
+|---|---|---|---|
+| SW-11, SW-35, SP-18 | Workspace read/search/write/patch | `test_files_write_read_search_patch_and_archive` | Real edited file and changed SHA; deterministic archive |
+| SW-26, SP-18, SP-27 | UUID ownership and descriptor-based path checks | `test_forbidden_paths_for_every_file_operation`, cross-workflow/link/secret tests | Traversal, outside paths, credentials, links and special files denied |
+| SW-35, SP-18 | Exact command profiles and isolated runner | Java test/package and pytest runner tests | All three commands executed successfully in disposable containers |
+| SW-26, SP-18 | Container inspection and runtime restrictions | `test_pytest_isolation_and_no_host_effects` | No host credentials/socket/mounts/network; non-root and resource controls observed |
+| SW-36, SP-18 | Deadline/output limits and cleanup | Failure, timeout, output-limit, cancellation, inspection-rejection tests | Actual failure classifications and no remaining candidate containers |
+| SW-37, SP-13, SP-17 | SDK grants and workspace allocation | SDK permissions/receipts and PostgreSQL state-boundary tests | Tool receipts plus UUID workspace; workflow status remains unchanged |
+
+Durable tool invocation storage, retained build products, parallel overlays
+and live engineering evidence remain open. Earlier records below describe
+the original delivery before this follow-up.
+
 ## Phase 10–11 verification record
 
 The [agent evidence manifest](evidence/phase-10-11-agents/manifest.json)

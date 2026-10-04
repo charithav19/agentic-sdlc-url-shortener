@@ -1,5 +1,25 @@
 # Testing and verification
 
+## Phase 9 — verified on 2026-10-04
+
+The full orchestrator suite passed **59 pytest tests, 0 failures, 0 skips**
+against disposable PostgreSQL 17.7. Fifteen new state-machine and atomicity
+tests cover the requested behavior.
+
+| Check | Test | Actual result |
+|---|---|---|
+| Legal rules | `test_required_legal_stage_transition_rules` | All seven requested example edges accepted |
+| Complete rule tables | `test_every_status_has_an_explicit_transition_rule` | Every workflow and stage enum value has an explicit outgoing set |
+| Illegal rules | Parameterized illegal cases and orchestrator integration test | Invalid edge raises before state/version change; no transition audit event |
+| Audit creation | Legal stage-chain and workflow transition tests | Before/after state, actor, reason, stage metadata and entity version persisted |
+| Atomicity | `test_audit_failure_rolls_back_stage_transition` | Injected audit failure rolls back status and version |
+| Authority/concurrency | Direct mutation and stale-version tests | Public status is read-only; guarded internal mutation denied; stale expected version rejected |
+
+The orchestrator uses PostgreSQL row locks and optimistic entity versions.
+`COMPLETED` requires the caller to assert verified release gates, but actual
+gate evaluation is not implemented in this phase. No agent or stage executor
+ran.
+
 ## Phase 8 — verified on 2026-10-04
 
 The full orchestrator suite passed **44 pytest tests, 0 failures, 0 skips**

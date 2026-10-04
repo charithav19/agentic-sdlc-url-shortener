@@ -42,3 +42,9 @@ Phase 8 adds `StageDependencyResolver`. Given the graph and current stage
 snapshots, it returns deterministic `READY`/`BLOCKED` decisions and unmet
 dependency names. Only `SUCCEEDED` from the current generation releases a
 child. It does not change persisted stage state, evaluate gates or run agents.
+
+Phase 9 adds `WorkflowOrchestrator`, the only application authority permitted
+to change workflow or stage status. It checks explicit legal transition
+tables, locks and version-checks records, then commits the status update and
+audit event atomically. Direct ORM status mutation is rejected. This is a
+state-control foundation; it does not schedule stages or invoke agents.

@@ -17,12 +17,16 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     Uuid,
+    event,
     func,
+    inspect,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm.attributes import NO_VALUE
 
 from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatus
+from app.orchestration.state_authority import transition_is_authorized
 from app.persistence.base import Base
 
 
@@ -41,7 +45,8 @@ class WorkflowRun(Base):
     scenario_type: Mapped[ScenarioType] = mapped_column(
         Enum(ScenarioType, name="scenario_type", native_enum=False, create_constraint=True)
     )
-    status: Mapped[WorkflowStatus] = mapped_column(
+    _status: Mapped[WorkflowStatus] = mapped_column(
+        "status",
         Enum(WorkflowStatus, name="workflow_status", native_enum=False, create_constraint=True),
         default=WorkflowStatus.CREATED,
     )
@@ -58,6 +63,10 @@ class WorkflowRun(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
     )
+
+    @property
+    def status(self) -> WorkflowStatus:
+        return self._status
 
 
 class StageRun(Base):
@@ -79,7 +88,8 @@ class StageRun(Base):
     stage_name: Mapped[str] = mapped_column(String(128))
     generation: Mapped[int] = mapped_column(Integer)
     attempt: Mapped[int] = mapped_column(Integer)
-    status: Mapped[StageStatus] = mapped_column(
+    _status: Mapped[StageStatus] = mapped_column(
+        "status",
         Enum(StageStatus, name="stage_status", native_enum=False, create_constraint=True),
         default=StageStatus.PENDING,
     )
@@ -96,6 +106,10 @@ class StageRun(Base):
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     version: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    @property
+    def status(self) -> StageStatus:
+        return self._status
 
 
 class Artifact(Base):
@@ -253,3 +267,18 @@ class AuditEvent(Base):
     artifact_refs: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     reason: Mapped[str | None] = mapped_column(Text, nullable=True)
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+
+
+def _guard_status_mutation(target: Any, value: Any, old_value: Any, _initiator: Any) -> Any:
+    state = inspect(target)
+    if old_value is NO_VALUE and (state.transient or state.pending):
+        return value
+    if old_value is value or old_value == value:
+        return value
+    if not transition_is_authorized():
+        raise PermissionError("Only WorkflowOrchestrator may change persisted status")
+    return value
+
+
+event.listen(WorkflowRun._status, "set", _guard_status_mutation, retval=True)
+event.listen(StageRun._status, "set", _guard_status_mutation, retval=True)

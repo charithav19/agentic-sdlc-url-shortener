@@ -1,0 +1,15 @@
+{
+  "phase": 9,
+  "commands": [
+    "UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db",
+    "apps/orchestrator/.venv/bin/python -m pytest -p no:cacheprovider -m 'not integration' -q"
+  ],
+  "database": "disposable PostgreSQL 17.7 on loopback; container removed after run",
+  "tests": 59,
+  "passed": 59,
+  "failed": 0,
+  "skipped": 0,
+  "new_state_tests": 15,
+  "style": "Ruff lint/format and git diff --check passed",
+  "scope": "WorkflowOrchestrator transition authority and atomic audit persistence; no execution"
+}

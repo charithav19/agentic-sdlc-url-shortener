@@ -144,6 +144,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
 
+## Phase 9 verification record
+
+Phase 9 is **VERIFIED on 2026-10-04** for deterministic status authority and
+atomic transition auditing. The [testing record](TESTING.md#phase-9--verified-on-2026-10-04)
+reports 59 passing PostgreSQL-backed pytest tests.
+
+| Requirement IDs | Phase 9 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-13, SP-13 | Legal/illegal transition-table tests | Every state has explicit rules; required edges accepted and invalid edges rejected | Aggregate mixed-branch status and command/API surface |
+| SW-28, SP-13, SP-33 | Stage-chain and workflow audit tests | Accepted state changes create ordered before/after audit events with actor/reason/version | Complete event coverage and metrics in Phase 21 |
+| SP-13, SP-34 | Audit-failure and stale-version tests | Update/event atomic rollback, row lock and optimistic-version protection | Multi-process recovery and lease reconciliation |
+| SW-37, SP-13 | Direct-mutation and agent-actor tests | ORM status writes outside `WorkflowOrchestrator` rejected; AGENT cannot be transition actor | Provider integration and bounded execution |
+| SP-37 | Plan, testing and evidence record | Requested Phase 9 scope and limits recorded | Later phase records and end-to-end evidence |
+
+No agent, gate, approval, scheduler or workflow HTTP endpoint executes through
+this foundation yet.
+
 ## Phase 8 verification record
 
 Phase 8 is **VERIFIED on 2026-10-04** for pure dependency readiness.

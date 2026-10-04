@@ -265,7 +265,7 @@ async def test_atomic_rollback_and_foreign_keys(
                     stage_name="orphan",
                     generation=1,
                     attempt=1,
-                    status=StageStatus.PENDING,
+                    _status=StageStatus.PENDING,
                     executor="agent",
                     input_artifact_refs=[],
                     version=1,

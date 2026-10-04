@@ -1,8 +1,8 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phases 1–8 VERIFIED for their requested scopes on 2026-10-04; Phases 9–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–9 VERIFIED for their requested scopes on 2026-10-04; Phases 10–28 NOT_STARTED**.
 
-Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–4; their actual implementation and verification are recorded below. Phases 5–28 remain proposed deliverables, not existing functionality or successful test results.
+Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–9; their actual implementation and verification are recorded below. Phases 10–28 remain proposed deliverables, not existing functionality or successful test results.
 
 ## Source review and reconciliation
 
@@ -308,7 +308,13 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Direct ORM mutation bypasses and misleading aggregate status. Centralize command handling and review all state write sites.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the requested Phase 9 state-authority scope. The full PostgreSQL-backed orchestrator suite passed 59 tests. No agent execution was added.
+
+**Implementation record:** Added explicit immutable workflow and stage transition tables covering every declared status, plus `WorkflowOrchestrator` as the sole transactional mutation authority. The public ORM status properties are read-only, and persisted internal status mutation outside an orchestrator transition context raises `PermissionError`. Transition commands accept SYSTEM or HUMAN actors only, optional trace/reason and optimistic expected version. Row locks serialize transitions; stale versions and illegal edges fail before mutation. Each accepted transition increments the entity version and appends a causal audit event in the same transaction. Workflow completion additionally requires an explicit verified-release-gates precondition.
+
+**Verification:** Required legal edges—`PENDING→BLOCKED`, `BLOCKED→READY`, `READY→RUNNING`, `RUNNING→SUCCEEDED/FAILED`, `FAILED→RETRY_PENDING`, and `SUCCEEDED→STALE`—are tested. Illegal edges preserve state/version and create no transition event. PostgreSQL tests verify stage and workflow audit contents, direct-mutation denial, stale-version rejection, and injected audit failure rolling back the status update. `make test-db` passed all 17 PostgreSQL tests and `python -m pytest -m 'not integration' -q` passed the other 42; Ruff, structure and diff checks passed.
+
+**Scope boundary:** This phase exposes no workflow HTTP mutation API and performs no agent, gate, approval or scheduler execution. Retry and replan record creation, completion-gate evaluation, cancellation propagation and mixed-branch workflow summaries remain in their planned later phases.
 
 ## PHASE 10 — OpenAI Agents SDK abstraction
 

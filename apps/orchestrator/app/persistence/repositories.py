@@ -31,7 +31,7 @@ class WorkflowRepository:
     ) -> WorkflowRun:
         workflow = WorkflowRun(
             scenario_type=scenario_type,
-            status=WorkflowStatus.CREATED,
+            _status=WorkflowStatus.CREATED,
             provider_mode=provider_mode,
             workspace_ref=workspace_ref,
             requirement_version=1,
@@ -86,7 +86,7 @@ class StageRunRepository:
             stage_name=stage_name,
             generation=generation,
             attempt=attempt,
-            status=StageStatus.PENDING,
+            _status=StageStatus.PENDING,
             executor=executor,
             input_artifact_refs=refs,
             version=1,

@@ -1,5 +1,36 @@
 # Testing and verification
 
+## Phases 10–11 — agent contracts verified offline on 2026-10-04
+
+The orchestrator suite passed **105 tests**: 87 non-DB tests and 18 real
+PostgreSQL tests. **One live smoke was skipped** because its explicit opt-in
+was not enabled. No paid API call or live model engineering result is claimed.
+
+Commands:
+
+```sh
+cd apps/orchestrator
+.venv/bin/python -m pytest -p no:cacheprovider -m 'not integration' -q
+cd ../..
+UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db
+```
+
+Coverage includes eight strict schemas and tool allowlists, repeatable fake
+responses, malformed outputs, actual SDK Runner parsing/tool loops with a
+local Model stub, turn exhaustion, deadlines/cancellation, provider error
+classification, snapshot access restrictions, and PostgreSQL state/audit
+preservation. The adapter test module rejects HTTP requests. The test
+`agent_provider` fixture is deterministic; application provider selection
+defaults to the real SDK.
+
+For a separately recorded live smoke, export a valid `OPENAI_API_KEY` and
+`OPENAI_MODEL`, then run
+`RUN_LIVE_AGENT_TESTS=1 uv run --locked python -m pytest tests/live/test_sdk_smoke.py -q`.
+An opted-in run fails when credentials/model configuration are missing.
+See [the evidence manifest](evidence/phase-10-11-agents/manifest.json) and
+[runtime ADR](decisions/ADR-003-openai-agent-runtime.md) for verified scope
+and outstanding isolated-runner and durable-result integration work.
+
 ## Phase 9 — verified on 2026-10-04
 
 The full orchestrator suite passed **59 pytest tests, 0 failures, 0 skips**

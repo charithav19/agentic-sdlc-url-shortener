@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–4 are VERIFIED; Phases 5–28 remain PLANNED / NOT IMPLEMENTED / NOT TESTED / DEMONSTRATION PENDING.** The tables describe the complete scope. Actual Phase 1–4 evidence and partial coverage are recorded in the verification records below; the URL product alone does not complete agentic demonstrations or deployment requirements. No live SDK run, scenario, or performance result is claimed.
+**Phases 1–9 are VERIFIED for their requested scopes. Phases 10–11 have tested provider/specialist contracts; full-plan live and runner acceptance remains IN_PROGRESS. Phases 12–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -143,6 +143,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 10–11 verification record
+
+The [agent evidence manifest](evidence/phase-10-11-agents/manifest.json)
+records 105 passing tests and one opt-in live skip. These are offline
+fixture/local-SDK and PostgreSQL results, not a live model demonstration.
+
+| Requirement | Phase/module | Tests | Actual evidence / outstanding scope |
+|---|---|---|---|
+| SW-09, SP-17 | P11 RequirementAgent | `test_specialist_contract`, `test_blocking_ambiguity_requires_questions` | Strict requirement fields and consistent ambiguity output; human clarification workflow pending |
+| SW-10, SP-17 | P11 PlanningAgent | `test_invalid_task_graph` | Task references/cycles/parallel groups validated; live decomposition quality unverified |
+| SW-07, SW-11, SW-12, SP-17 | P11 eight specialists | `test_specialist_contract`, `test_specialists_bind_existing_graph_identifiers` | Instructions, schemas, tools and budgets for all eight; candidate editing/execution pending |
+| SW-19, SP-17 | P10 context/provider | `test_fake_provider_repeatable_and_validated` | Versioned bounded inputs and provenance hashes; durable result integration pending |
+| SW-37, SP-13 | P10–11 authority boundary | `test_specialists_leave_state_and_audit_unchanged`, forbidden SDK tool call test | PostgreSQL state/version/audit unchanged; no mutation/approval tools |
+| SP-18, SP-27 | P11 snapshot tools | `test_snapshot_tools.py` | Supplied-snapshot reads only, unauthorized paths/contexts denied; host runner and write tooling unimplemented |
+| SP-21, SP-34 | P10 SDK adapter | SDK loop/failure/timeout/cancellation/error tests | Real SDK exercised with local inference stub; no automatic retries or fake fallback |
+| SP-34 | P10 live smoke | `tests/live/test_sdk_smoke.py` | Skipped: opt-in not enabled; live acceptance remains open |
 
 ## Phase 9 verification record
 

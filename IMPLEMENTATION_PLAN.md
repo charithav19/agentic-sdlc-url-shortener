@@ -1,8 +1,8 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phases 1–9 VERIFIED for their requested scopes on 2026-10-04; Phases 10–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–9 VERIFIED for their requested scopes; Phases 10–11 requested provider/specialist scope implemented and tested offline, with full-plan acceptance still IN_PROGRESS; Phases 12–28 NOT_STARTED**.
 
-Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–9; their actual implementation and verification are recorded below. Phases 10–28 remain proposed deliverables, not existing functionality or successful test results.
+Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–11; their actual implementation, tests and scope limits are recorded below. Phases 12–28 remain proposed deliverables.
 
 ## Source review and reconciliation
 
@@ -334,7 +334,13 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** SDK API drift, cost/turn overruns, and confusing fake integration tests with live proof. Verify official SDK contracts when implementing the pinned version.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** IN_PROGRESS for full-plan acceptance; the requested provider abstraction is implemented and offline-verified on 2026-10-04.
+
+**Implementation record:** Added the typed `AgentProvider`, real `OpenAIAgentProvider` using SDK `Agent`/`Runner.run`, explicit fixture-only `FakeAgentProvider`, frozen context snapshots, result metadata and classified failures. The application default is `openai`; `AgentSettings` reads `AGENT_PROVIDER`, `OPENAI_MODEL` and a secret API key. SDK remains pinned at 0.23.1. Turns/time/output tokens are bounded, client retries are zero, cancellation propagates, and model failures never select fake output. SDK tracing export is disabled. No state mutation, database session or approval capability enters the provider.
+
+**Verification:** Combined suite: 105 passed (87 non-DB, 18 PostgreSQL), one opt-in live smoke skipped. Tests exercise all eight fake outputs, defensive fixture copies, malformed output, actual local SDK parsing/tool loop, turn exhaustion, timeout/cancellation, unauthorized tools and classified provider errors. See `docs/evidence/phase-10-11-agents/`.
+
+**Remaining full-plan acceptance:** Live API smoke was not run. Result envelopes expose model/SDK/instruction/schema/context hashes and workflow/stage/generation/attempt/trace metadata; persisting those envelopes onto stage attempts and scheduler integration remain outstanding. No migration or workflow API was added.
 
 ## PHASE 11 — Engineering specialist agents
 
@@ -354,7 +360,15 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** An allowlisted build still executes arbitrary candidate code; stage tools leaking credentials; model-generated fake test summaries. Runner isolation and independently attached invocation evidence are mandatory.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** IN_PROGRESS for full-plan tooling; all eight requested specialists and output contracts are implemented and offline-verified on 2026-10-04.
+
+**Implementation record:** Added the eight named specialist classes, shared authority/evidence instructions, strict Pydantic schemas and graph-name bindings in `agents/registry.py`. Each has a fixed tool allowlist and a 4–8 turn / 60-second budget. Requirement, planning, architecture and implementation outputs contain the exact requested fields. Planning validates task IDs, edges, cycles and parallel groups; blocking ambiguity requires questions. All outputs reject unexpected fields, including status/approval injection.
+
+**Tools:** Added `tools/snapshots.py`: `read_artifact`, `list_files`, `read_file`, and `search_code` over bounded immutable supplied snapshots. Runtime grants must be a subset of the specialist allowlist. Tools cannot access the host filesystem, shell, network, database or workflow authority. Requirement/release agents receive artifact-reading permission only; other agents have the specific code-reading permissions listed in their definitions.
+
+**Verification:** All eight schemas validate through the SDK strict-output schema adapter and fake provider. Tests verify tool denial, path/context restrictions, bounded input, ambiguity and planning validation. PostgreSQL verifies that invoking all eight specialists preserves workflow/stage status, versions and audit events.
+
+**Remaining full-plan acceptance:** Host workspace editing, candidate generation, isolated build/test execution, tool invocation persistence and their runner-isolation evidence remain unimplemented. ImplementationAgent reports supplied change evidence; with no such evidence it must report no changed/created files and disclose the limitation. This delivery implements the user's provider/specialist contract scope, not the broader planned engineering runner or a live end-to-end workflow.
 
 ## PHASE 12 — Entry and exit gates
 

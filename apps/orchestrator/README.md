@@ -27,8 +27,8 @@ immutable artifact versions, lineage, decisions, exact-version approval
 requests and append-only audit events. The `0002_workflow_foundation`
 migration adds database constraints and mutation-rejecting triggers. Internal
 repositories and the creation service write provenance and audit events in one
-transaction. There are no workflow execution routes, stage transitions,
-agent execution or terminal commands yet.
+transaction. Workflow execution routes and terminal commands remain pending;
+the later phase additions below provide internal state and agent interfaces.
 
 Phase 7 adds `config/default_sdlc.yaml` and the pure graph loader. The
 ordinary DAG has 16 stages; `load_graph(blocking_ambiguity=True)` inserts
@@ -48,3 +48,54 @@ to change workflow or stage status. It checks explicit legal transition
 tables, locks and version-checks records, then commits the status update and
 audit event atomically. Direct ORM status mutation is rejected. This is a
 state-control foundation; it does not schedule stages or invoke agents.
+
+## Phase 10–11 agent runtime
+
+`app.agents.settings.create_agent_provider()` returns the primary
+`OpenAIAgentProvider` by default. Export `OPENAI_MODEL` and
+`OPENAI_API_KEY` in the trusted process environment; missing configuration
+fails explicitly. The adapter uses pinned `openai-agents==0.23.1`,
+`Agent(output_type=...)`, `Runner.run(max_turns=...)`, a 60-second deadline,
+an 8192 output-token ceiling, no client retries, and no exported SDK traces.
+
+The internal invocation contract is:
+
+```python
+from app.agents.requirement import RequirementAgent
+from app.agents.settings import create_agent_provider
+
+# context is an AgentContext with UUIDs, generation/attempt, requirement,
+# versioned snapshots and an explicitly authorized tool subset.
+result = await create_agent_provider().run(RequirementAgent(), context)
+normalized = result.output.normalized_requirement
+```
+
+All eight specialists are bound to existing graph executor names in
+`app.agents.registry.SPECIALISTS`. They return strict Pydantic outputs.
+Result metadata includes provider/model/SDK, instruction/schema/context
+hashes, workflow/stage/trace IDs, generation, attempt and execution budgets.
+The result envelope is returned to the caller; it is not yet persisted by a
+scheduler.
+
+Tests use the `agent_provider` fixture, a `FakeAgentProvider` with explicit
+responses. Application callers can select `AGENT_PROVIDER=fake` and supply
+`fake_outputs` to the factory. Missing fixtures fail; real failures never
+fall back to fake output.
+
+The current tool surface reads immutable supplied artifact/code snapshots.
+Per-specialist allowlists and per-run grants determine which tools are exposed.
+No tool edits a workspace, executes a command, accesses a database or grants
+approval. Implementation output describes supplied change evidence; without it,
+file lists must be empty and missing implementation evidence reported.
+The broader isolated candidate runner remains pending.
+
+Ordinary offline verification and the explicitly paid live smoke:
+
+```sh
+uv run --locked python -m pytest -m 'not integration'
+# Requires exported OPENAI_MODEL and OPENAI_API_KEY; synthetic input only.
+RUN_LIVE_AGENT_TESTS=1 uv run --locked python -m pytest tests/live/test_sdk_smoke.py -q
+```
+
+The offline SDK tests execute the real Runner against a local model stub.
+They do not establish live API connectivity or model quality.

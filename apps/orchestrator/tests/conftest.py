@@ -1,6 +1,7 @@
 """Isolated PostgreSQL fixtures for the orchestrator service."""
 
 import os
+import uuid
 from collections.abc import AsyncIterator, Iterator
 
 import psycopg
@@ -15,6 +16,30 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from alembic import command
 from app.main import app
 from app.persistence.session import create_session_factory
+
+
+@pytest.fixture
+def agent_context():
+    from app.agents.contracts import AgentContext, FileSnapshot, Snapshot
+
+    return AgentContext(
+        workflow_id=uuid.UUID(int=1),
+        stage_run_id=uuid.UUID(int=2),
+        trace_id=uuid.UUID(int=3),
+        generation=1,
+        attempt=1,
+        requirement="Create an HTTP URL shortener.",
+        artifacts=(Snapshot(name="requirement-v1", version=1, content="HTTP links"),),
+        files=(FileSnapshot(name="src/app.py", version=1, content="return 302"),),
+    )
+
+
+@pytest.fixture
+def agent_provider():
+    from app.agents.fake_provider import FakeAgentProvider
+    from tests.agent_fixtures import OUTPUTS
+
+    return FakeAgentProvider(OUTPUTS)
 
 
 def pytest_addoption(parser: pytest.Parser) -> None:

@@ -1,0 +1,45 @@
+{
+  "phases": [
+    10,
+    11
+  ],
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_AGENT_CONTRACTS_OFFLINE_VERIFIED",
+  "base_commit": "ce169551338fc7bcb00b6232b0d2e9f3ae4b7adb",
+  "source_state": "Uncommitted Phase 10–11 changes on the recorded base",
+  "checks": ["Ruff lint passed", "75 files passed Ruff format check", "Repository structure passed", "git diff --check passed"],
+  "runtime": "Python 3.12.13 / openai-agents 0.23.1",
+  "provider_modes_tested": [
+    "fake",
+    "openai adapter with local Model stub"
+  ],
+  "live_api": "NOT_RUN: opt-in smoke skipped; RUN_LIVE_AGENT_TESTS was not enabled",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && .venv/bin/python -m pytest -p no:cacheprovider -m 'not integration' -q",
+      "passed": 87,
+      "skipped": 1,
+      "deselected": 18
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db",
+      "passed": 18,
+      "skipped": 0,
+      "deselected": 88
+    }
+  ],
+  "totals": {
+    "passed": 105,
+    "failed": 0,
+    "skipped": 1
+  },
+  "reports": [
+    "assertions.md"
+  ],
+  "limitations": [
+    "Snapshot read tools only; no candidate workspace edits or command runner",
+    "Provider metadata returned but not yet attached durably to attempts",
+    "No scheduler, approval or workflow execution integration",
+    "Live API connectivity and model engineering quality unverified"
+  ]
+}

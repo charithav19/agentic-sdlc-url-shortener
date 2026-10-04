@@ -1,0 +1,39 @@
+{
+  "A_to_B": {
+    "input": {
+      "A": "SUCCEEDED"
+    },
+    "result": {
+      "B": "READY"
+    }
+  },
+  "A_to_B_and_C": {
+    "input": {
+      "A": "SUCCEEDED"
+    },
+    "result": {
+      "B": "READY",
+      "C": "READY"
+    }
+  },
+  "B_and_C_to_D": {
+    "waiting_input": {
+      "B": "SUCCEEDED",
+      "C": "RUNNING"
+    },
+    "waiting_result": {
+      "D": "BLOCKED",
+      "unmet_dependencies": [
+        "C"
+      ]
+    },
+    "released_input": {
+      "B": "SUCCEEDED",
+      "C": "SUCCEEDED"
+    },
+    "released_result": {
+      "D": "READY",
+      "unmet_dependencies": []
+    }
+  }
+}

@@ -37,3 +37,8 @@ depend on it. The loader rejects missing dependencies, duplicate names,
 cycles, unknown symbolic executors/gates and invalid retry policies. Each
 variant has a deterministic hash. The YAML is included in the wheel.
 Symbolic executors and gates are declarations only; no stage is executed.
+
+Phase 8 adds `StageDependencyResolver`. Given the graph and current stage
+snapshots, it returns deterministic `READY`/`BLOCKED` decisions and unmet
+dependency names. Only `SUCCEEDED` from the current generation releases a
+child. It does not change persisted stage state, evaluate gates or run agents.

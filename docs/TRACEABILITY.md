@@ -144,6 +144,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
 
+## Phase 8 verification record
+
+Phase 8 is **VERIFIED on 2026-10-04** for pure dependency readiness.
+The [testing record](TESTING.md#phase-8--verified-on-2026-10-04) reports
+44 passing pytest tests, including all three user-mandated cases.
+
+| Requirement IDs | Phase 8 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-10, SW-16, SP-14 | `test_a_success_makes_b_ready` | Sequential `A → B` readiness after A succeeds | State transitions and gate enforcement |
+| SW-17, SP-14 | `test_a_success_fans_out_to_b_and_c` | Both independent children become structurally ready | Actual concurrent execution in Phase 14 |
+| SW-18, SP-14 | `test_join_waits_for_both_b_and_c` | Fan-in stays blocked until both predecessors succeed | Synchronization/candidate assembly in Phase 15 |
+| SW-13, SP-13 | Wrong-generation, missing and non-success predecessor tests | Old or invalid evidence cannot release a child; resolver does not mutate state | Atomic state authority and restart recovery |
+| SP-37 | Plan, testing and evidence record | Requested Phase 8 scope and limits recorded | Later phase records and final end-to-end evidence |
+
+The resolver yields structural decisions only. It does not execute agents,
+evaluate entry/exit gates, change stage records or claim concurrency.
+
 ## Phase 7 verification record
 
 Phase 7 is **VERIFIED on 2026-10-04** for the requested YAML DAG and loader.

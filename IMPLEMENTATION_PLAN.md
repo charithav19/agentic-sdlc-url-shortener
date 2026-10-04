@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phases 1–7 VERIFIED for their requested scopes on 2026-10-04; Phases 8–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–8 VERIFIED for their requested scopes on 2026-10-04; Phases 9–28 NOT_STARTED**.
 
 Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–4; their actual implementation and verification are recorded below. Phases 5–28 remain proposed deliverables, not existing functionality or successful test results.
 
@@ -284,7 +284,11 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Confusing structural eligibility with permission to execute. The final scheduler must additionally check gates, approvals, policy, and claims.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the requested Phase 8 resolver scope. The full orchestrator pytest suite passed 44 tests, including the three mandatory sequential, fan-out and fan-in cases, against disposable PostgreSQL. No agent execution or state write was added.
+
+**Implementation record:** Added `StageDependencyResolver`, immutable `StageSnapshot` and `StageReadiness` results. For each graph stage, only a `SUCCEEDED` predecessor from the current generation satisfies a dependency. Unmet dependencies produce `BLOCKED`; all met dependencies produce `READY` for pending-like stages. Active and terminal stage statuses are preserved. Results follow deterministic graph order and include sorted unmet dependency names. Missing or prior-generation parents do not release children. The resolver reads snapshots only and neither evaluates gates nor persists transitions.
+
+**Verification:** `test_dependency_resolver.py` contains the three mandatory tests plus failure/stale/rolled-back/skipped/cancelled predecessor, wrong-generation, missing-parent, deterministic ordering and input immutability cases. Full `python -m pytest -p no:cacheprovider --require-postgres -q` passed 44 tests, 0 failures/skips. Phase 9 remains the sole planned transition authority.
 
 ## PHASE 9 — Deterministic state machine
 

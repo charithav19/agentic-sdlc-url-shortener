@@ -1,5 +1,23 @@
 # Testing and verification
 
+## Phase 8 — verified on 2026-10-04
+
+The full orchestrator suite passed **44 pytest tests, 0 failures, 0 skips**
+against disposable PostgreSQL 17.7. Twelve new resolver tests include the
+three mandatory readiness cases:
+
+| Case | Status input | Verified result |
+|---|---|---|
+| `A → B` | A `SUCCEEDED` | B `READY` |
+| `A → B,C` | A `SUCCEEDED` | B and C both `READY` |
+| `B,C → D` | B `SUCCEEDED`, C `RUNNING`; then C `SUCCEEDED` | D stays `BLOCKED`, then becomes `READY` |
+
+The remaining cases verify that failed, stale, rolled-back, skipped,
+cancelled, missing and prior-generation parents do not satisfy dependencies.
+Resolution is deterministic and leaves its input unchanged. It computes
+structural eligibility only; gates, approval, policy, claims and execution
+remain separate later phases.
+
 ## Phase 7 — verified on 2026-10-04
 
 The complete orchestrator suite passed **32 pytest tests, 0 failures, 0

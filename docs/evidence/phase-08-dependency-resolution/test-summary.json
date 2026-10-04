@@ -1,0 +1,12 @@
+{
+  "phase": 8,
+  "command": "apps/orchestrator/.venv/bin/python -m pytest -p no:cacheprovider --require-postgres -q",
+  "database": "disposable PostgreSQL 17.7 on loopback; container removed after run",
+  "tests": 44,
+  "passed": 44,
+  "failed": 0,
+  "skipped": 0,
+  "new_resolver_tests": 12,
+  "style": "Ruff lint/format and git diff --check passed",
+  "scope": "Pure structural readiness; no database writes, gates or agent execution"
+}

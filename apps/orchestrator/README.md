@@ -29,3 +29,11 @@ migration adds database constraints and mutation-rejecting triggers. Internal
 repositories and the creation service write provenance and audit events in one
 transaction. There are no workflow execution routes, stage transitions,
 agent execution or terminal commands yet.
+
+Phase 7 adds `config/default_sdlc.yaml` and the pure graph loader. The
+ordinary DAG has 16 stages; `load_graph(blocking_ambiguity=True)` inserts
+`CLARIFICATION` after requirement analysis and makes task decomposition
+depend on it. The loader rejects missing dependencies, duplicate names,
+cycles, unknown symbolic executors/gates and invalid retry policies. Each
+variant has a deterministic hash. The YAML is included in the wheel.
+Symbolic executors and gates are declarations only; no stage is executed.

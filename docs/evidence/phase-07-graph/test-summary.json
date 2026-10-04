@@ -1,0 +1,12 @@
+{
+  "phase": 7,
+  "command": "apps/orchestrator/.venv/bin/python -m pytest --require-postgres -q",
+  "database": "disposable PostgreSQL 17.7 on loopback; container removed after run",
+  "tests": 32,
+  "passed": 32,
+  "failed": 0,
+  "skipped": 0,
+  "graph_tests": 14,
+  "style": "Ruff lint and format, git diff --check, and uv lock --check passed",
+  "package": "uv build --no-sources passed; wheel contains app/resources/default_sdlc.yaml"
+}

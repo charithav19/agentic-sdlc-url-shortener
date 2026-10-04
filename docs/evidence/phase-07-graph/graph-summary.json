@@ -1,0 +1,118 @@
+{
+  "version": "1",
+  "ordinary": {
+    "sha256": "19454e6299307e8385cea9279c34b0ade3fa3d770cbb577325be82ab76b7b5e8",
+    "stage_count": 16,
+    "dependencies": {
+      "INTAKE": [],
+      "REQUIREMENT_ANALYSIS": [
+        "INTAKE"
+      ],
+      "TASK_DECOMPOSITION": [
+        "REQUIREMENT_ANALYSIS"
+      ],
+      "ARCHITECTURE_DESIGN": [
+        "TASK_DECOMPOSITION"
+      ],
+      "ARCHITECTURE_APPROVAL": [
+        "ARCHITECTURE_DESIGN"
+      ],
+      "IMPLEMENTATION": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "TEST_DESIGN": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "DOCUMENTATION_DRAFT": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "BUILD_VALIDATION": [
+        "IMPLEMENTATION",
+        "TEST_DESIGN"
+      ],
+      "UNIT_TEST": [
+        "BUILD_VALIDATION"
+      ],
+      "INTEGRATION_TEST": [
+        "BUILD_VALIDATION"
+      ],
+      "SECURITY_VALIDATION": [
+        "BUILD_VALIDATION"
+      ],
+      "DOCUMENTATION_FINALIZATION": [
+        "UNIT_TEST",
+        "INTEGRATION_TEST",
+        "SECURITY_VALIDATION",
+        "DOCUMENTATION_DRAFT"
+      ],
+      "RELEASE_READINESS": [
+        "DOCUMENTATION_FINALIZATION"
+      ],
+      "RELEASE_APPROVAL": [
+        "RELEASE_READINESS"
+      ],
+      "COMPLETED": [
+        "RELEASE_APPROVAL"
+      ]
+    }
+  },
+  "blocking_ambiguity": {
+    "sha256": "a4a1fbd4f249fdee918a654ca548c169356d94c343cf9ab5e0922fed06fa7c05",
+    "stage_count": 17,
+    "dependencies": {
+      "INTAKE": [],
+      "REQUIREMENT_ANALYSIS": [
+        "INTAKE"
+      ],
+      "TASK_DECOMPOSITION": [
+        "CLARIFICATION"
+      ],
+      "ARCHITECTURE_DESIGN": [
+        "TASK_DECOMPOSITION"
+      ],
+      "ARCHITECTURE_APPROVAL": [
+        "ARCHITECTURE_DESIGN"
+      ],
+      "IMPLEMENTATION": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "TEST_DESIGN": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "DOCUMENTATION_DRAFT": [
+        "ARCHITECTURE_APPROVAL"
+      ],
+      "BUILD_VALIDATION": [
+        "IMPLEMENTATION",
+        "TEST_DESIGN"
+      ],
+      "UNIT_TEST": [
+        "BUILD_VALIDATION"
+      ],
+      "INTEGRATION_TEST": [
+        "BUILD_VALIDATION"
+      ],
+      "SECURITY_VALIDATION": [
+        "BUILD_VALIDATION"
+      ],
+      "DOCUMENTATION_FINALIZATION": [
+        "UNIT_TEST",
+        "INTEGRATION_TEST",
+        "SECURITY_VALIDATION",
+        "DOCUMENTATION_DRAFT"
+      ],
+      "RELEASE_READINESS": [
+        "DOCUMENTATION_FINALIZATION"
+      ],
+      "RELEASE_APPROVAL": [
+        "RELEASE_READINESS"
+      ],
+      "COMPLETED": [
+        "RELEASE_APPROVAL"
+      ],
+      "CLARIFICATION": [
+        "REQUIREMENT_ANALYSIS"
+      ]
+    }
+  }
+}

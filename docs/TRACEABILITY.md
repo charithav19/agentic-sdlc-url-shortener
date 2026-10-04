@@ -144,6 +144,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
 
+## Phase 7 verification record
+
+Phase 7 is **VERIFIED on 2026-10-04** for the requested YAML DAG and loader.
+The [testing record](TESTING.md#phase-7--verified-on-2026-10-04) reports
+32 passing pytest tests, including 14 graph tests.
+
+| Requirement IDs | Phase 7 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-12, SW-14, SP-14 | `test_graph_validation.py::test_default_graph_has_required_fan_out_joins_and_approval_checkpoints` | Explicit 16-stage lifecycle and specified dependencies/joins | Persisted graph revision, actual resolver/execution and demonstration |
+| SW-09, SP-14 | `test_graph_validation.py::test_blocking_ambiguity_inserts_clarification_without_cycle` | Conditional clarification graph variant without a same-generation cycle | Human answer, new analysis generation and blocking gate behavior |
+| SW-14, SP-14 | Cycle/duplicate/unknown identifier/retry-policy tests | Invalid YAML and graph contracts rejected; safe symbolic registry | Executable bindings, timeout/schema contracts and workflow startup checks |
+| SP-37 | Plan, testing record and ADR-002 | Requested Phase 7 scope and unimplemented execution boundary recorded | Later phase records and final end-to-end evidence |
+
+The graph hash identifies loaded variants but is not yet stored as a
+`graph_revisions` row or bound to a workflow. No agent, gate, stage or
+approval was executed.
+
 ## Phase 6 verification record
 
 Phase 6 is **VERIFIED on 2026-10-04** for the seven tables explicitly

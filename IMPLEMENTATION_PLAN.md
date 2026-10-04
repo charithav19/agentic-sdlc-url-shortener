@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phases 1–4 VERIFIED on 2026-10-04; Phases 5–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–7 VERIFIED for their requested scopes on 2026-10-04; Phases 8–28 NOT_STARTED**.
 
 Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–4; their actual implementation and verification are recorded below. Phases 5–28 remain proposed deliverables, not existing functionality or successful test results.
 
@@ -260,7 +260,11 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Treating a diagram as execution configuration or creating cycles through clarification. Distinguish graph generations from within-generation edges.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the requested configurable-DAG scope. The full Python suite passed 32 tests against disposable PostgreSQL, including 14 new graph tests; Ruff checks and wheel/sdist build passed. No agent or stage was executed.
+
+**Implementation record:** Added `config/default_sdlc.yaml` with 16 ordinary stages, the specified fan-out/fan-in joins, two approval checkpoints and a conditional `CLARIFICATION` insertion. Every stage declares name, dependencies, executor, entry/exit gates, retry policy, fallback and approval requirement. The safe YAML loader rejects duplicate keys and unknown identifiers, validates both graph variants, detects cycles and produces a deterministic SHA-256/version. The YAML is packaged in the wheel. [ADR-002](docs/decisions/ADR-002-deterministic-orchestration.md) records the graph-generation choice.
+
+**Scope boundary:** The user requested the graph configuration, loader and validation in this phase. Planned `graph_revisions` persistence, workflow binding, graph HTTP API, timeout/schema contracts and executable registry bindings remain for later orchestration phases. Clarification does not add a same-generation back edge; re-analysis after a human answer requires a new generation in later phases.
 
 ## PHASE 8 — Dependency resolver + fan-out/fan-in
 

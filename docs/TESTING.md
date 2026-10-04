@@ -1,5 +1,26 @@
 # Testing and verification
 
+## Phase 7 — verified on 2026-10-04
+
+The complete orchestrator suite passed **32 pytest tests, 0 failures, 0
+skips** against a disposable PostgreSQL 17.7 database. Fourteen new graph
+tests exercise the default and ambiguity variants, required fan-out/fan-in
+dependencies, deterministic hashing, and invalid configuration rejection.
+Ruff lint/format checks and the wheel/sdist build passed; the wheel contains
+`app/resources/default_sdlc.yaml`.
+
+| Check | Test | Actual result |
+|---|---|---|
+| Default DAG | `test_graph_validation.py::test_default_graph_has_required_fan_out_joins_and_approval_checkpoints` | All 16 required stages and specified joins/checkpoints present |
+| Conditional clarification | `test_graph_validation.py::test_blocking_ambiguity_inserts_clarification_without_cycle` | Seventeenth stage inserted after analysis; decomposition waits on it; graph hash changes |
+| Invalid graphs | Cycle, duplicate, unknown-dependency, registry and retry-policy tests | Loader rejects malformed or unregistered configuration before execution |
+| Safe loading and identity | YAML duplicate-key/tag and hash tests | Unsafe tags and duplicate keys rejected; equivalent ordering has the same hash |
+| Packaging/regressions | `uv build --no-sources`; full pytest | YAML present in wheel; prior health and persistence tests continue to pass |
+
+The graph registry contains symbolic names only. These tests do not execute
+agents, evaluate gates or prove parallel scheduling. Graph revision
+persistence/API and new-generation re-analysis remain future work.
+
 ## Phase 6 — verified on 2026-10-04
 
 The complete orchestrator suite passed **18 pytest tests, 0 failures, 0

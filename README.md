@@ -1,11 +1,12 @@
 # Schwab Agentic Engineering
 
 Monorepo for a Spring Boot URL shortener and a deterministic FastAPI SDLC
-orchestrator. **Phase 6:** the Spring Boot service creates and resolves short
+orchestrator. **Phase 7:** the Spring Boot service creates and resolves short
 links with reliability controls, asynchronous click analytics, and operational
 metrics. FastAPI now persists workflow identity, stage attempts, immutable
-artifacts, lineage, decisions, approval requests and audit events. Workflow
-execution and agent integrations are scheduled for later phases.
+artifacts, lineage, decisions, approval requests and audit events. Its SDLC
+graph is configurable and validated; workflow execution and agent integrations
+are scheduled for later phases.
 
 ## Repository layout
 

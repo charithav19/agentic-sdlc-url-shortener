@@ -1,0 +1,162 @@
+version: "1"
+stages:
+  - name: INTAKE
+    dependencies: []
+    executor: intake
+    entry_gate: always
+    exit_gate: intake_complete
+    retry_policy: {max_attempts: 1, retryable_errors: []}
+    fallback: null
+    approval_required: false
+
+  - name: REQUIREMENT_ANALYSIS
+    dependencies: [INTAKE]
+    executor: requirements_specialist
+    entry_gate: intake_complete
+    exit_gate: requirements_analyzed
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: TASK_DECOMPOSITION
+    dependencies: [REQUIREMENT_ANALYSIS]
+    executor: task_decomposition_specialist
+    entry_gate: requirements_unambiguous
+    exit_gate: tasks_defined
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: ARCHITECTURE_DESIGN
+    dependencies: [TASK_DECOMPOSITION]
+    executor: architecture_specialist
+    entry_gate: tasks_defined
+    exit_gate: architecture_ready
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: ARCHITECTURE_APPROVAL
+    dependencies: [ARCHITECTURE_DESIGN]
+    executor: human_checkpoint
+    entry_gate: architecture_ready
+    exit_gate: architecture_approved
+    retry_policy: {max_attempts: 1, retryable_errors: []}
+    fallback: null
+    approval_required: true
+
+  - name: IMPLEMENTATION
+    dependencies: [ARCHITECTURE_APPROVAL]
+    executor: implementation_specialist
+    entry_gate: architecture_approved
+    exit_gate: implementation_complete
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: TEST_DESIGN
+    dependencies: [ARCHITECTURE_APPROVAL]
+    executor: test_design_specialist
+    entry_gate: architecture_approved
+    exit_gate: test_design_complete
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: DOCUMENTATION_DRAFT
+    dependencies: [ARCHITECTURE_APPROVAL]
+    executor: documentation_specialist
+    entry_gate: architecture_approved
+    exit_gate: documentation_draft_complete
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: BUILD_VALIDATION
+    dependencies: [IMPLEMENTATION, TEST_DESIGN]
+    executor: build_runner
+    entry_gate: candidate_and_test_plan_current
+    exit_gate: build_passed
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR, TIMEOUT]}
+    fallback: null
+    approval_required: false
+
+  - name: UNIT_TEST
+    dependencies: [BUILD_VALIDATION]
+    executor: unit_test_runner
+    entry_gate: build_passed
+    exit_gate: unit_tests_passed
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR, TIMEOUT]}
+    fallback: null
+    approval_required: false
+
+  - name: INTEGRATION_TEST
+    dependencies: [BUILD_VALIDATION]
+    executor: integration_test_runner
+    entry_gate: build_passed
+    exit_gate: integration_tests_passed
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR, TIMEOUT]}
+    fallback: null
+    approval_required: false
+
+  - name: SECURITY_VALIDATION
+    dependencies: [BUILD_VALIDATION]
+    executor: security_specialist
+    entry_gate: build_passed
+    exit_gate: security_validation_passed
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: DOCUMENTATION_FINALIZATION
+    dependencies:
+      - UNIT_TEST
+      - INTEGRATION_TEST
+      - SECURITY_VALIDATION
+      - DOCUMENTATION_DRAFT
+    executor: documentation_specialist
+    entry_gate: build_passed
+    exit_gate: documentation_finalized
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: RELEASE_READINESS
+    dependencies: [DOCUMENTATION_FINALIZATION]
+    executor: release_specialist
+    entry_gate: documentation_finalized
+    exit_gate: release_ready
+    retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
+    fallback: null
+    approval_required: false
+
+  - name: RELEASE_APPROVAL
+    dependencies: [RELEASE_READINESS]
+    executor: human_checkpoint
+    entry_gate: release_ready
+    exit_gate: release_approved
+    retry_policy: {max_attempts: 1, retryable_errors: []}
+    fallback: null
+    approval_required: true
+
+  - name: COMPLETED
+    dependencies: [RELEASE_APPROVAL]
+    executor: system_marker
+    entry_gate: release_approved
+    exit_gate: workflow_complete
+    retry_policy: {max_attempts: 1, retryable_errors: []}
+    fallback: null
+    approval_required: false
+
+conditional_insertions:
+  - when: blocking_ambiguity
+    before: TASK_DECOMPOSITION
+    stage:
+      name: CLARIFICATION
+      dependencies: [REQUIREMENT_ANALYSIS]
+      executor: clarification
+      entry_gate: blocking_ambiguity_detected
+      exit_gate: clarification_answered
+      retry_policy: {max_attempts: 1, retryable_errors: []}
+      fallback: null
+      approval_required: false

@@ -1,0 +1,164 @@
+cd apps/orchestrator && uv sync --locked
+Using CPython 3.12.13
+Creating virtual environment at: .venv
+Resolved 29 packages in 10ms
+   Building schwab-agentic-orchestrator @ file://<repo>/apps/orchestrator
+      Built schwab-agentic-orchestrator @ file://<repo>/apps/orchestrator
+Prepared 1 package in 1.36s
+Installed 27 packages in 5.93s
+ + annotated-doc==0.0.5
+ + annotated-types==0.8.0
+ + anyio==4.15.1
+ + certifi==2026.7.22
+ + click==8.5.0
+ + fastapi==0.142.2
+ + h11==0.16.0
+ + httpcore==1.0.9
+ + httpx==0.28.1
+ + idna==3.20
+ + iniconfig==2.3.0
+ + opentelemetry-api==1.45.0
+ + packaging==26.3
+ + pluggy==1.6.0
+ + psycopg==3.3.6
+ + psycopg-binary==3.3.6
+ + pydantic==2.13.5
+ + pydantic-core==2.46.5
+ + pygments==2.21.0
+ + pytest==9.1.1
+ + pytest-asyncio==1.4.0
+ + ruff==0.16.10
+ + schwab-agentic-orchestrator==0.1.0 (from file://<repo>/apps/orchestrator)
+ + starlette==1.7.0
+ + typing-extensions==4.16.0
+ + typing-inspection==0.4.4
+ + uvicorn==0.54.0
+uv run --project apps/orchestrator --locked python scripts/verify-structure.py
+Verified 12 directories, 11 files, Java 21/Spring Boot 3 and pinned FastAPI.
+docker compose --env-file .env.example config --quiet
+cd apps/url-shortener && ./mvnw --batch-mode spotless:check
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.schwab:url-shortener >----------------------
+[INFO] Building URL Shortener 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- spotless:3.10.3:check (default-cli) @ url-shortener ---
+[INFO] Index file does not exist. Fallback to an empty index
+[INFO] Spotless.Java is keeping 2 files clean - 0 needs changes to be clean, 2 were already clean, 0 were skipped because caching determined they were already clean
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  0.728 s
+[INFO] Finished at: 2026-10-04T16:06:58-04:00
+[INFO] ------------------------------------------------------------------------
+cd apps/orchestrator && uv run --locked ruff check . ../../scripts/verify-structure.py
+All checks passed!
+cd apps/orchestrator && uv run --locked ruff format --check . ../../scripts/verify-structure.py
+6 files already formatted
+cd apps/url-shortener && ./mvnw --batch-mode verify
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.schwab:url-shortener >----------------------
+[INFO] Building URL Shortener 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (require-java-21) @ url-shortener ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- spotless:3.10.3:check (format-check) @ url-shortener ---
+[INFO] Spotless.Java is keeping 2 files clean - 0 needs changes to be clean, 0 were already clean, 2 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ url-shortener ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 0 resource from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ url-shortener ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1 source file with javac [debug parameters release 21] to target/classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ url-shortener ---
+[INFO] skip non existing resourceDirectory <repo>/apps/url-shortener/src/test/resources
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ url-shortener ---
+[INFO] Recompiling the module because of changed dependency.
+[INFO] Compiling 1 source file with javac [debug parameters release 21] to target/test-classes
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ url-shortener ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.schwab.urlshortener.BootstrapTest
+16:07:02.037 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.schwab.urlshortener.BootstrapTest]: BootstrapTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+16:07:02.085 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.BootstrapTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T16:07:02.272-04:00  INFO 28789 --- [url-shortener] [           main] com.schwab.urlshortener.BootstrapTest    : Starting BootstrapTest using Java 21.0.1 with PID 28789 (started by raghavaveeragandham in <repo>/apps/url-shortener)
+2026-10-04T16:07:02.273-04:00  INFO 28789 --- [url-shortener] [           main] com.schwab.urlshortener.BootstrapTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T16:07:02.647-04:00  INFO 28789 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T16:07:02.648-04:00  INFO 28789 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T16:07:02.648-04:00  INFO 28789 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 0 ms
+2026-10-04T16:07:02.658-04:00  INFO 28789 --- [url-shortener] [           main] com.schwab.urlshortener.BootstrapTest    : Started BootstrapTest in 0.52 seconds (process running for 0.889)
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (<task-workspace>/work/cache/maven/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+Java HotSpot(TM) 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.082 s -- in com.schwab.urlshortener.BootstrapTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ url-shortener ---
+[INFO] Building jar: <repo>/apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.5.16:repackage (repackage) @ url-shortener ---
+[INFO] Replacing main artifact <repo>/apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to <repo>/apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  2.870 s
+[INFO] Finished at: 2026-10-04T16:07:03-04:00
+[INFO] ------------------------------------------------------------------------
+cd apps/orchestrator && uv lock --check && uv build --no-sources
+Resolved 29 packages in 22ms
+Building source distribution...
+Building wheel from source distribution...
+Successfully built dist/schwab_agentic_orchestrator-0.1.0.tar.gz
+Successfully built dist/schwab_agentic_orchestrator-0.1.0-py3-none-any.whl
+cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration'
+============================= test session starts ==============================
+platform darwin -- Python 3.12.13, pytest-9.1.1, pluggy-1.6.0
+rootdir: <repo>/apps/orchestrator
+configfile: pyproject.toml
+testpaths: tests
+plugins: asyncio-1.4.0, anyio-4.15.1
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 4 items / 1 deselected / 3 selected
+
+tests/test_bootstrap.py ...                                              [100%]
+
+=============================== warnings summary ===============================
+.venv/lib/python3.12/site-packages/fastapi/testclient.py:1
+  <repo>/apps/orchestrator/.venv/lib/python3.12/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.
+    from starlette.testclient import TestClient as TestClient  # noqa
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+================== 3 passed, 1 deselected, 1 warning in 0.01s ==================

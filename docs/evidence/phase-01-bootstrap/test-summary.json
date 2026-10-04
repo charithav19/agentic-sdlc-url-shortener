@@ -1,0 +1,25 @@
+{
+  "java": {
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "cases": [
+      "doesNotProvideRedirectFunctionality",
+      "bootsWithoutProductEndpoints"
+    ]
+  },
+  "python_bootstrap": {
+    "passed": 3,
+    "deselected_integration": 1
+  },
+  "python_postgres": {
+    "passed": 1,
+    "deselected_bootstrap": 3
+  },
+  "artifacts_built": [
+    "apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar",
+    "apps/orchestrator/dist/schwab_agentic_orchestrator-0.1.0.tar.gz",
+    "apps/orchestrator/dist/schwab_agentic_orchestrator-0.1.0-py3-none-any.whl"
+  ]
+}

@@ -1,0 +1,44 @@
+# Phase 1 skeleton: databases only. Application images, migrations and the
+# restricted runner are added in their planned phases, not represented as working.
+name: schwab-agentic-engineering
+
+x-application-layout:
+  url-shortener: apps/url-shortener
+  orchestrator: apps/orchestrator
+
+services:
+  url-db:
+    image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+    environment:
+      POSTGRES_DB: ${URL_DB_NAME:-url_shortener}
+      POSTGRES_USER: ${URL_DB_USER:-url_shortener}
+      POSTGRES_PASSWORD: ${URL_DB_PASSWORD:?Set URL_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${URL_DB_PORT:-5433}:5432"
+    volumes:
+      - url-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  orchestrator-db:
+    image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+    environment:
+      POSTGRES_DB: ${ORCHESTRATOR_DB_NAME:-orchestrator}
+      POSTGRES_USER: ${ORCHESTRATOR_DB_USER:-orchestrator}
+      POSTGRES_PASSWORD: ${ORCHESTRATOR_DB_PASSWORD:?Set ORCHESTRATOR_DB_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:${ORCHESTRATOR_DB_PORT:-5434}:5432"
+    volumes:
+      - orchestrator-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  url-db-data:
+  orchestrator-db-data:

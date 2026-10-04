@@ -1,0 +1,35 @@
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+.aws/
+.ssh/
+
+# Generated execution contents
+workspaces/*
+!workspaces/.gitkeep
+
+# Java and Python build/test artifacts
+**/target/
+**/.venv/
+**/__pycache__/
+*.py[cod]
+**/.pytest_cache/
+**/.ruff_cache/
+**/.mypy_cache/
+**/.coverage
+**/htmlcov/
+**/dist/
+**/build/
+**/*.egg-info/
+.cache/
+.reports/
+*.log
+
+# Editor and operating-system files
+.DS_Store
+.idea/
+.vscode/
+*.iml

@@ -1,0 +1,48 @@
+$ docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example config --quiet
+$ make up COMPOSE=docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example
+docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example up --detach --wait
+ Network schwab-phase1-check-ca33a22d_default Creating 
+ Network schwab-phase1-check-ca33a22d_default Created 
+ Volume schwab-phase1-check-ca33a22d_url-db-data Creating 
+ Volume schwab-phase1-check-ca33a22d_url-db-data Created 
+ Volume schwab-phase1-check-ca33a22d_orchestrator-db-data Creating 
+ Volume schwab-phase1-check-ca33a22d_orchestrator-db-data Created 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Creating 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Creating 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Created 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Created 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Starting 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Starting 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Started 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Started 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Waiting 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Waiting 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Healthy 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Healthy 
+$ make health COMPOSE=docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example
+docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example exec -T url-db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+/var/run/postgresql:5432 - accepting connections
+docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example exec -T orchestrator-db sh -c 'pg_isready -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+/var/run/postgresql:5432 - accepting connections
+$ make down COMPOSE=docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example
+docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example down
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Stopping 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Stopping 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Stopped 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Removing 
+ Container schwab-phase1-check-ca33a22d-orchestrator-db-1 Removed 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Stopped 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Removing 
+ Container schwab-phase1-check-ca33a22d-url-db-1 Removed 
+ Network schwab-phase1-check-ca33a22d_default Removing 
+ Network schwab-phase1-check-ca33a22d_default Removed 
+$ docker volume inspect schwab-phase1-check-ca33a22d_url-db-data schwab-phase1-check-ca33a22d_orchestrator-db-data --format {{.Name}}
+schwab-phase1-check-ca33a22d_url-db-data
+schwab-phase1-check-ca33a22d_orchestrator-db-data
+PASS: both databases became ready; make down preserved both named volumes.
+$ docker compose --project-name schwab-phase1-check-ca33a22d --env-file .env.example down --volumes
+ Volume schwab-phase1-check-ca33a22d_orchestrator-db-data Removing 
+ Volume schwab-phase1-check-ca33a22d_url-db-data Removing 
+ Volume schwab-phase1-check-ca33a22d_url-db-data Removed 
+ Volume schwab-phase1-check-ca33a22d_orchestrator-db-data Removed 
+Removed only the disposable verification project and its test volumes.

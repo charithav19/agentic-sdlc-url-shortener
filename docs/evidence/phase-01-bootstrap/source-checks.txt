@@ -1,0 +1,19 @@
+PASS unchanged source: AGENTS.md
+PASS unchanged source: docs/schwab-assignment.pdf
+PASS unchanged source: docs/IMPLEMENTATION_SPEC.md
+PASS ignored: .env
+PASS ignored: .env.local
+PASS ignored: workspaces/example/generated.java
+PASS ignored: apps/url-shortener/target/file
+PASS ignored: apps/orchestrator/.venv/file
+PASS ignored: apps/orchestrator/app/__pycache__/file.pyc
+PASS ignored: .DS_Store
+PASS ignored: .cache/tmp
+PASS trackable: .env.example
+PASS trackable: workspaces/.gitkeep
+PASS trackable: apps/orchestrator/uv.lock
+PASS trackable: apps/url-shortener/mvnw
+PASS wheel contains the application package and excludes caches.
+PASS deferred target fails explicitly: demo
+PASS deferred target fails explicitly: smoke
+PASS all bootstrap scope, source-preservation and ignore checks.

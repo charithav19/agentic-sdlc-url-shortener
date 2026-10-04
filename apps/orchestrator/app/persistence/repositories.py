@@ -1,0 +1,201 @@
+"""Internal repositories for creating and reading Phase 6 records."""
+
+import uuid
+from typing import Any
+
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.artifacts.schemas import ArtifactRef
+from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatus
+from app.persistence.models import (
+    Approval,
+    Artifact,
+    ArtifactLineage,
+    Decision,
+    StageRun,
+    WorkflowRun,
+)
+
+
+class WorkflowRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def create(
+        self,
+        *,
+        scenario_type: ScenarioType,
+        provider_mode: str,
+        workspace_ref: str,
+    ) -> WorkflowRun:
+        workflow = WorkflowRun(
+            scenario_type=scenario_type,
+            status=WorkflowStatus.CREATED,
+            provider_mode=provider_mode,
+            workspace_ref=workspace_ref,
+            requirement_version=1,
+            generation=1,
+            version=1,
+        )
+        self.session.add(workflow)
+        await self.session.flush()
+        return workflow
+
+    async def get(self, workflow_id: uuid.UUID) -> WorkflowRun:
+        workflow = await self.session.get(WorkflowRun, workflow_id)
+        if workflow is None:
+            raise KeyError(f"Unknown workflow {workflow_id}")
+        return workflow
+
+
+class StageRunRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add_attempt(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        stage_name: str,
+        generation: int,
+        attempt: int,
+        executor: str,
+        input_artifacts: list[ArtifactRef] | None = None,
+    ) -> StageRun:
+        workflow = await self.session.scalar(
+            select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+        )
+        if workflow is None:
+            raise KeyError(f"Unknown workflow {workflow_id}")
+        if generation > workflow.generation or generation < 1 or attempt < 1:
+            raise ValueError("Invalid stage generation or attempt")
+        refs: list[dict[str, Any]] = []
+        for ref in input_artifacts or []:
+            artifact = await self.session.get(Artifact, ref.id)
+            if (
+                artifact is None
+                or artifact.workflow_id != workflow_id
+                or artifact.version != ref.version
+                or artifact.content_sha256 != ref.sha256
+            ):
+                raise ValueError("Input artifact reference does not match an exact version")
+            refs.append({"id": str(ref.id), "version": ref.version, "sha256": ref.sha256})
+        stage = StageRun(
+            workflow_id=workflow_id,
+            stage_name=stage_name,
+            generation=generation,
+            attempt=attempt,
+            status=StageStatus.PENDING,
+            executor=executor,
+            input_artifact_refs=refs,
+            version=1,
+        )
+        self.session.add(stage)
+        await self.session.flush()
+        return stage
+
+    async def get(self, stage_run_id: uuid.UUID) -> StageRun:
+        stage = await self.session.get(StageRun, stage_run_id)
+        if stage is None:
+            raise KeyError(f"Unknown stage run {stage_run_id}")
+        return stage
+
+
+class LineageRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        parent_artifact_id: uuid.UUID,
+        child_artifact_id: uuid.UUID,
+        relationship: str,
+        requirement_ids: list[str] | None = None,
+        component_ids: list[str] | None = None,
+    ) -> ArtifactLineage:
+        if parent_artifact_id == child_artifact_id:
+            raise ValueError("Lineage parent and child must differ")
+        for artifact_id in (parent_artifact_id, child_artifact_id):
+            artifact = await self.session.get(Artifact, artifact_id)
+            if artifact is None or artifact.workflow_id != workflow_id:
+                raise ValueError("Lineage artifacts must belong to the workflow")
+        edge = ArtifactLineage(
+            workflow_id=workflow_id,
+            parent_artifact_id=parent_artifact_id,
+            child_artifact_id=child_artifact_id,
+            relationship=relationship,
+            requirement_ids=requirement_ids or [],
+            component_ids=component_ids or [],
+        )
+        self.session.add(edge)
+        await self.session.flush()
+        return edge
+
+
+class DecisionRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        decision_type: str,
+        outcome: str,
+        rationale: str,
+        actor_type: str,
+        actor_id: str,
+        stage_run_id: uuid.UUID | None = None,
+        alternatives: list[dict[str, Any]] | None = None,
+        related_artifact_ids: list[uuid.UUID] | None = None,
+        requirement_ids: list[str] | None = None,
+    ) -> Decision:
+        if stage_run_id is not None:
+            stage = await self.session.get(StageRun, stage_run_id)
+            if stage is None or stage.workflow_id != workflow_id:
+                raise ValueError("Decision stage must belong to the workflow")
+        for artifact_id in related_artifact_ids or []:
+            artifact = await self.session.get(Artifact, artifact_id)
+            if artifact is None or artifact.workflow_id != workflow_id:
+                raise ValueError("Decision artifact must belong to the workflow")
+        decision = Decision(
+            workflow_id=workflow_id,
+            stage_run_id=stage_run_id,
+            decision_type=decision_type,
+            outcome=outcome,
+            rationale=rationale,
+            alternatives=alternatives or [],
+            actor_type=actor_type,
+            actor_id=actor_id,
+            related_artifact_ids=[str(value) for value in related_artifact_ids or []],
+            requirement_ids=requirement_ids or [],
+        )
+        self.session.add(decision)
+        await self.session.flush()
+        return decision
+
+
+class ApprovalRepository:
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def request(
+        self, workflow_id: uuid.UUID, *, artifact_id: uuid.UUID, approval_type: str
+    ) -> Approval:
+        artifact = await self.session.get(Artifact, artifact_id)
+        if artifact is None or artifact.workflow_id != workflow_id:
+            raise ValueError("Approval artifact must belong to the workflow")
+        approval = Approval(
+            workflow_id=workflow_id,
+            artifact_id=artifact_id,
+            artifact_version=artifact.version,
+            artifact_hash=artifact.content_sha256,
+            approval_type=approval_type,
+            status="PENDING",
+        )
+        self.session.add(approval)
+        await self.session.flush()
+        return approval

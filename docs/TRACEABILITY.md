@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phase 1 bootstrap is VERIFIED; later-phase capabilities remain PLANNED / NOT IMPLEMENTED / NOT TESTED / DEMONSTRATION PENDING.** The tables describe the complete future scope. Actual Phase 1 evidence and partial coverage are recorded in the verification record below; no whole assignment requirement is marked complete merely because the bootstrap exists. No live SDK run, scenario, or performance result is claimed.
+**Phases 1–4 are VERIFIED; Phases 5–28 remain PLANNED / NOT IMPLEMENTED / NOT TESTED / DEMONSTRATION PENDING.** The tables describe the complete scope. Actual Phase 1–4 evidence and partial coverage are recorded in the verification records below; the URL product alone does not complete agentic demonstrations or deployment requirements. No live SDK run, scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -144,9 +144,94 @@ Paths below are future run outputs. Store reports only after actual execution, s
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
 
+## Phase 6 verification record
+
+Phase 6 is **VERIFIED on 2026-10-04** for the seven tables explicitly
+requested. The [testing record](TESTING.md#phase-6--verified-on-2026-10-04)
+records 18 passing pytest tests on disposable PostgreSQL, including all
+Phase 5 regressions.
+
+| Requirement IDs | Phase 6 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-19, SP-12 | `test_persistence.py::test_all_entities_round_trip_and_reload` | Durable workflow/scenario identity, exact input references and preserved stage attempts | DAG, state machine and execution in Phases 7–9 |
+| SW-19, SW-20, SP-25 | `test_artifact_immutability.py`, `test_persistence.py` | Immutable versioned content/hash, requirement/component IDs, decisions and queryable lineage | Selective invalidation and full dependency lineage in Phases 18–19 |
+| SW-21, SP-16 | `test_persistence.py::test_approval_foreign_key_binds_hash_and_version` | Approval request references exact artifact version/hash | Trusted reviewer decisions and invalidation in Phase 13 |
+| SW-28, SP-33 | `test_persistence.py::test_audit_pages_remain_causal_under_concurrent_appends` | Append-only, per-workflow ordered and paginated audit events | Full transition/policy audit and metrics in Phases 9, 20–21 |
+| SP-34 | `test_database.py`, `test_persistence.py` | Seven-table Alembic migration, UUID/FK/unique constraints, rollback and engine reload | Restart recovery, restricted runtime role and concurrency under later state transitions |
+| SP-37 | Updated implementation/testing/traceability records | Requested Phase 6 scope and limitations recorded | Later phase records and final demonstration |
+
+The earlier broad plan also named graph revisions, requirement versions,
+policy events, clarifications and recovery incidents. Those records were not
+requested in this seven-table implementation and remain open in their related
+later phases. No workflow scheduling or agent-facing mutation API exists.
+
+## Phase 5 verification record
+
+Phase 5 is **VERIFIED on 2026-10-04** for the requested FastAPI bootstrap and
+database scope. The [testing record](TESTING.md#phase-5--verified-on-2026-10-04)
+records 9 passing pytest tests, including 4 against disposable PostgreSQL.
+
+| Requirement IDs | Phase 5 test | Verified portion | Still pending |
+|---|---|---|---|
+| SP-01, SW-45 | `test_bootstrap.py`, Python build | Python 3.12 FastAPI service with separate package and migration ownership | Workflow runtime and complete deployment |
+| SP-02 | Locked build, Ruff checks | SQLAlchemy 2 async extra, Alembic, psycopg, Pydantic settings, Typer, Rich and OpenAI Agents SDK installed from lock | SDK integration and security scanning in later phases |
+| SP-11 | `test_health.py`, `test_bootstrap.py` | Database-backed 200/503 health, traceable error envelope, OpenAPI/docs | Workflow metrics and deployed readiness evidence |
+| SP-34 | `test_database.py` | Clean Alembic baseline on PostgreSQL and transaction rollback | Workflow tables, restricted runtime DB role and concurrency/restart evidence |
+| SP-37 | Updated plan and testing record | Authorized Phase 5 only; verification and limitations recorded | Per-phase records for Phases 6–28 |
+
+The development Compose database currently uses a bootstrap administrator.
+Least-privilege runtime role provisioning remains open for Phase 26. No
+workflow model, agent behavior or scenario demonstration is claimed.
+
+## Phase 4 verification record
+
+Phase 4 was explicitly authorized and is **VERIFIED on 2026-10-04** in the actual repository. The [testing record](TESTING.md#phase-4--verified-on-2026-10-04) and [run manifest](evidence/phase-04-analytics/manifest.json) record the final `mvn verify` outcome: 37 tests, 0 failures, 0 errors and 0 skips, including real PostgreSQL Testcontainers analytics cases.
+
+| Requirement IDs | Phase 4 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-03, SP-10 | `AnalyticsTest` | Successful redirect event fields, UTC daily aggregation, metadata/non-success non-counting, analytics `404` for missing code | Full assignment scenario and deployed-service evidence |
+| SP-10 | `AnalyticsFailureIsolationTest`, `AnalyticsTimeoutTest`, `AnalyticsRecorderTest` | Forced write failure, stalled worker and PostgreSQL write timeout preserve `302`; queue rejection increments a dropped counter | Production retention policy, multi-instance durability and load testing |
+| SP-11 | `ObservabilityTest` | Health/readiness, Prometheus, Micrometer counters, OpenAPI and restricted management exposure | Broader system observability in later orchestrator phases |
+| SP-34 | `AnalyticsTest` and full Java suite | Flyway V3 and click-event persistence on real PostgreSQL | Orchestrator persistence, CI and live workflow evidence |
+| SP-37 | Updated plan, traceability, testing, ADR and evidence | Authorized Phase 4 only; full test outcome and limits recorded | Per-phase records for Phases 5–28 |
+
+The URL portion of E01 now has local automated evidence for core behavior, reliability and analytics. The complete assignment still needs agentic scenarios, deployment and final demonstration; local MockMvc/Testcontainers tests are not a deployed-service transcript.
+
+## Phase 3 verification record
+
+Phase 3 was explicitly authorized and is **VERIFIED on 2026-10-04** in the actual repository. The [testing record](TESTING.md#phase-3--verified-on-2026-10-04) and [run manifest](evidence/phase-03-reliability/manifest.json) record a complete `mvn verify` run: 29 tests, 0 failures, 0 errors and 0 skips. PostgreSQL Testcontainers exercises aliases, exact expiry, collision recovery, concurrent idempotency and disable behavior. The HTTP limiter is tested at both filter and API levels.
+
+| Requirement IDs | Phase 3 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-04, SP-03 | `ExpiryTest`, `DisableLinkTest` | Expired/disabled redirects `410`; repeatable disable `204`; missing `404` | Analytics and complete assignment demonstration |
+| SP-04 | `CollisionTest` | Forced generated collision then success, five-total-attempt exhaustion, healthy subsequent transaction | Further load/performance evidence in later phases |
+| SP-05 | `AliasTest` | Format/length boundaries, reserved names, case-sensitive names, duplicate `409` | Brownfield scenario demonstration in Phase 24 |
+| SP-06 | `ExpiryTest` | Future-only input and exact UTC boundary without cleanup job | Brownfield requirement-change demonstration |
+| SP-07 | `IdempotencyTest` | Same response replay, changed request `409`, concurrent identical single creation/record | Authenticated caller scoping if added in a later phase |
+| SP-09 | `RateLimitTest`, `RateLimitApiTest` | Bounded per-instance window, `429` and `Retry-After`; reset behavior documented | Multi-instance coordination is intentionally outside this phase |
+| SP-34 | `LinkPersistenceTest` and Phase 3 PostgreSQL tests | Flyway V2, uniqueness and concurrent behavior on real PostgreSQL | Orchestrator/CI/live evidence |
+| SP-37 | Updated plan, traceability, testing and evidence | Authorized Phase 3 only; full test outcome and limits recorded | Per-phase records for Phases 4–28 |
+
+The Phase 3 portion of E01 is automated API and PostgreSQL test evidence. E01 remains incomplete until Phase 4 analytics evidence is recorded; no scenario, live agent or deployed-service transcript is claimed here.
+
+## Phase 2 verification record
+
+Phase 2 was explicitly authorized and is **VERIFIED on 2026-10-04** in the actual repository. [TESTING.md](TESTING.md#phase-2--verified-on-2026-10-04) and the [run manifest](evidence/phase-02-core/manifest.json) record `mvn test` and `mvn package`: both passed all 15 JUnit tests, including PostgreSQL Testcontainers integration tests, with no failures, errors or skips. The evidence bundle records the API assertions, Flyway V1 migration, uniqueness constraint and restart persistence. API assertions used MockMvc, not a separate deployed HTTP service.
+
+| Requirement IDs | Phase 2 test | Verified portion | Still pending |
+|---|---|---|---|
+| SW-02, SP-03 | `LinkApiTest` | Create `201`, metadata lookup, valid redirect `302`, missing code `404` | Greenfield agentic generation/demo; disable and expired-link contracts in Phase 3 |
+| SP-04 | `ShortCodeGeneratorTest`, `LinkPersistenceTest` | Secure seven-character Base62 generator and PostgreSQL unique constraint | Collision retry/exhaustion and concurrent handling in Phase 3 |
+| SP-08 | `UrlValidationTest`, `LinkApiTest` | HTTP/HTTPS URL validation and invalid input rejection without fetching destination | Further parser/security hardening as later requirements demand |
+| SP-11 | `LinkApiTest` | OpenAPI document, Actuator health, restricted `/actuator/env`, structured errors with trace ID | Readiness, metrics and broader observability in Phase 4 and orchestrator phases |
+| SP-34 | `LinkPersistenceTest`, `LinkRestartTest` | Fresh Flyway V1 migration, constraint enforcement and data retained across app context restart on real PostgreSQL | Concurrent collision tests, Alembic/orchestrator persistence and later live evidence |
+| SP-37 | Updated implementation plan, traceability and testing records | Authorized Phase 2 only, verified commands/results and explicit remaining work | Per-phase records for Phases 3–28 |
+
+The Phase 2 portion of E01 is demonstrated by automated API and PostgreSQL test assertions; the complete E01 catalog entry still requires Phase 3 reliability and Phase 4 analytics evidence. No alias, expiry behavior, idempotency, rate limiting, analytics or agent orchestration is claimed.
+
 ## Phase 1 verification record
 
-Phase 1 was explicitly authorized after planning and is **VERIFIED on 2026-10-04**. The original three source documents are unchanged. The bootstrap files are installed in the repository. See [TESTING.md](TESTING.md) and [the run manifest](evidence/phase-01-bootstrap/manifest.json) for actual commands, environment, sanitized transcripts and source hashes.
+Phase 1 was explicitly authorized after planning and is **VERIFIED on 2026-10-04**. This section is the historical Phase 1 snapshot; Phase 2 progress appears above. The original three source documents are unchanged. The bootstrap files are installed in the repository. See [TESTING.md](TESTING.md#phase-1--verified-on-2026-10-04) and [the run manifest](evidence/phase-01-bootstrap/manifest.json) for actual commands, environment, sanitized transcripts and source hashes.
 
 | Requirement IDs | Phase 1 evidence | Verified portion | Still pending |
 |---|---|---|---|
@@ -158,4 +243,4 @@ Phase 1 was explicitly authorized after planning and is **VERIFIED on 2026-10-04
 | SP-37 | Updated Phase 1 record in implementation plan | Requested phase only; commands/results/status recorded | Each later phase requires separate implementation authorization |
 | SW-40 | `decisions/ADR-001-service-boundaries.md` | Service ownership and bootstrap architecture decision | Implemented workflow/DAG/state/trust-boundary architecture |
 
-All evidence filenames above are under `docs/evidence/phase-01-bootstrap/` unless another path is given. Python wheel/source distribution, Java executable JAR, structure, Compose syntax and lint checks all passed. The PostgreSQL test ran separately rather than being silently skipped. The disposable Docker resources were cleaned up. Known non-fatal dependency deprecation warnings are documented in TESTING.md. No business functionality, migrations, live model calls, scenarios, or CI were implemented or run. Phases 2–28 remain NOT_STARTED.
+All evidence filenames above are under `docs/evidence/phase-01-bootstrap/` unless another path is given. Python wheel/source distribution, Java executable JAR, structure, Compose syntax and lint checks all passed. The PostgreSQL test ran separately rather than being silently skipped. The disposable Docker resources were cleaned up. Known non-fatal dependency deprecation warnings are documented in TESTING.md. At Phase 1 completion, no business functionality, migrations, live model calls, scenarios, or CI were implemented or run; Phases 2–28 were then NOT_STARTED.

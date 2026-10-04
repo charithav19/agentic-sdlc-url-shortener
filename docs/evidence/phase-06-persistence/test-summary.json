@@ -1,0 +1,12 @@
+{
+  "phase": 6,
+  "command": "apps/orchestrator/.venv/bin/python -m pytest --require-postgres -q",
+  "database": "disposable PostgreSQL 17.7 on loopback; fresh container removed after run",
+  "tests": 18,
+  "passed": 18,
+  "failed": 0,
+  "skipped": 0,
+  "evidence": "pytest.txt",
+  "style": "Ruff check and format checks passed; git diff --check passed",
+  "scope": "Seven user-requested tables; no workflow execution or state-transition API"
+}

@@ -1,8 +1,8 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phase 1 VERIFIED on 2026-10-04; Phases 2–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–4 VERIFIED on 2026-10-04; Phases 5–28 NOT_STARTED**.
 
-Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phase 1 bootstrap; its actual implementation and verification are recorded below. Phases 2–28 remain proposed deliverables, not existing functionality or successful test results.
+Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–4; their actual implementation and verification are recorded below. Phases 5–28 remain proposed deliverables, not existing functionality or successful test results.
 
 ## Source review and reconciliation
 
@@ -108,7 +108,7 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Dependency incompatibility, wrapper downloads, Docker availability, and accidental secret tracking. Resolve versions here rather than guessing them in the plan.
 
-**Status:** VERIFIED — completed 2026-10-04. The bootstrap is installed in the actual repository, not only in the staging workspace. No business functionality was implemented. Phases 2–28 remain NOT_STARTED.
+**Status:** VERIFIED — completed 2026-10-04. The bootstrap is installed in the actual repository, not only in the staging workspace. No business functionality was implemented during Phase 1; its record is a point-in-time snapshot.
 
 **Implementation record:** Added the required `apps/url-shortener`, `apps/orchestrator`, `docs`, `scenarios`, `workspaces` and `scripts` layout; root README, Makefile, `.env.example`, `.gitignore`, `.editorconfig`; pinned Maven Wrapper and Spring Boot/Python build configurations; minimal Java entry point and empty FastAPI ASGI app; bootstrap tests; database fixture and structure-check scripts; service-boundary ADR; testing documentation and evidence. `docker-compose.yml` is a database-only skeleton explicitly requested for Phase 1, with isolated databases/roles/volumes and a digest-pinned PostgreSQL image. Scenario and Alembic directories contain placeholders only. `O/main.py` is introduced as an empty application shell here; Phase 5 still owns configuration, health, sessions and migrations.
 
@@ -124,7 +124,7 @@ Resolve potential forward dependencies as follows:
 
 **Objective:** Persist validated URLs, return short-link metadata, and redirect active links.
 
-**Exact modules/files expected:** `J/api/LinkController.java`, `J/api/RedirectController.java`, `J/api/CreateLinkRequest.java`, `J/api/LinkResponse.java`, `J/api/ApiExceptionHandler.java`, `J/api/ApiError.java`, `J/application/LinkService.java`, `J/application/RedirectService.java`, `J/domain/Link.java`, `J/domain/LinkStatus.java`, `J/domain/ShortCodeGenerator.java`, `J/domain/SecureShortCodeGenerator.java`, `J/domain/UrlValidator.java`, `J/persistence/LinkRepository.java`, `J/config/ClockConfig.java`, `JR/db/migration/V1__create_links.sql`, `JT/LinkApiTest.java`, `JT/UrlValidationTest.java`, `JT/LinkPersistenceTest.java`.
+**Exact modules/files expected:** `J/api/LinkController.java`, `J/api/RedirectController.java`, `J/api/CreateLinkRequest.java`, `J/api/LinkResponse.java`, `J/api/ApiExceptionHandler.java`, `J/api/ApiError.java`, `J/application/LinkService.java`, `J/application/RedirectService.java`, `J/domain/Link.java`, `J/domain/LinkStatus.java`, `J/domain/ShortCodeGenerator.java`, `J/domain/SecureShortCodeGenerator.java`, `J/domain/UrlValidator.java`, `J/persistence/LinkRepository.java`, `J/config/ClockConfig.java`, `J/config/ShortUrlProperties.java`, `J/observability/TraceIdFilter.java`, `J/analytics/package-info.java`, `JR/db/migration/V1__create_links.sql`, `JT/LinkApiTest.java`, `JT/UrlValidationTest.java`, `JT/LinkPersistenceTest.java`, `JT/LinkRestartTest.java`, `JT/LinkServiceTest.java`, `JT/ShortCodeGeneratorTest.java`; modify `apps/url-shortener/pom.xml`, `J/UrlShortenerApplication.java`, `JR/application.yml`, root `README.md`, and `Makefile`; add `J/application/LinkNotFoundException.java`, `J/domain/InvalidUrlException.java`.
 
 **Data model changes:** `links`: UUID, unique case-sensitive `short_code`, original URL, active/disabled status, UTC creation time, nullable expiry reserved for Phase 3, optimistic version. Seven-character secure Base62 generation; database uniqueness is mandatory from the first insert.
 
@@ -138,15 +138,19 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** URL parser edge cases, catch-all redirect routing intercepting management paths, and treating random generation as a uniqueness guarantee.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED — completed 2026-10-04 in the actual repository. The remaining Phase 3 work described below was implemented subsequently; this Phase 2 record is historical.
+
+**Implementation record:** Java 21/Spring Boot 3.5.16 Maven service now persists validated HTTP(S) links through JPA/PostgreSQL and Flyway V1, creates cryptographically random seven-character Base62 codes, returns metadata, and redirects valid codes with `302`. The migration enforces a unique `short_code`; collision recovery is deferred to Phase 3. Structured `400`/`404` errors include a trace ID. Only Actuator health/info are exposed, and `/v3/api-docs` is available. `analytics/` is a package placeholder with no analytics behavior. Alias, expiry behavior, idempotency, rate limiting, disable handling, and collision retry remain unimplemented.
+
+**Verification:** From `apps/url-shortener` in the actual repository, `mvn test` and `mvn package` both passed with Java 21 and Maven 3.9.16; each executed 15 tests with 0 failures, 0 errors, and 0 skips. PostgreSQL Testcontainers tests verified the fresh Flyway migration, database uniqueness, API contracts, and link availability after closing and reopening the Spring application context against the same database. `mvn package` built the executable JAR. See [Phase 2 testing record](docs/TESTING.md#phase-2--verified-on-2026-10-04), [run manifest](docs/evidence/phase-02-core/manifest.json), and [traceability progress](docs/TRACEABILITY.md#phase-2-verification-record).
 
 ## PHASE 3 — URL reliability: aliases, expiry, collision handling, idempotency, rate limiting
 
 **Objective:** Make creation/redirect behavior deterministic at boundaries and under concurrent requests; add soft disable.
 
-**Exact modules/files expected:** Modify Phase 2 API/domain/service files; add `J/domain/AliasValidator.java`, `J/application/CollisionRetryExecutor.java`, `J/application/IdempotencyService.java`, `J/persistence/IdempotencyRecord.java`, `J/persistence/IdempotencyRepository.java`, `J/config/CreationRateLimitFilter.java`, `J/config/RateLimitProperties.java`, `JR/db/migration/V2__add_idempotency.sql`, `JT/AliasTest.java`, `JT/ExpiryTest.java`, `JT/CollisionTest.java`, `JT/IdempotencyTest.java`, `JT/RateLimitTest.java`, `JT/DisableLinkTest.java`.
+**Exact modules/files expected:** Modify Phase 2 API/domain/service files, `J/UrlShortenerApplication.java`, `J/observability/TraceIdFilter.java`, `JR/application.yml`, root `README.md` and `.env.example`; add `J/domain/AliasValidator.java`, `J/domain/InvalidAliasException.java`, `J/application/CollisionRetryExecutor.java`, `J/application/CollisionExhaustedException.java`, `J/application/IdempotencyService.java`, `J/application/InvalidIdempotencyKeyException.java`, `J/application/InvalidExpiryException.java`, `J/application/LinkConflictException.java`, `J/application/LinkGoneException.java`, `J/persistence/IdempotencyRecord.java`, `J/persistence/IdempotencyRepository.java`, `J/config/CreationRateLimitFilter.java`, `J/config/RateLimitProperties.java`, `JR/db/migration/V2__add_idempotency.sql`, `JT/AliasTest.java`, `JT/ExpiryTest.java`, `JT/CollisionTest.java`, `JT/IdempotencyTest.java`, `JT/RateLimitTest.java`, `JT/RateLimitApiTest.java`, `JT/DisableLinkTest.java`, `JT/MutableClock.java`, `JT/UrlIntegrationTestSupport.java`, and `apps/url-shortener/src/test/resources/mockito-extensions/org.mockito.plugins.MockMaker`.
 
-**Data model changes:** `idempotency_records`: caller scope, key, canonical request fingerprint, original status/body or link reference, creation time; unique `(caller_scope,key)`. Link mutations use optimistic versions. Retain keys throughout the demo retry window; initial policy is no automatic eviction from durable idempotency storage, documented for later retention work. Limiter state is bounded and in memory only.
+**Data model changes:** `idempotency_records`: caller scope, key, canonical request fingerprint, original response and link reference, creation time; unique `(caller_scope,key)`. One-way disable conditionally updates active rows and advances the link version, so concurrent repeated disables are safe. Retain keys throughout the demo retry window; initial policy is no automatic eviction from durable idempotency storage, documented for later retention work. Limiter state is bounded and in memory only.
 
 **APIs:** Create accepts `customAlias`, `expiresAt`, `Idempotency-Key`; alias conflict or mismatched replay → `409`; invalid alias/expiry → `400`; throttle → `429` plus `Retry-After`; expired/disabled redirect → `410`. `DELETE /api/v1/links/{shortCode}` → repeatable `204`, missing → `404`. Identical replay returns the original creation result.
 
@@ -156,15 +160,19 @@ Resolve potential forward dependencies as follows:
 
 **Acceptance criteria:** Concurrent identical requests create one link; collision retries use recoverable transactions/savepoints and stop after five total attempts; alias conflicts are not retried as generated collisions; no expiry cleanup job dependency; limiter memory is bounded and per-instance/restart limits documented.
 
-**Risks:** Aborted PostgreSQL transactions after unique violations, ambiguous fingerprint normalization, spoofable caller keys, reserved-route conflicts, and clock boundary errors. Document anonymous caller scope and trusted proxy assumptions.
+**Risks:** Aborted PostgreSQL transactions after unique violations, ambiguous fingerprint normalization, shared anonymous caller keys, reserved-route conflicts, and clock boundary errors. Document anonymous caller scope; the global limiter deliberately does not rely on client IP or proxy headers.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED — completed 2026-10-04 in the actual repository. This Phase 3 record is historical; Phase 4 was implemented subsequently.
+
+**Implementation record:** Flyway V2 widens `links.short_code` for aliases while retaining the unique constraint and adds durable `idempotency_records` with a unique `(caller_scope, request_key)` key and stored original response. Alias validation enforces the stated length, alphabet, reserved words and case sensitivity. An injectable generator supplies random codes; collision handling uses PostgreSQL `INSERT ... ON CONFLICT DO NOTHING` inside the creation transaction, so failed attempts do not abort it, and stops after five total attempts. Expiry uses the injected UTC clock; soft disable uses an atomic status update that increments the version. Transaction-scoped PostgreSQL advisory locks serialize requests sharing an idempotency key, including concurrent requests across instances. The creation limiter is a bounded single-window, per-instance in-memory filter; it returns structured `429` with `Retry-After`. The scope is currently `anonymous` because authentication has not been added; keys are retained indefinitely, and the limiter resets on restart. No Redis or Phase 4 analytics was added.
+
+**Verification:** From `apps/url-shortener`, `mvn test` passed after the initial implementation (28 tests). After adding the HTTP limiter and Flyway V2 assertions, `mvn verify` passed with 29 tests, 0 failures, 0 errors and 0 skips, including real PostgreSQL Testcontainers cases for aliases, exact expiry, collision recovery/exhaustion, concurrent idempotency and disable. The executable JAR was built. See [Phase 3 testing record](docs/TESTING.md#phase-3--verified-on-2026-10-04), [run manifest](docs/evidence/phase-03-reliability/manifest.json), and [traceability progress](docs/TRACEABILITY.md#phase-3-verification-record).
 
 ## PHASE 4 — URL analytics and observability
 
 **Objective:** Count successful redirects with best-effort analytics that cannot break valid redirects; expose operational evidence.
 
-**Exact modules/files expected:** `J/analytics/ClickEvent.java`, `J/analytics/ClickEventRepository.java`, `J/analytics/AnalyticsRecorder.java`, `J/analytics/AnalyticsService.java`, `J/api/AnalyticsController.java`, `J/observability/TraceIdFilter.java`, `J/observability/UrlMetrics.java`, `J/config/ManagementConfig.java`, `JR/db/migration/V3__create_click_events.sql`, `JT/AnalyticsTest.java`, `JT/AnalyticsFailureIsolationTest.java`, `JT/ObservabilityTest.java`, `docs/decisions/ADR-005-analytics-design.md`; modify `RedirectService`, `application.yml`, and `pom.xml`.
+**Exact modules/files expected:** `J/analytics/ClickEvent.java`, `J/analytics/ClickEventRepository.java`, `J/analytics/AnalyticsRecorder.java`, `J/analytics/AnalyticsWriter.java`, `J/analytics/AnalyticsService.java`, `J/api/AnalyticsController.java`, `J/api/AnalyticsResponse.java`, existing `J/observability/TraceIdFilter.java`, `J/observability/UrlMetrics.java`, `J/config/AnalyticsProperties.java`, `J/config/ManagementConfig.java`, `JR/db/migration/V3__create_click_events.sql`, `JT/AnalyticsTest.java`, `JT/AnalyticsFailureIsolationTest.java`, `JT/AnalyticsTimeoutTest.java`, `JT/AnalyticsRecorderTest.java`, `JT/ObservabilityTest.java`, `docs/decisions/ADR-005-analytics-design.md`; modify `RedirectService`, `RedirectController`, `UrlShortenerApplication`, `application.yml`, `pom.xml`, `.env.example`, root `README.md`, and the existing Java integration tests/support to isolate their Phase 2–3 expectations.
 
 **Data model changes:** `click_events`: link FK, UTC timestamp, sanitized optional referrer, coarse user-agent category, trace ID; index `(link_id,occurred_at)`. No raw client IP by default.
 
@@ -178,7 +186,11 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Hidden synchronous blocking, pool exhaustion, cardinality growth, and leaking destination queries/referrers. Set explicit retention and redaction configuration.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED — completed 2026-10-04 in the actual repository. Phases 5–28 remain NOT_STARTED.
+
+**Implementation record:** Flyway V3 adds `click_events` with a link foreign key and `(link_id, occurred_at)` index. Valid redirects submit an event containing link ID, UTC timestamp, origin-only HTTP(S) referrer, coarse user-agent category and trace ID. Raw IP, raw user-agent, referrer path and query are not stored. A bounded two-thread/100-item executor writes events in independent `REQUIRES_NEW` transactions with two-second transaction and PostgreSQL statement timeouts; connection acquisition defaults to three seconds. Queue rejection and writer exceptions increment separate Micrometer counters and do not alter a valid `302`. Analytics totals are computed from persisted events in a single UTC-day aggregation query, so recent redirects may not yet appear. Actuator health/readiness, metrics and Prometheus are exposed; sensitive management routes remain closed. Events have no automatic deletion; best-effort delivery and this retention policy are documented in [ADR-005](docs/decisions/ADR-005-analytics-design.md).
+
+**Verification:** From `apps/url-shortener`, the final `mvn verify` run passed 37 JUnit tests with 0 failures, 0 errors and 0 skips and built the executable JAR. Real PostgreSQL Testcontainers tests cover UTC aggregation, persisted event fields, non-success and metadata non-counting, forced writer failure, an actual PostgreSQL write timeout and a stalled writer preserving `302`, management endpoints and metrics. A unit test forces queue rejection and checks the dropped-event counter. See [Phase 4 testing record](docs/TESTING.md#phase-4--verified-on-2026-10-04), [run manifest](docs/evidence/phase-04-analytics/manifest.json), and [traceability progress](docs/TRACEABILITY.md#phase-4-verification-record).
 
 ## PHASE 5 — FastAPI orchestrator bootstrap and database
 
@@ -198,7 +210,11 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Async session misuse and migration startup races. Select one explicit migration owner/process.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the requested Phase 5 service scope. Nine Python tests passed (five local, four against disposable PostgreSQL), Ruff lint/format passed, and the wheel/sdist built. The Alembic baseline creates only its version table; no workflow model or route exists. Development Compose still provisions its orchestrator user as a PostgreSQL bootstrap administrator; restricted runtime role provisioning remains for Phase 26 and is not claimed as complete here.
+
+**Implementation record:** Added the requested package boundaries, typed environment settings, a PostgreSQL async engine and transaction-scoped sessions, explicit Alembic migration ownership, JSON request logs and trace IDs, a database-backed `GET /health`, structured errors, and FastAPI OpenAPI/docs. Locked SQLAlchemy 2 with its async extra, Alembic, psycopg, pydantic-settings, openai-agents, Typer and Rich. Startup initializes the connection pool but does not migrate or connect until a probe/use; operators run `alembic upgrade head` separately. The initial migration has no workflow tables.
+
+**Verification:** `uv run --locked python -m pytest -m 'not integration' -q` passed 5 tests. `scripts/test-postgres.sh -q` passed 4 integration tests using disposable PostgreSQL. Ruff lint and format checks passed; `uv build --no-sources` built a wheel and sdist. Healthy `/health` returned 200 and unavailable database 503 without credential disclosure. The migration applied cleanly and sessions demonstrated commit/rollback.
 
 ## PHASE 6 — Workflow persistence model
 
@@ -218,7 +234,13 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Monolithic requirement lineage preventing selective reuse, mutable blob locations, and JSON-only unqueryable governance history. Use stable requirement/component identifiers and verifiable durable content.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the seven-table Phase 6 scope explicitly requested. A complete pytest run passed 18 tests against disposable PostgreSQL, including all earlier FastAPI tests. Workflow scheduling and status transitions are not implemented.
+
+**Implementation record:** Added the exact ScenarioType, WorkflowStatus and StageStatus vocabularies; UUID-keyed workflow runs, stage attempts, immutable/versioned artifacts, lineage, decisions, exact-version/hash approvals and append-only audit events. PostgreSQL constraints enforce stage-attempt identity, cross-workflow lineage isolation, approval exact references and per-workflow audit sequence uniqueness. Database triggers reject artifact/audit update, delete and truncate. Internal repositories, unit-of-work, artifact store, audit store and creation service commit provenance with its audit event atomically. Alembic revision `0002_workflow_foundation` applies after the Phase 5 baseline. No API or agent-facing state mutation was added.
+
+**Verification:** Full `python -m pytest --require-postgres -q` on disposable PostgreSQL 17.7 passed 18 tests, 0 failures/skips. Tests cover fresh migration, all seven entity round trips and engine reload, stage uniqueness, foreign keys, exact input/approval references, transaction rollback, immutable contents and audit history, concurrent artifact version assignment and causal audit pagination. Ruff lint/format checks passed.
+
+**Scope boundary:** The earlier broad Phase 6 plan also listed `graph_revisions`, `requirement_versions`, `policy_events`, `clarifications` and `recovery_incidents`. The user requested only seven tables here, so those companion records remain for their related later phases. Graph revision fields are stored as UUID/hash references without a graph table yet. Approval decisions, stage transitions, scheduling, agent execution and runtime role provisioning remain outside this phase.
 
 ## PHASE 7 — Explicit configurable DAG
 

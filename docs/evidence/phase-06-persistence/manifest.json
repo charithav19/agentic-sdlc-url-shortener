@@ -1,0 +1,15 @@
+{
+  "run_id": "phase-06-persistence",
+  "phase": 6,
+  "status": "VERIFIED_FOR_REQUESTED_SCOPE",
+  "recorded_at": "2026-10-04T17:52:47.796949-04:00",
+  "repository": "schwab-agentic-engineering",
+  "base_commit": "954dbe8559dcde990459196bfed225d91438cf5c",
+  "commit_note": "Phase 6 changes remain in the working tree; source-sha256.json identifies verified contents.",
+  "reports": [
+    "pytest.txt",
+    "test-summary.json",
+    "source-sha256.json"
+  ],
+  "remaining_scope": "Graph/requirement/policy/clarification/recovery records and workflow behavior belong to later phases; restricted runtime role and full Compose app stack remain pending."
+}

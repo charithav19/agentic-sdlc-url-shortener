@@ -1,11 +1,191 @@
 # Testing and verification
 
+## Phase 6 — verified on 2026-10-04
+
+The complete orchestrator suite passed **18 pytest tests, 0 failures, 0
+skips** against a disposable PostgreSQL 17.7 database. This includes the
+Phase 5 health/configuration tests. Ruff lint and format checks passed.
+
+| Check | Test | Actual result |
+|---|---|---|
+| Seven-table migration | `test_database.py::test_clean_alembic_upgrade` | Alembic upgrades a fresh database to revision `0002_workflow_foundation`; all requested tables exist |
+| Persistence and reload | `test_persistence.py::test_all_entities_round_trip_and_reload` | Workflow, two stage attempts, two artifact versions, lineage, decision, approval and eight audit events reload through a new engine |
+| Constraints and rollback | `test_persistence.py` | Duplicate stage attempts, orphan FKs, cross-workflow lineage and mismatched artifact input/approval hashes are rejected; failed transaction leaves no workflow or audit event |
+| Immutability | `test_artifact_immutability.py` | PostgreSQL rejects artifact/audit updates and deletes, plus audit truncate; old artifact content and audit events remain; concurrent versions are unique |
+| Audit ordering | `test_persistence.py::test_audit_pages_remain_causal_under_concurrent_appends` | Five concurrent appends receive distinct per-workflow sequences and paginate in order |
+
+The full run used a newly created loopback-only PostgreSQL container and
+`python -m pytest --require-postgres -q` from `apps/orchestrator`. No
+workflow scheduling, approval decision, stage transition, agent call or CLI
+was exercised. The requested seven tables are present; graph revisions,
+requirement versions, policy events, clarifications and recovery incidents
+remain for later phases.
+
+## Phase 5 — verified on 2026-10-04
+
+The FastAPI orchestrator foundation passed **9 pytest tests**: five local
+tests and four against an isolated, disposable PostgreSQL 17.7 container.
+The PostgreSQL fixture is explicit; a missing `POSTGRES_TEST_DSN` fails
+when `--require-postgres` is used. No workflow behavior was tested or built.
+
+| Check | Test | Actual result |
+|---|---|---|
+| Health and secrecy | `test_health.py` | PostgreSQL reachable → 200; unreachable → 503 with trace ID and no connection password |
+| Migration | `test_database.py::test_clean_alembic_upgrade` | At the Phase 5 snapshot, only `alembic_version` was created; the current regression test now checks the Phase 6 schema |
+| Session lifecycle | `test_database.py::test_session_commits_and_rolls_back` | Committed write retained; exception rolled back later write |
+| Config and API boundary | `test_database.py`, `test_bootstrap.py` | Invalid port/log level rejected; password masked; OpenAPI/docs exposed; no workflow route |
+| Build/style | Ruff and `uv build --no-sources` | Lint/format passed; wheel and sdist built |
+
+Reproduce from the repository root with Docker running:
+
+```sh
+cd apps/orchestrator
+uv sync --locked
+uv run --locked python -m pytest -m 'not integration' -q
+cd ../..
+./scripts/test-postgres.sh -q
+```
+
+The development Compose database still uses a bootstrap administrator role.
+Restricted runtime roles and full application Compose lifecycle belong to
+Phase 26. Tests cover local FastAPI and PostgreSQL behavior, not a deployed
+service or OpenAI model calls.
+
+## Phase 4 — verified on 2026-10-04
+
+Verification ran from `apps/url-shortener` in the actual repository with
+JDK 21, Maven 3.9.16, Docker 29.4.2 and PostgreSQL 17.7 Testcontainers.
+The final `mvn verify` run passed **37 JUnit tests, 0 failures, 0 errors,
+0 skips**, checked Java formatting and built the executable JAR. It includes
+all Phase 2–3 regression tests.
+
+| Check | Test | Actual result |
+|---|---|---|
+| Event persistence and aggregation | `AnalyticsTest` with PostgreSQL | Link ID, UTC timestamp, origin-only referrer, coarse user-agent and trace ID persisted; two UTC days aggregate correctly |
+| Non-counting paths | `AnalyticsTest` | Metadata, missing and expired redirects create no events; unknown analytics code returns 404 |
+| Failure isolation | `AnalyticsFailureIsolationTest`, `AnalyticsTimeoutTest` with PostgreSQL | Forced persistence exception, blocked writer and an actual PostgreSQL write timeout all leave valid redirect at 302; failure counter increases |
+| Queue rejection | `AnalyticsRecorderTest` | Rejected event does not throw into caller; dropped counter increases |
+| Management and metrics | `ObservabilityTest` | Health/readiness, Prometheus, Micrometer metrics and OpenAPI available; sensitive `/actuator/env` unavailable; success counter increases |
+| Prior behavior | Phase 2–3 suite | Creation, aliases, expiry, disable, collision, idempotency, rate limiting and database restart tests continue to pass |
+
+The test context needed `@AutoConfigureObservability` to expose Prometheus
+inside Spring Boot tests; the first observability check failed without it.
+The final complete run passed. The [Phase 4 evidence manifest](evidence/phase-04-analytics/manifest.json)
+contains the sanitized Maven log, per-class test summary and source hashes.
+
+Events are written asynchronously, so totals can briefly lag a successful
+redirect. If the process stops before a write, a queue is full, or a write
+fails, that click can be lost. Analytics is best-effort, not exactly-once.
+No retention deletion runs automatically; the privacy and growth limits are
+recorded in [ADR-005](decisions/ADR-005-analytics-design.md). This phase did
+not test a deployed service, multi-instance ingestion, or the future
+orchestrator/CI stack.
+
+### Reproduce Phase 4
+
+With JDK 21, Maven 3.9.16 and Docker running:
+
+```sh
+cd apps/url-shortener
+mvn verify
+```
+
+## Phase 3 — verified on 2026-10-04
+
+This historical record covers Phase 3 only. Verification ran in the actual repository from `apps/url-shortener` with JDK 21,
+Maven 3.9.16, Docker 29.4.2 and a digest-pinned PostgreSQL 17.7
+Testcontainers image. The final `mvn verify` run passed all 29 JUnit tests
+with 0 failures, 0 errors and 0 skips, checked formatting, and built the
+executable JAR. The run included Phase 2 regressions and the new Phase 3 cases.
+
+| Check | Test / method | Actual result |
+|---|---|---|
+| Aliases | `AliasTest` with PostgreSQL | 3/32-character boundaries, case-sensitive names, invalid/reserved rejection, duplicate `409` |
+| Expiry | `ExpiryTest` with PostgreSQL and controlled clock | Future-only creation; `302` before expiry, `410` exactly at expiry |
+| Collision recovery | `CollisionTest` with injected generator and PostgreSQL | Forced collision then success; exactly five failed attempts and subsequent transaction health |
+| Idempotency | `IdempotencyTest` with PostgreSQL | Same key replays original response; changed request `409`; two concurrent identical requests produce one link and record |
+| Disable | `DisableLinkTest` with PostgreSQL | Repeatable `204`; disabled redirect `410`; missing `404`; concurrent disable succeeds |
+| Rate limit | `RateLimitTest`, `RateLimitApiTest` | Capacity/window reset, create-only counting, HTTP `429` and `Retry-After` |
+| Migration and regressions | `LinkPersistenceTest` and Phase 2 suite | Flyway V1/V2 recorded, database uniqueness, create/metadata/redirect and restart persistence |
+
+The final command was `mvn verify`; its complete sanitized log and test
+summary are referenced by the [Phase 3 manifest](evidence/phase-03-reliability/manifest.json).
+An earlier failed HTTP-level rate-limit test exposed a path-matching issue in
+MockMvc. Matching the request URI fixed it; the final complete run passed.
+No tests were skipped because Docker was unavailable. The first sandboxed
+attempt lacked Docker socket/process-attach access; granting local Docker
+access and selecting Mockito's subclass test mock maker allowed the PostgreSQL
+suite to run. The final result is based on the successful full run.
+
+The limiter is one bounded global window per process with default capacity 60
+and a one-minute window. It is not shared across instances and resets on
+restart. Idempotency currently uses the anonymous caller scope; records have
+no automatic expiry. These are prototype limits, not claims of authenticated
+caller isolation or distributed throttling. No analytics or orchestrator
+behavior was implemented or tested in Phase 3.
+
+### Reproduce Phase 3
+
+With JDK 21, Maven 3.9.16 and Docker running:
+
+```sh
+cd apps/url-shortener
+mvn verify
+```
+
+## Phase 2 — verified on 2026-10-04
+
+This historical record covers Phase 2 only. The Java URL shortener core was installed in the actual repository and verified
+from `apps/url-shortener` with JDK 21, Apache Maven 3.9.16, Docker 29.4.2 and
+the digest-pinned PostgreSQL 17.7 Testcontainers image. Maven's validation phase
+also ran the Java formatting check. The test reports include real PostgreSQL
+integration tests; no database test was skipped.
+
+| Check | Command / method | Actual result |
+|---|---|---|
+| Core tests | `mvn test` | Passed; 15 tests, 0 failures, 0 errors, 0 skipped |
+| Executable package | `mvn package` | Passed; 15 tests, 0 failures, 0 errors, 0 skipped; executable JAR built |
+| HTTP contract | `LinkApiTest` with PostgreSQL Testcontainers | `201` create, metadata read, `302` redirect with original `Location`, structured `404`, invalid/unsupported input `400`, OpenAPI and health availability |
+| Database contract | `LinkPersistenceTest` with PostgreSQL Testcontainers | Flyway V1 applied on a fresh database; persisted row reloads; duplicate short codes fail the database unique constraint |
+| Restart persistence | `LinkRestartTest` with PostgreSQL Testcontainers | Link remains readable after closing and reopening the Spring application context against the same database |
+| Unit contracts | `LinkServiceTest`, `UrlValidationTest`, `ShortCodeGeneratorTest` | Service mapping, URL validation and seven-character Base62 generation pass |
+
+The tests used the repository's Spring Boot configuration with database
+properties supplied by Testcontainers. They did not require a local `.env` or
+modify the Compose databases. The package output is
+`apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar` and is ignored by
+Git. The tests and command logs are recorded in the
+[Phase 2 evidence manifest](evidence/phase-02-core/manifest.json).
+
+The Phase 2 API supports only generated codes and active links. The schema has
+nullable `expires_at` and an `ACTIVE`/`DISABLED` status for later phases, but
+expiry and disable behavior are not implemented. A random-code collision is
+rejected by PostgreSQL uniqueness; retry handling, custom aliases, idempotency,
+rate limiting and analytics are Phase 3–4 work. The `analytics` package is an
+empty boundary. No orchestrator, scenario, full application Compose stack or CI
+test is claimed by this phase.
+
+### Reproduce Phase 2
+
+With JDK 21, Maven 3.9.16 and Docker running:
+
+```sh
+cd apps/url-shortener
+mvn test
+mvn package
+```
+
+The two commands each execute the full unit and PostgreSQL Testcontainers test
+suite. The test image and Maven dependencies may need downloading on a fresh
+machine.
+
 ## Phase 1 — verified on 2026-10-04
 
-Verification ran from the actual repository after the bootstrap files were installed.
-No product endpoints, persistence models, workflow engine, agents, migrations or
-scenario functionality are implemented. The tests verify only the application
-shells, build configuration and database test infrastructure.
+This historical record covers Phase 1 only. Verification ran from the actual repository after the bootstrap files were installed.
+At that point, no product endpoints, persistence models, workflow engine,
+agents, migrations or scenario functionality were implemented. The Phase 1
+tests verified only the application shells, build configuration and database
+test infrastructure.
 
 | Check | Command / method | Actual result |
 |---|---|---|

@@ -1,0 +1,42 @@
+{
+  "run_id": "phase-03-reliability",
+  "phase": 3,
+  "status": "VERIFIED",
+  "recorded_at": "2026-10-04T16:57:29.575830-04:00",
+  "repository": "schwab-agentic-engineering",
+  "base_commit": "7d549d843042aa3b3ef9e80f91548169919f794c",
+  "commit_note": "Phase 3 changes remain in the working tree; source-sha256.json identifies exact verified contents.",
+  "provider_mode": "not_applicable_url_service",
+  "model": null,
+  "agents_sdk": null,
+  "environment": {
+    "java": "21.0.1",
+    "maven": "3.9.16",
+    "spring_boot": "3.5.16",
+    "docker_engine": "29.4.2",
+    "testcontainers": "2.0.5",
+    "postgres_image": "postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2"
+  },
+  "commands": [
+    {
+      "command": "mvn verify",
+      "working_directory": "apps/url-shortener",
+      "exit_code": 0,
+      "tests": {
+        "tests": 29,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "evidence": "mvn-verify.txt"
+    }
+  ],
+  "reports": [
+    "test-summary.json",
+    "url-reliability.md",
+    "source-sha256.json"
+  ],
+  "artifact": "apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar",
+  "sanitization": "Absolute repository/workspace/user paths and credential-looking key/value fields replaced in command log; raw XML properties and runtime secrets are not copied.",
+  "remaining_scope": "Phases 4-28 not started; analytics, orchestrator, scenarios and full application Compose/CI remain pending."
+}

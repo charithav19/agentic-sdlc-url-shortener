@@ -1,0 +1,58 @@
+{
+  "run_id": "phase-02-core",
+  "phase": 2,
+  "status": "VERIFIED",
+  "recorded_at": "2026-10-04T16:35:11.612246-04:00",
+  "repository": "schwab-agentic-engineering",
+  "commit": "eff136d2ae0441c23c607b630fcf47692e9d9f71",
+  "commit_note": "Phase 2 verified in the working tree; no commit was created. Exact files are identified by source-sha256.json.",
+  "provider_mode": "not_applicable_url_service",
+  "model": null,
+  "agents_sdk": null,
+  "environment": {
+    "java": "21.0.1",
+    "maven": "3.9.16",
+    "spring_boot": "3.5.16",
+    "docker_engine": "29.4.2",
+    "testcontainers": "2.0.5",
+    "postgres_image": "postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2"
+  },
+  "commands": [
+    {
+      "command": "mvn test",
+      "working_directory": "apps/url-shortener",
+      "exit_code": 0,
+      "tests": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "evidence": "mvn-test.txt"
+    },
+    {
+      "command": "mvn package",
+      "working_directory": "apps/url-shortener",
+      "exit_code": 0,
+      "tests": {
+        "tests": 15,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "evidence": "mvn-package.txt"
+    }
+  ],
+  "reports": [
+    "test-summary.json",
+    "url-api.md",
+    "url-migrations.md",
+    "source-sha256.json"
+  ],
+  "artifact": "apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar",
+  "warnings": [
+    "Mockito dynamic-agent attachment warning on JDK 21; non-fatal"
+  ],
+  "sanitization": "Absolute repository/workspace/user paths and credential-looking key/value log fields replaced in command logs. XML properties and runtime secrets are not copied. Stale Phase 1 BootstrapTest XML in target is excluded from current report summary.",
+  "remaining_scope": "Phases 3-28 not started; Phase 2 has no alias, expiry behavior, collision retry, idempotency, rate limiting or analytics."
+}

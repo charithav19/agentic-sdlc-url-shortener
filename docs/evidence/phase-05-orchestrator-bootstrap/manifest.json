@@ -1,0 +1,20 @@
+{
+  "run_id": "phase-05-orchestrator-bootstrap",
+  "phase": 5,
+  "status": "VERIFIED_FOR_REQUESTED_SCOPE",
+  "recorded_at": "2026-10-04T17:29:27.833066-04:00",
+  "repository": "schwab-agentic-engineering",
+  "base_commit": "cc27085ed879a1c554adfe4a42fa90a0899492a2",
+  "commit_note": "Phase 5 changes remain in the working tree; source-sha256.json identifies verified contents.",
+  "provider_mode": "not_invoked",
+  "agents_sdk": "installed, not invoked",
+  "environment": {
+    "python": "3.12.13",
+    "postgres_image": "postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2"
+  },
+  "reports": [
+    "test-summary.json",
+    "source-sha256.json"
+  ],
+  "remaining_scope": "Workflow phases 6-28 and restricted runtime role provisioning are pending; no model call or workflow was executed."
+}

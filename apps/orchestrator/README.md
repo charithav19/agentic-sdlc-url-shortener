@@ -1,14 +1,31 @@
-# Orchestrator bootstrap
+# Orchestrator foundation
 
-Python 3.12.13, FastAPI, Pydantic, Uvicorn and locked development tools.
-Use uv 0.11.8. From this directory:
+Python 3.12.13, FastAPI, SQLAlchemy 2, Alembic, PostgreSQL, Pydantic,
+OpenAI Agents SDK, Typer, Rich, and locked development tools. Use uv 0.11.8.
+From this directory:
 
 ```sh
 uv sync --locked
 uv run --locked python -m pytest -m 'not integration'
+uv run --locked alembic upgrade head
 uv run --locked uvicorn app.main:app --host 127.0.0.1 --port 8000
 ```
 
-Only the framework OpenAPI/docs routes exist. Database sessions, migrations,
-health, workflow state, agents and the terminal CLI belong to later phases.
-The PostgreSQL fixture is test infrastructure, not an application database layer.
+Set `ORCHESTRATOR_DB_HOST`, `ORCHESTRATOR_DB_PORT`,
+`ORCHESTRATOR_DB_NAME`, `ORCHESTRATOR_DB_USER`, and
+`ORCHESTRATOR_DB_PASSWORD` in the process environment. The root
+`.env.example` documents local values. Migrations are an explicit operator
+step; application startup does not alter the schema. `GET /health` executes a
+PostgreSQL probe and returns 200 when reachable or 503 when unavailable.
+`/docs` and `/openapi.json` describe the sole application route. Request
+responses have `X-Trace-Id`; errors include the same identifier without
+database credentials.
+
+From the repository root, `make test-db` runs PostgreSQL integration tests
+against a disposable database. Phase 6 adds UUID-keyed workflow/stage records,
+immutable artifact versions, lineage, decisions, exact-version approval
+requests and append-only audit events. The `0002_workflow_foundation`
+migration adds database constraints and mutation-rejecting triggers. Internal
+repositories and the creation service write provenance and audit events in one
+transaction. There are no workflow execution routes, stage transitions,
+agent execution or terminal commands yet.

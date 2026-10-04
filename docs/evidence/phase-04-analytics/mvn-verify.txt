@@ -1,0 +1,660 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ----------------------< com.schwab:url-shortener >----------------------
+[INFO] Building URL Shortener 0.1.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.2:enforce (require-java-21) @ url-shortener ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireJavaVersion passed
+[INFO] Rule 1: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- spotless:3.10.3:check (format-check) @ url-shortener ---
+[INFO] Spotless.Java is keeping 64 files clean - 0 needs changes to be clean, 0 were already clean, 64 were skipped because caching determined they were already clean
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ url-shortener ---
+[INFO] Copying 1 resource from src/main/resources to target/classes
+[INFO] Copying 3 resources from src/main/resources to target/classes
+[INFO] 
+[INFO] --- compiler:3.14.1:compile (default-compile) @ url-shortener ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ url-shortener ---
+[INFO] Copying 1 resource from src/test/resources to target/test-classes
+[INFO] 
+[INFO] --- compiler:3.14.1:testCompile (default-testCompile) @ url-shortener ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ url-shortener ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.schwab.urlshortener.AnalyticsFailureIsolationTest
+17:12:11.093 [main] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.schwab.urlshortener.AnalyticsFailureIsolationTest]: AnalyticsFailureIsolationTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+17:12:11.158 [main] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.AnalyticsFailureIsolationTest
+17:12:11.228 [main] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+17:12:11.230 [main] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+17:12:11.246 [main] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 2.0.5
+17:12:11.591 [main] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with local Unix socket (unix:///var/run/docker.sock)
+17:12:11.592 [main] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+17:12:11.605 [main] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.4.2
+  API Version: 1.54
+  Operating System: Docker Desktop
+  Total Memory: 3918 MB
+  Labels: 
+    com.docker.desktop.address=unix://<user-home>/Library/Containers/com.docker.docker/Data/docker-cli.sock
+17:12:11.685 [main] INFO tc.testcontainers/ryuk:0.14.0 -- Creating container for image: testcontainers/ryuk:0.14.0
+17:12:11.819 [main] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
+17:12:11.888 [main] INFO tc.testcontainers/ryuk:0.14.0 -- Container testcontainers/ryuk:0.14.0 is starting: f1c6139554d6765782712f4e1ae9023417c2256e96e5197338c6cb48bd117f6b
+17:12:12.109 [main] INFO tc.testcontainers/ryuk:0.14.0 -- Container testcontainers/ryuk:0.14.0 started in PT0.424411S
+17:12:12.113 [main] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+17:12:12.113 [main] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+17:12:12.113 [main] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
+17:12:12.132 [main] INFO tc.postgres:17.7-alpine@sha256:bb377b... -- Creating container for image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+17:12:12.160 [main] INFO tc.postgres:17.7-alpine@sha256:bb377b... -- Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 is starting: c919605172be4377dfb6f0cd1538f87b58fbc95c59b0f4e2b1ab12e219d44fa7
+17:12:12.939 [main] INFO tc.postgres:17.7-alpine@sha256:bb377b... -- Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 started in PT0.807524S
+17:12:12.941 [main] INFO tc.postgres:17.7-alpine@sha256:bb377b... -- Container is started (JDBC URL: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:13.140-04:00  INFO 34449 --- [url-shortener] [           main] c.s.u.AnalyticsFailureIsolationTest      : Starting AnalyticsFailureIsolationTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:13.141-04:00  INFO 34449 --- [url-shortener] [           main] c.s.u.AnalyticsFailureIsolationTest      : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:13.584-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:13.618-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 27 ms. Found 3 JPA repository interfaces.
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+WARNING: A Java agent has been loaded dynamically (<verification-workspace>/work/cache/maven/net/bytebuddy/byte-buddy-agent/1.17.8/byte-buddy-agent-1.17.8.jar)
+WARNING: If a serviceability tool is in use, please run with -XX:+EnableDynamicAgentLoading to hide this warning
+WARNING: If a serviceability tool is not in use, please run with -Djdk.instrument.traceUsage for more information
+WARNING: Dynamic loading of agents will be disallowed by default in a future release
+2026-10-04T17:12:14.208-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-10-04T17:12:14.295-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@16f2d883
+2026-10-04T17:12:14.295-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-10-04T17:12:14.308-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:14.329-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-10-04T17:12:14.332-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.009s)
+2026-10-04T17:12:14.349-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-10-04T17:12:14.406-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-10-04T17:12:14.411-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - create links"
+2026-10-04T17:12:14.433-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - add idempotency"
+2026-10-04T17:12:14.445-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - create click events"
+2026-10-04T17:12:14.454-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 3 migrations to schema "public", now at version v3 (execution time 00:00.020s)
+2026-10-04T17:12:14.497-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:14.526-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.53.Final
+2026-10-04T17:12:14.548-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:14.664-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:14.707-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:15.002-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:15.037-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:15.551-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:15.551-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:15.554-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:15.562-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 11 ms
+2026-10-04T17:12:15.600-04:00  INFO 34449 --- [url-shortener] [           main] c.s.u.AnalyticsFailureIsolationTest      : Started AnalyticsFailureIsolationTest in 2.627 seconds (process running for 4.919)
+2026-10-04T17:12:15.644-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:15.645-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-10-04T17:12:15.801-04:00  WARN 34449 --- [url-shortener] [lytics-writer-1] c.s.u.analytics.AnalyticsRecorder        : event=analytics_write_failed traceId=33c0734f-28f5-44ea-a19b-c09f97f99de8 errorType=IllegalStateException
+2026-10-04T17:12:15.833-04:00  WARN 34449 --- [url-shortener] [lytics-writer-2] c.s.u.analytics.AnalyticsRecorder        : event=analytics_write_failed traceId=32dd2d9b-1141-41cc-a30b-3c0f9343ba80 errorType=IllegalStateException
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 4.818 s -- in com.schwab.urlshortener.AnalyticsFailureIsolationTest
+[INFO] Running com.schwab.urlshortener.RateLimitTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.011 s -- in com.schwab.urlshortener.RateLimitTest
+[INFO] Running com.schwab.urlshortener.RateLimitApiTest
+2026-10-04T17:12:15.851-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.RateLimitApiTest]: RateLimitApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:15.852-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.RateLimitApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:15.866-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.RateLimitApiTest   : Starting RateLimitApiTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:15.866-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.RateLimitApiTest   : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:16.007-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:16.012-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:16.047-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-10-04T17:12:16.071-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection org.postgresql.jdbc.PgConnection@d74f68e
+2026-10-04T17:12:16.071-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-10-04T17:12:16.073-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:16.086-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.004s)
+2026-10-04T17:12:16.098-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:16.098-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:16.106-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:16.107-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:16.112-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:16.118-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-2)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:16.139-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:16.153-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:16.252-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:16.252-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:16.253-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:16.255-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 3 ms
+2026-10-04T17:12:16.262-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.RateLimitApiTest   : Started RateLimitApiTest in 0.407 seconds (process running for 5.581)
+2026-10-04T17:12:16.263-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:16.263-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.477 s -- in com.schwab.urlshortener.RateLimitApiTest
+[INFO] Running com.schwab.urlshortener.LinkServiceTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.108 s -- in com.schwab.urlshortener.LinkServiceTest
+[INFO] Running com.schwab.urlshortener.UrlValidationTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.002 s -- in com.schwab.urlshortener.UrlValidationTest
+[INFO] Running com.schwab.urlshortener.AnalyticsTimeoutTest
+2026-10-04T17:12:16.440-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.AnalyticsTimeoutTest]: AnalyticsTimeoutTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:16.441-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.AnalyticsTimeoutTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:16.450-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.AnalyticsTimeoutTest    : Starting AnalyticsTimeoutTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:16.450-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.AnalyticsTimeoutTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:16.534-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:16.539-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:16.582-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-10-04T17:12:16.600-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection org.postgresql.jdbc.PgConnection@53efde9f
+2026-10-04T17:12:16.600-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-10-04T17:12:16.601-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:16.622-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.004s)
+2026-10-04T17:12:16.632-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:16.632-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:16.640-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:16.641-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:16.644-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:16.647-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-3)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:16.664-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:16.676-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:16.751-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:16.751-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:16.752-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:16.753-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-04T17:12:16.761-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.AnalyticsTimeoutTest    : Started AnalyticsTimeoutTest in 0.319 seconds (process running for 6.079)
+2026-10-04T17:12:16.761-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:16.761-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-10-04T17:12:17.814-04:00  WARN 34449 --- [url-shortener] [lytics-writer-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 57014
+2026-10-04T17:12:17.815-04:00 ERROR 34449 --- [url-shortener] [lytics-writer-1] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: canceling statement due to user request
+2026-10-04T17:12:17.837-04:00  WARN 34449 --- [url-shortener] [lytics-writer-1] c.s.u.analytics.AnalyticsRecorder        : event=analytics_write_failed traceId=b4ec6cd0-e349-4941-b7f8-81e508fe786b errorType=QueryTimeoutException
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.536 s -- in com.schwab.urlshortener.AnalyticsTimeoutTest
+[INFO] Running com.schwab.urlshortener.DisableLinkTest
+2026-10-04T17:12:17.977-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.DisableLinkTest]: DisableLinkTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:17.979-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.DisableLinkTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:17.990-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.DisableLinkTest    : Starting DisableLinkTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:17.990-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.DisableLinkTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:18.099-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:18.106-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:18.136-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Starting...
+2026-10-04T17:12:18.149-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-4 - Added connection org.postgresql.jdbc.PgConnection@48b3a9ed
+2026-10-04T17:12:18.149-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Start completed.
+2026-10-04T17:12:18.151-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:18.172-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.006s)
+2026-10-04T17:12:18.184-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:18.184-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:18.191-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:18.192-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:18.195-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:18.198-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-4)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:18.216-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:18.228-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:18.328-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:18.328-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:18.329-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:18.331-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 3 ms
+2026-10-04T17:12:18.354-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.DisableLinkTest    : Started DisableLinkTest in 0.374 seconds (process running for 7.672)
+2026-10-04T17:12:18.355-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:18.355-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.459 s -- in com.schwab.urlshortener.DisableLinkTest
+[INFO] Running com.schwab.urlshortener.IdempotencyTest
+2026-10-04T17:12:18.436-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.IdempotencyTest]: IdempotencyTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:18.438-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.IdempotencyTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in com.schwab.urlshortener.IdempotencyTest
+[INFO] Running com.schwab.urlshortener.LinkRestartTest
+2026-10-04T17:12:18.562-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Creating container for image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+2026-10-04T17:12:18.687-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 is starting: fc8b3261b2d9c5a171614103c75874d6b24106870de075b8cf088b26029317a7
+2026-10-04T17:12:19.743-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 started in PT1.180558S
+2026-10-04T17:12:19.748-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container is started (JDBC URL: jdbc:postgresql://localhost:59308/test?loggerLevel=OFF)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:19.808-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : Starting ForkedBooter v3.5.6 using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:19.809-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:19.919-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:19.926-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:19.960-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Starting...
+2026-10-04T17:12:19.990-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Added connection org.postgresql.jdbc.PgConnection@7357a52e
+2026-10-04T17:12:19.990-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Start completed.
+2026-10-04T17:12:19.992-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59308/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:20.001-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-10-04T17:12:20.001-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.002s)
+2026-10-04T17:12:20.005-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-10-04T17:12:20.026-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-10-04T17:12:20.032-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - create links"
+2026-10-04T17:12:20.048-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - add idempotency"
+2026-10-04T17:12:20.064-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - create click events"
+2026-10-04T17:12:20.079-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 3 migrations to schema "public", now at version v3 (execution time 00:00.025s)
+2026-10-04T17:12:20.086-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:20.088-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:20.097-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:20.101-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-5)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:20.122-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:20.130-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:20.209-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : Started ForkedBooter in 0.437 seconds (process running for 9.528)
+2026-10-04T17:12:20.218-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:20.219-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown initiated...
+2026-10-04T17:12:20.248-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Shutdown completed.
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:20.257-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : Starting ForkedBooter v3.5.6 using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:20.257-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:20.314-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:20.319-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:20.336-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Starting...
+2026-10-04T17:12:20.344-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-6 - Added connection org.postgresql.jdbc.PgConnection@54e8ba11
+2026-10-04T17:12:20.344-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Start completed.
+2026-10-04T17:12:20.345-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59308/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:20.360-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.006s)
+2026-10-04T17:12:20.374-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:20.374-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:20.379-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:20.380-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:20.383-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:20.385-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-6)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:20.398-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:20.407-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:20.470-04:00  INFO 34449 --- [url-shortener] [           main] o.a.maven.surefire.booter.ForkedBooter   : Started ForkedBooter in 0.221 seconds (process running for 9.789)
+2026-10-04T17:12:20.476-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Closing JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:20.477-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown initiated...
+2026-10-04T17:12:20.492-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Shutdown completed.
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.490 s -- in com.schwab.urlshortener.LinkRestartTest
+[INFO] Running com.schwab.urlshortener.LinkApiTest
+2026-10-04T17:12:21.068-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Creating container for image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+2026-10-04T17:12:21.193-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 is starting: 9dabfec2c6edc4129893e7e3855df8de89b14316b6a3ad4e4da3889ce11416c4
+2026-10-04T17:12:22.432-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 started in PT1.363253S
+2026-10-04T17:12:22.438-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container is started (JDBC URL: jdbc:postgresql://localhost:59319/test?loggerLevel=OFF)
+2026-10-04T17:12:22.462-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.LinkApiTest]: LinkApiTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:22.471-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.LinkApiTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:22.499-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.LinkApiTest      : Starting LinkApiTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:22.499-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.LinkApiTest      : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:22.702-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:22.709-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:22.737-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Starting...
+2026-10-04T17:12:22.762-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-7 - Added connection org.postgresql.jdbc.PgConnection@4d8b2172
+2026-10-04T17:12:22.762-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Start completed.
+2026-10-04T17:12:22.763-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59319/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:22.770-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-10-04T17:12:22.770-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.002s)
+2026-10-04T17:12:22.775-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-10-04T17:12:22.787-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-10-04T17:12:22.788-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - create links"
+2026-10-04T17:12:22.796-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - add idempotency"
+2026-10-04T17:12:22.804-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - create click events"
+2026-10-04T17:12:22.809-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 3 migrations to schema "public", now at version v3 (execution time 00:00.009s)
+2026-10-04T17:12:22.816-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:22.817-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:22.821-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:22.823-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-7)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:22.841-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:22.848-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:22.922-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:22.923-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:22.923-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:22.924-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-10-04T17:12:22.930-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.LinkApiTest      : Started LinkApiTest in 0.449 seconds (process running for 12.248)
+2026-10-04T17:12:22.931-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:22.931-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-10-04T17:12:23.086-04:00  INFO 34449 --- [url-shortener] [           main] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 87 ms
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.333 s -- in com.schwab.urlshortener.LinkApiTest
+[INFO] Running com.schwab.urlshortener.LinkPersistenceTest
+2026-10-04T17:12:23.403-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Creating container for image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+2026-10-04T17:12:23.460-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 is starting: 3e7a591a10eac739d2c4785f83dfe88aef10e3d83e7adb79f6d1aa7730812e5b
+2026-10-04T17:12:24.193-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2 started in PT0.789984S
+2026-10-04T17:12:24.194-04:00  INFO 34449 --- [url-shortener] [           main] t.postgres:17.7-alpine@sha256:bb377b...  : Container is started (JDBC URL: jdbc:postgresql://localhost:59333/test?loggerLevel=OFF)
+2026-10-04T17:12:24.208-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.LinkPersistenceTest]: LinkPersistenceTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:24.227-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.LinkPersistenceTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:24.252-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.LinkPersistenceTest     : Starting LinkPersistenceTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:24.252-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.LinkPersistenceTest     : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:24.294-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:24.300-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:24.339-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Starting...
+2026-10-04T17:12:24.353-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-8 - Added connection org.postgresql.jdbc.PgConnection@4c159b48
+2026-10-04T17:12:24.353-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Start completed.
+2026-10-04T17:12:24.355-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59333/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:24.368-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-10-04T17:12:24.368-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.003s)
+2026-10-04T17:12:24.373-04:00  INFO 34449 --- [url-shortener] [           main] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-10-04T17:12:24.387-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-10-04T17:12:24.388-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - create links"
+2026-10-04T17:12:24.398-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - add idempotency"
+2026-10-04T17:12:24.408-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - create click events"
+2026-10-04T17:12:24.413-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Successfully applied 3 migrations to schema "public", now at version v3 (execution time 00:00.012s)
+2026-10-04T17:12:24.419-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:24.420-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:24.423-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:24.427-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-8)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:24.444-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:24.451-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:24.470-04:00  INFO 34449 --- [url-shortener] [           main] c.s.urlshortener.LinkPersistenceTest     : Started LinkPersistenceTest in 0.234 seconds (process running for 13.788)
+Hibernate: insert into links (created_at,expires_at,short_code,status,original_url,version,id) values (?,?,?,?,?,?,?)
+Hibernate: insert into links (created_at,expires_at,short_code,status,original_url,version,id) values (?,?,?,?,?,?,?)
+2026-10-04T17:12:24.481-04:00  WARN 34449 --- [url-shortener] [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : SQL Error: 0, SQLState: 23505
+2026-10-04T17:12:24.481-04:00 ERROR 34449 --- [url-shortener] [           main] o.h.engine.jdbc.spi.SqlExceptionHelper   : ERROR: duplicate key value violates unique constraint "uk_links_short_code"
+  Detail: Key (short_code)=(Cc56789) already exists.
+Hibernate: insert into links (created_at,expires_at,short_code,status,original_url,version,id) values (?,?,?,?,?,?,?)
+Hibernate: select l1_0.id,l1_0.created_at,l1_0.expires_at,l1_0.short_code,l1_0.status,l1_0.original_url,l1_0.version from links l1_0 where l1_0.short_code=?
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.296 s -- in com.schwab.urlshortener.LinkPersistenceTest
+[INFO] Running com.schwab.urlshortener.AnalyticsRecorderTest
+2026-10-04T17:12:24.748-04:00  WARN 34449 --- [url-shortener] [           main] c.s.u.analytics.AnalyticsRecorder        : event=analytics_queue_rejected traceId=56f189eb-74e6-4f4a-a5b9-3002c0f8c671
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.050 s -- in com.schwab.urlshortener.AnalyticsRecorderTest
+[INFO] Running com.schwab.urlshortener.AnalyticsTest
+2026-10-04T17:12:24.751-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.AnalyticsTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:24.758-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.AnalyticsTest    : Starting AnalyticsTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:24.758-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.AnalyticsTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:24.850-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:24.856-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 5 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:24.885-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Starting...
+2026-10-04T17:12:24.897-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-9 - Added connection org.postgresql.jdbc.PgConnection@2c9d03ee
+2026-10-04T17:12:24.897-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Start completed.
+2026-10-04T17:12:24.898-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:24.908-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.002s)
+2026-10-04T17:12:24.917-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:24.918-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:24.924-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:24.925-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:24.928-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:24.931-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-9)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:24.944-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:24.952-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:25.020-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:25.020-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:25.020-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:25.021-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-10-04T17:12:25.028-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.AnalyticsTest    : Started AnalyticsTest in 0.274 seconds (process running for 14.346)
+2026-10-04T17:12:25.028-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:25.028-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.439 s -- in com.schwab.urlshortener.AnalyticsTest
+[INFO] Running com.schwab.urlshortener.AliasTest
+2026-10-04T17:12:25.189-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.AliasTest]: AliasTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:25.191-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.AliasTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.058 s -- in com.schwab.urlshortener.AliasTest
+[INFO] Running com.schwab.urlshortener.CollisionTest
+2026-10-04T17:12:25.247-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.CollisionTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:25.253-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.CollisionTest    : Starting CollisionTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:25.253-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.CollisionTest    : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:25.323-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:25.328-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:25.354-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Starting...
+2026-10-04T17:12:25.368-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-10 - Added connection org.postgresql.jdbc.PgConnection@6924bec6
+2026-10-04T17:12:25.368-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Start completed.
+2026-10-04T17:12:25.369-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:25.384-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.005s)
+2026-10-04T17:12:25.399-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:25.399-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:25.404-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:25.405-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:25.408-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:25.410-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-10)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:25.424-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:25.433-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:25.497-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:25.504-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.CollisionTest    : Started CollisionTest in 0.255 seconds (process running for 14.822)
+2026-10-04T17:12:25.504-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:25.504-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.309 s -- in com.schwab.urlshortener.CollisionTest
+[INFO] Running com.schwab.urlshortener.ShortCodeGeneratorTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in com.schwab.urlshortener.ShortCodeGeneratorTest
+[INFO] Running com.schwab.urlshortener.ObservabilityTest
+2026-10-04T17:12:25.559-04:00  INFO 34449 --- [url-shortener] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.schwab.urlshortener.ObservabilityTest]: ObservabilityTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-10-04T17:12:25.561-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.ObservabilityTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:25.572-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.ObservabilityTest  : Starting ObservabilityTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:25.572-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.ObservabilityTest  : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:25.656-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:25.662-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 6 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:25.699-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Starting...
+2026-10-04T17:12:25.708-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-11 - Added connection org.postgresql.jdbc.PgConnection@1a45689e
+2026-10-04T17:12:25.709-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Start completed.
+2026-10-04T17:12:25.710-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:25.720-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.003s)
+2026-10-04T17:12:25.733-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:25.733-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:25.740-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:25.741-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:25.743-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:25.746-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-11)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:25.759-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:25.766-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:25.828-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:25.828-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:25.829-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 4 endpoints beneath base path '/actuator'
+2026-10-04T17:12:25.830-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-04T17:12:25.836-04:00  INFO 34449 --- [url-shortener] [           main] c.schwab.urlshortener.ObservabilityTest  : Started ObservabilityTest in 0.274 seconds (process running for 15.154)
+2026-10-04T17:12:25.836-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:25.836-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+2026-10-04T17:12:25.954-04:00  INFO 34449 --- [url-shortener] [           main] o.springdoc.api.AbstractOpenApiResource  : Init duration for springdoc-openapi is: 24 ms
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.401 s -- in com.schwab.urlshortener.ObservabilityTest
+[INFO] Running com.schwab.urlshortener.ExpiryTest
+2026-10-04T17:12:25.960-04:00  INFO 34449 --- [url-shortener] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.schwab.urlshortener.UrlShortenerApplication for test class com.schwab.urlshortener.ExpiryTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::               (v3.5.16)
+
+2026-10-04T17:12:25.967-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.ExpiryTest       : Starting ExpiryTest using Java 21.0.1 with PID 34449 (started by raghavaveeragandham in <repository>/apps/url-shortener)
+2026-10-04T17:12:25.967-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.ExpiryTest       : No active profile set, falling back to 1 default profile: "default"
+2026-10-04T17:12:26.039-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-10-04T17:12:26.045-04:00  INFO 34449 --- [url-shortener] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 4 ms. Found 3 JPA repository interfaces.
+2026-10-04T17:12:26.072-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Starting...
+2026-10-04T17:12:26.084-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-12 - Added connection org.postgresql.jdbc.PgConnection@2a82f6b
+2026-10-04T17:12:26.084-04:00  INFO 34449 --- [url-shortener] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Start completed.
+2026-10-04T17:12:26.085-04:00  INFO 34449 --- [url-shortener] [           main] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:59265/test?loggerLevel=OFF (PostgreSQL 17.7)
+2026-10-04T17:12:26.093-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbValidate     : Successfully validated 3 migrations (execution time 00:00.003s)
+2026-10-04T17:12:26.102-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Current version of schema "public": 3
+2026-10-04T17:12:26.102-04:00  INFO 34449 --- [url-shortener] [           main] o.f.core.internal.command.DbMigrate      : Schema "public" is up to date. No migration necessary.
+2026-10-04T17:12:26.109-04:00  INFO 34449 --- [url-shortener] [           main] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-10-04T17:12:26.111-04:00  INFO 34449 --- [url-shortener] [           main] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-10-04T17:12:26.113-04:00  INFO 34449 --- [url-shortener] [           main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-10-04T17:12:26.116-04:00  INFO 34449 --- [url-shortener] [           main] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-12)']
+	Database driver: undefined/unknown
+	Database version: 17.7
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-10-04T17:12:26.132-04:00  INFO 34449 --- [url-shortener] [           main] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-10-04T17:12:26.140-04:00  INFO 34449 --- [url-shortener] [           main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-10-04T17:12:26.215-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-10-04T17:12:26.215-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-10-04T17:12:26.216-04:00  INFO 34449 --- [url-shortener] [           main] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 3 endpoints beneath base path '/actuator'
+2026-10-04T17:12:26.217-04:00  INFO 34449 --- [url-shortener] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 2 ms
+2026-10-04T17:12:26.222-04:00  INFO 34449 --- [url-shortener] [           main] com.schwab.urlshortener.ExpiryTest       : Started ExpiryTest in 0.261 seconds (process running for 15.541)
+2026-10-04T17:12:26.223-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /v3/api-docs endpoint is enabled by default. To disable it in production, set the property 'springdoc.api-docs.enabled=false'
+2026-10-04T17:12:26.223-04:00  WARN 34449 --- [url-shortener] [           main] o.s.core.events.SpringDocAppInitializer  : SpringDoc /swagger-ui.html endpoint is enabled by default. To disable it in production, set the property 'springdoc.swagger-ui.enabled=false'
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.301 s -- in com.schwab.urlshortener.ExpiryTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 37, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jar:3.4.2:jar (default-jar) @ url-shortener ---
+[INFO] 
+[INFO] --- spring-boot:3.5.16:repackage (repackage) @ url-shortener ---
+[INFO] Replacing main artifact <repository>/apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to <repository>/apps/url-shortener/target/url-shortener-0.1.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  20.422 s
+[INFO] Finished at: 2026-10-04T17:12:29-04:00
+[INFO] ------------------------------------------------------------------------

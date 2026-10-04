@@ -1,0 +1,19 @@
+{
+  "phase": 5,
+  "tests": 9,
+  "passed": 9,
+  "failed": 0,
+  "skipped_in_combined_execution": 0,
+  "local": {
+    "command": "uv run --locked python -m pytest -m 'not integration' -q",
+    "passed": 5,
+    "deselected_in_local_run": 4
+  },
+  "postgresql": {
+    "command": "./scripts/test-postgres.sh -q",
+    "passed": 4,
+    "deselected_in_database_run": 5
+  },
+  "style": "ruff check and ruff format --check passed",
+  "build": "uv build --no-sources built wheel and sdist"
+}

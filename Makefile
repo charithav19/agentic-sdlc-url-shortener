@@ -9,11 +9,11 @@ PYTHON_APP := apps/orchestrator
 .PHONY: help bootstrap build test test-java test-python test-db lint format structure compose-config up down health demo smoke
 
 help:
-	@printf '%s\n' 'Phase 1 bootstrap targets:' \
+	@printf '%s\n' 'Repository targets:' \
 	  '  bootstrap       Install locked Python development dependencies' \
 	  '  build           Build Spring Boot JAR and Python wheel/sdist' \
-	  '  test            Run Java and Python bootstrap tests (no Docker)' \
-	  '  test-db         Check PostgreSQL fixture connectivity (requires Docker)' \
+	  '  test            Run Java unit/PostgreSQL tests and Python service unit tests' \
+	  '  test-db         Run Python PostgreSQL integration tests (requires Docker)' \
 	  '  lint / format   Check / apply pinned Java and Python formatting' \
 	  '  structure       Verify monorepo layout and build configuration' \
 	  '  compose-config  Validate Compose with example configuration' \
@@ -66,5 +66,5 @@ health:
 	$(COMPOSE) exec -T orchestrator-db sh -c 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
 
 demo smoke:
-	@printf '%s\n' '$@ is not implemented in Phase 1; see IMPLEMENTATION_PLAN.md.' >&2
+	@printf '%s\n' '$@ is not implemented yet; see IMPLEMENTATION_PLAN.md.' >&2
 	@exit 2

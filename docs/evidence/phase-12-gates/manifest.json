@@ -1,0 +1,35 @@
+{
+  "phase": 12,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_DETERMINISTIC_GATE_SCOPE_VERIFIED",
+  "base_commit": "0c52ffc04fc4e013d2079b2e809934ea081ccbc7",
+  "source_state": "Uncommitted Phase 12 changes on the recorded base",
+  "runtime": "Python 3.12.13",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && .venv/bin/ruff check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && .venv/bin/pytest -q tests/test_gates.py tests/test_graph_validation.py",
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "command": "cd apps/orchestrator && .venv/bin/pytest -q",
+      "passed": 162,
+      "failed": 0,
+      "skipped": 26
+    }
+  ],
+  "requirements": ["SW-09", "SW-12", "SW-15", "SW-21", "SP-15", "SP-16"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "Gate evaluations are not yet stored in a gate_evaluations table",
+    "The scheduler does not yet route WAIT or FAIL outcomes",
+    "Claim-time and commit-time evidence rechecks await scheduler integration",
+    "Human approval authentication and APIs remain Phase 13",
+    "Policy rule evaluation remains Phase 20"
+  ]
+}

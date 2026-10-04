@@ -390,7 +390,30 @@ Resolve potential forward dependencies as follows:
 
 **Risks:** Reusing validation against a changed hash, gate evaluation races, or silently interpreting WAIT as PASS. Recheck input/version preconditions when claiming/committing.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED for the requested deterministic gate scope on 2026-10-04.
+
+**Implementation record:** Added strict immutable evidence snapshots, `GateResult`
+(`PASS`, `FAIL`, `WAIT`), the read-only `StageGate` abstraction, and executable
+gate registry bindings for requirement exit, architecture entry/exit,
+implementation entry, and release-readiness entry. Artifacts must match their
+recorded SHA-256 and specialist schema. Architecture approval is bound to the
+current artifact ID, version, and hash. Release readiness requires successful
+current build, unit, integration, security, and documentation stage evidence and
+rejects active blocking policy violations. The default DAG now uses the aggregate
+release-readiness prerequisite gate.
+
+**Verification:** Ruff passed for the complete orchestrator source/test tree. The
+focused Phase 12 and graph suite passed 42 tests. The full default pytest suite
+passed 162 tests with 26 configured skips for opt-in PostgreSQL, Docker-runner,
+and live-SDK checks. Gate tests cover absent, malformed, corrupt, stale,
+in-progress, failed, rejected, invalidated, version-mismatched, and policy-blocked
+evidence. See `docs/evidence/phase-12-gates/`.
+
+**Scope boundary:** This delivery evaluates in-memory immutable evidence and does
+not schedule stages or mutate workflow state. Durable `gate_evaluations`, atomic
+gate/audit persistence, HTTP workflow projections, claim-time rechecks, and
+FAIL/WAIT routing remain coupled to later scheduler/API work. No Phase 13 approval
+endpoint or human authentication behavior was added.
 
 ## PHASE 13 — Human approval checkpoints
 

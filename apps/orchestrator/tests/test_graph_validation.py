@@ -41,6 +41,7 @@ def test_default_graph_has_required_fan_out_joins_and_approval_checkpoints() -> 
         "DOCUMENTATION_DRAFT",
     }
     assert graph.stage("RELEASE_READINESS").dependencies == ("DOCUMENTATION_FINALIZATION",)
+    assert graph.stage("RELEASE_READINESS").entry_gate == "release_readiness_prerequisites"
     assert graph.stage("RELEASE_APPROVAL").dependencies == ("RELEASE_READINESS",)
     assert graph.stage("COMPLETED").dependencies == ("RELEASE_APPROVAL",)
     assert graph.stage("ARCHITECTURE_APPROVAL").approval_required

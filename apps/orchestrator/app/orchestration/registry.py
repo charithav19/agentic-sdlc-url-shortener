@@ -1,4 +1,4 @@
-"""Declared graph identifiers; executable bindings arrive in later phases."""
+"""Declared graph identifiers used while loading versioned workflow definitions."""
 
 from dataclasses import dataclass
 
@@ -48,6 +48,7 @@ DEFAULT_REGISTRY = GraphRegistry(
             "integration_tests_passed",
             "security_validation_passed",
             "documentation_finalized",
+            "release_readiness_prerequisites",
             "release_ready",
             "release_approved",
             "workflow_complete",

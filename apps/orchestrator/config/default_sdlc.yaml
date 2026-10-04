@@ -124,7 +124,7 @@ stages:
   - name: RELEASE_READINESS
     dependencies: [DOCUMENTATION_FINALIZATION]
     executor: release_specialist
-    entry_gate: documentation_finalized
+    entry_gate: release_readiness_prerequisites
     exit_gate: release_ready
     retry_policy: {max_attempts: 2, retryable_errors: [TRANSIENT_TOOL_ERROR]}
     fallback: null

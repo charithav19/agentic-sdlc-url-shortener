@@ -1,5 +1,28 @@
 # Testing and verification
 
+## Phase 12 gates — verified on 2026-10-04
+
+The focused gate and graph suite passed **42 tests**. The full default
+orchestrator suite passed **162 tests** and skipped 26 tests that require an
+explicit PostgreSQL fixture, built Docker runner, or live OpenAI opt-in.
+
+```sh
+cd apps/orchestrator
+.venv/bin/ruff check app tests
+.venv/bin/pytest -q tests/test_gates.py tests/test_graph_validation.py
+.venv/bin/pytest -q
+```
+
+The tests exercise `PASS`, `FAIL`, and `WAIT`; requirement and architecture
+exit schemas; blocking ambiguity; missing and corrupt artifacts; exact current
+architecture approvals; every non-success release prerequisite class; stale
+evidence; and active blocking policy violations. The graph test confirms that
+`RELEASE_READINESS` invokes the aggregate prerequisite gate.
+
+These are deterministic unit tests. Phase 12 does not persist gate evaluations,
+execute stages, authenticate reviewers, or call a live model. See
+[the evidence manifest](evidence/phase-12-gates/manifest.json).
+
 ## Phase 11 bounded tools — verified on 2026-10-04
 
 **159 tests passed:** 134 unit tests, 18 PostgreSQL tests and seven real

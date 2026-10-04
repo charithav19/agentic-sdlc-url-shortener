@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 are VERIFIED for their requested scopes. Phases 10–11 have tested provider/specialist contracts; full-plan live and runner acceptance remains IN_PROGRESS. Phases 12–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9 and the requested Phase 12 deterministic gate scope are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Phases 13–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -143,6 +143,31 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 12 verification record
+
+Phase 12 is **VERIFIED on 2026-10-04** for the requested deterministic entry and
+exit gate scope. `test_gates.py` verifies the exact `PASS`/`FAIL`/`WAIT`
+vocabulary and all requested gate inputs. Requirement and architecture exits
+validate hashed specialist artifacts and mandatory sections. Architecture entry
+waits for a normalized requirement and valid task plan and cannot pass blocking
+ambiguity. Implementation entry requires an `APPROVED` architecture decision
+bound to the current artifact ID, version, and hash. Release readiness aggregates
+current successful build, unit, integration, security, and documentation evidence
+and fails on active blocking policy violations.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-15, SP-15 | `test_gates.py` (28 tests) and `test_graph_validation.py` release assertion | Typed gates reject missing, malformed, corrupt, stale and incompatible evidence; WAIT never becomes PASS | Scheduler claim/commit recheck and durable gate/audit record |
+| SW-09 | Requirement/architecture-entry gate tests | Normalized requirement, acceptance criteria, explicit ambiguity/assumptions; blocking ambiguity waits | Clarification persistence and resume in Phase 13 |
+| SW-21, SP-16 | Implementation-entry approval tests | Only an exact current APPROVED architecture artifact passes | Reviewer authentication/API/invalidation in Phase 13 |
+| SW-12, SP-15 | Release-readiness tests | Build, unit, integration, security and documentation must all succeed; blocking policy finding fails | Policy engine rules in Phase 20 and scheduler execution in Phase 14 |
+
+The focused gate/graph suite passed 42 tests; the complete default orchestrator
+suite passed 162 tests with 26 explicitly configured integration, runner, and
+live checks skipped. Ruff passed. This phase does not claim scheduler execution,
+durable gate evaluation storage, human authentication, or live agent quality.
+See [the Phase 12 evidence manifest](evidence/phase-12-gates/manifest.json).
 
 ## Phase 11 bounded engineering tools follow-up
 

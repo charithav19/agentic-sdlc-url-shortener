@@ -18,6 +18,7 @@ from app.artifacts.schemas import ArtifactInput
 from app.artifacts.store import canonical_content
 from app.config import Settings
 from app.governance.approvals import ApprovalStatus, ApprovalType
+from app.governance.policy import PolicyEngine
 from app.orchestration.claims import StageClaim, StageCompletion
 from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import StageStatus, WorkflowStatus
@@ -131,6 +132,7 @@ class WorkflowRuntime:
                 model=settings.openai_model,
                 api_key=settings.openai_api_key.get_secret_value(),
                 workspaces=self.service.workspaces,
+                policy_engine=PolicyEngine(self.factory),
             )
         fixture = self.service.loader.load(workflow.scenario_type)
         outputs = json.loads(

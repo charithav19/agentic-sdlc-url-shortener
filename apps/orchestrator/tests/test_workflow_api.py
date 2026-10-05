@@ -335,3 +335,36 @@ async def test_approval_wakes_parallel_work_but_missing_validation_never_fakes_s
     assert stages["BUILD_VALIDATION"]["status"] == "SAFE_STOPPED"
     assert stages["COMPLETED"]["startedAt"] is None
     assert status["stopReason"]
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+async def test_graph_reads_pinned_revision_not_changed_configuration(workflow_api, monkeypatch):
+    client, runtime = workflow_api
+    identifier, _ = await start(client, runtime)
+
+    def changed_config(*_args, **_kwargs):
+        raise AssertionError("Read views must use the persisted graph revision")
+
+    monkeypatch.setattr("app.orchestration.workflows.load_graph", changed_config)
+    assert (await client.get(f"/api/v1/workflows/{identifier}/graph")).status_code == 200
+    async with session_scope(runtime.factory) as session:
+        workflow = await session.get(WorkflowRun, identifier)
+        workflow.graph_hash = "0" * 64
+    response = await client.get(f"/api/v1/workflows/{identifier}/graph")
+    assert response.status_code == 409
+    assert "Persisted workflow graph is invalid" in response.json()["error"]["message"]
+
+
+def test_cli_json_remains_valid_at_narrow_terminal_width():
+    import io
+    import json
+
+    from rich.console import Console
+
+    from app.cli.rendering import emit
+
+    output = io.StringIO()
+    payload = {"nextAction": "Review this exact artifact version " * 8, "graphHash": "a" * 64}
+    emit(Console(file=output, width=30), payload, None, json_output=True)
+    assert json.loads(output.getvalue()) == payload

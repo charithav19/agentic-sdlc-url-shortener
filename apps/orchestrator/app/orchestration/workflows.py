@@ -9,11 +9,19 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.artifacts.schemas import ArtifactInput
+from app.artifacts.store import canonical_content
 from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatus
 from app.orchestration.dependencies import StageDependencyResolver
 from app.orchestration.graph import StageDefinition, WorkflowGraph, build_graph
 from app.orchestration.graph_loader import load_graph
-from app.persistence.models import Approval, Artifact, ArtifactLifecycle, AuditEvent, StageRun
+from app.persistence.models import (
+    Approval,
+    Artifact,
+    ArtifactLifecycle,
+    AuditEvent,
+    StageRun,
+    WorkflowRun,
+)
 from app.persistence.session import session_scope
 from app.persistence.unit_of_work import UnitOfWork
 from app.scenarios.fixtures import ScenarioFixtureLoader
@@ -91,6 +99,7 @@ class WorkflowView(Document):
     requirement_version: int
     graph_hash: str
     graph_version: str
+    graph_revision_id: uuid.UUID
     stages: list[StageView]
     blockers: list[str]
     pending_human_action: list[HumanAction]
@@ -261,29 +270,40 @@ class WorkflowService:
                 )
             return workflow.id
 
+    @staticmethod
+    def _graph_from_revision(revision: Artifact, graph_hash: str) -> WorkflowGraph:
+        if canonical_content(revision.content)[1] != revision.content_sha256:
+            raise ValueError("Persisted graph content hash is invalid")
+        for variant in ("base", "conditional"):
+            doc = revision.content[variant]
+            graph = build_graph(
+                doc["version"], tuple(StageDefinition.model_validate(s) for s in doc["stages"])
+            )
+            if graph.sha256 == graph_hash:
+                return graph
+        raise ValueError("Workflow graph hash does not match its persisted revision")
+
     async def graph_for(self, workflow_id: uuid.UUID) -> WorkflowGraph:
         async with UnitOfWork.open(self.factory) as unit:
             workflow = await unit.workflows.get(workflow_id)
             revision = await unit.session.get(Artifact, workflow.graph_revision_id)
             if revision is None or revision.workflow_id != workflow_id:
                 raise ValueError("Persisted workflow graph revision is missing")
-            for variant in ("base", "conditional"):
-                doc = revision.content[variant]
-                graph = build_graph(
-                    doc["version"], tuple(StageDefinition.model_validate(s) for s in doc["stages"])
-                )
-                if graph.sha256 == workflow.graph_hash:
-                    return graph
-            raise ValueError("Workflow graph hash does not match its persisted revision")
+            return self._graph_from_revision(revision, workflow.graph_hash)
 
     async def status(self, workflow_id: uuid.UUID) -> WorkflowView:
-        graph = await self.graph_for(workflow_id)
         async with session_scope(self.factory) as session:
-            from app.persistence.models import WorkflowRun
-
-            workflow = await session.get(WorkflowRun, workflow_id)
+            # Domain mutations lock this row first. Keep generation, graph and stage
+            # evidence consistent while answering a read, without writing any audit event.
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update(read=True)
+            )
             if workflow is None:
                 raise KeyError(workflow_id)
+            revision = await session.get(Artifact, workflow.graph_revision_id)
+            if revision is None or revision.workflow_id != workflow_id:
+                raise ValueError("Persisted workflow graph revision is missing")
+            graph = self._graph_from_revision(revision, workflow.graph_hash)
             rows = list(
                 await session.scalars(
                     select(StageRun)
@@ -400,6 +420,7 @@ class WorkflowService:
                 requirement_version=workflow.requirement_version,
                 graph_hash=graph.sha256,
                 graph_version=graph.version,
+                graph_revision_id=revision.id,
                 stages=stages,
                 blockers=blockers,
                 pending_human_action=actions,
@@ -421,11 +442,10 @@ class WorkflowService:
             )
 
     async def graph(self, workflow_id: uuid.UUID) -> GraphView:
-        graph = await self.graph_for(workflow_id)
         view = await self.status(workflow_id)
-        async with UnitOfWork.open(self.factory) as unit:
-            workflow = await unit.workflows.get(workflow_id)
-            revision_id = workflow.graph_revision_id
+        async with session_scope(self.factory) as session:
+            revision = await session.get(Artifact, view.graph_revision_id)
+            graph = self._graph_from_revision(revision, view.graph_hash)
         by_name = {stage.stage_name: stage for stage in view.stages}
         nodes = []
         for name in graph.topological_order:
@@ -439,7 +459,7 @@ class WorkflowService:
             generation=view.generation,
             version=graph.version,
             graph_hash=graph.sha256,
-            graph_revision_id=revision_id,
+            graph_revision_id=view.graph_revision_id,
             stages=nodes,
             current_stages=[
                 s.stage_name

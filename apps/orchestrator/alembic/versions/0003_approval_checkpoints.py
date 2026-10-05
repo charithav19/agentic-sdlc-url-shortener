@@ -20,12 +20,9 @@ def upgrade() -> None:
     op.create_check_constraint(
         "ck_approval_type",
         "approvals",
-        "approval_type IN "
-        "('ARCHITECTURE', 'HIGH_IMPACT_CHANGE', 'ASSUMPTION', 'RELEASE')",
+        "approval_type IN ('ARCHITECTURE', 'HIGH_IMPACT_CHANGE', 'ASSUMPTION', 'RELEASE')",
     )
-    op.create_check_constraint(
-        "ck_approval_artifact_version", "approvals", "artifact_version > 0"
-    )
+    op.create_check_constraint("ck_approval_artifact_version", "approvals", "artifact_version > 0")
     op.create_index(
         "uq_approval_pending_exact",
         "approvals",

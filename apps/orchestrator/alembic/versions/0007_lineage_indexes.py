@@ -18,14 +18,12 @@ def upgrade() -> None:
     # Phase 6 used REVISES in its version fixture before the typed vocabulary
     # was established. Its direction matches SUPERSEDES (older -> newer).
     op.execute(
-        "UPDATE artifact_lineage SET relationship = 'SUPERSEDES' "
-        "WHERE relationship = 'REVISES'"
+        "UPDATE artifact_lineage SET relationship = 'SUPERSEDES' WHERE relationship = 'REVISES'"
     )
     op.create_check_constraint(
         "ck_lineage_relationship",
         "artifact_lineage",
-        "relationship IN ('DERIVED_FROM', 'IMPLEMENTS', 'VALIDATES', 'DOCUMENTS', "
-        "'SUPERSEDES')",
+        "relationship IN ('DERIVED_FROM', 'IMPLEMENTS', 'VALIDATES', 'DOCUMENTS', 'SUPERSEDES')",
     )
     op.create_index(
         "ix_lineage_workflow_parent",

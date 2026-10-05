@@ -1,12 +1,12 @@
 """Typed, immutable evidence consumed by deterministic stage gates."""
 
 import uuid
-from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from app.artifacts.store import canonical_content
+from app.governance.approvals import ApprovalStatus
 from app.orchestration.contracts import StageStatus
 
 
@@ -27,13 +27,6 @@ class ArtifactEvidence(EvidenceModel):
     @property
     def reference(self) -> str:
         return f"artifact:{self.id}@{self.version}:{self.sha256}"
-
-
-class ApprovalStatus(StrEnum):
-    PENDING = "PENDING"
-    APPROVED = "APPROVED"
-    REJECTED = "REJECTED"
-    INVALIDATED = "INVALIDATED"
 
 
 class ApprovalEvidence(EvidenceModel):

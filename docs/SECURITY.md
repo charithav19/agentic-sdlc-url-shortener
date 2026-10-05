@@ -81,6 +81,14 @@ An exited container is required; a container that never started cannot be
 reported as successful. Candidate-generated output remains untrusted, and a
 zero exit code alone is not release approval or comprehensive test evidence.
 
+Human approval uses a separate local bearer credential configured through
+`ORCHESTRATOR_LOCAL_REVIEWER_TOKEN` plus an explicit `X-Reviewer-Id`. The token
+belongs only in the trusted orchestrator process and is never provided to agent
+tools or workspaces. This prototype credential establishes a local trust
+boundary; production deployment still requires a real identity provider,
+authorization policy, transport security, credential rotation, and protected
+audit access.
+
 The image includes Java 21/Maven, Python/pytest and a small prepared Maven
 dependency cache. Candidate execution is offline. Other dependencies require
 a trusted image rebuild; agents cannot install them or enable network access.
@@ -97,4 +105,3 @@ resource settings, real failure exit codes, timeout/output limits, cancellation,
 and cleanup after rejected isolation. `tests/test_tools.py` verifies filesystem
 and SDK allowlist denials. This is local Docker isolation evidence, not a claim
 of protection from Docker/kernel vulnerabilities or hostile host administrators.
-

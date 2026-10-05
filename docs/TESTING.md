@@ -1,5 +1,32 @@
 # Testing and verification
 
+## Phase 13 approvals — verified on 2026-10-04
+
+The default offline orchestrator suite passed **164 tests**, with one opt-in
+live SDK smoke skipped and integration/runner tests deselected. The disposable
+PostgreSQL suite passed **24 tests**, including six approval API/workflow cases.
+
+```sh
+cd apps/orchestrator
+.venv/bin/ruff check app tests
+.venv/bin/ruff format --check app tests
+.venv/bin/pytest -q -m 'not integration and not runner'
+cd ../..
+UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db
+```
+
+The tests cover architecture and release pauses, denial of stage execution while
+waiting, approval resume, rejection blocking, wrong-version `409`, stale artifact
+invalidation, exact release approval before completion, reviewer credential
+separation, migration constraints, audit creation, and earlier-phase regressions.
+The PostgreSQL harness used a disposable PostgreSQL 17.7 container and removed it
+afterward.
+
+No live agent was called. Clarification workflows, production authentication,
+approval listing, scheduler execution, and policy selection remain outside this
+Phase 13 request. See
+[the evidence manifest](evidence/phase-13-approvals/manifest.json).
+
 ## Phase 12 gates — verified on 2026-10-04
 
 The focused gate and graph suite passed **42 tests**. The full default

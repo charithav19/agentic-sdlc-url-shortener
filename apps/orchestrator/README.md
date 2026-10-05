@@ -17,7 +17,7 @@ Set `ORCHESTRATOR_DB_HOST`, `ORCHESTRATOR_DB_PORT`,
 `.env.example` documents local values. Migrations are an explicit operator
 step; application startup does not alter the schema. `GET /health` executes a
 PostgreSQL probe and returns 200 when reachable or 503 when unavailable.
-`/docs` and `/openapi.json` describe the sole application route. Request
+`/docs` and `/openapi.json` describe the application routes. Request
 responses have `X-Trace-Id`; errors include the same identifier without
 database credentials.
 
@@ -127,3 +127,21 @@ RUN_LIVE_AGENT_TESTS=1 uv run --locked python -m pytest tests/live/test_sdk_smok
 
 The offline SDK tests execute the real Runner against a local model stub.
 They do not establish live API connectivity or model quality.
+
+## Phase 13 approval checkpoints
+
+`POST /api/v1/workflows/{workflow_id}/approvals` submits an `APPROVED` or
+`REJECTED` decision for an existing pending checkpoint. The request includes
+`approvalId`, exact `artifactId` and `artifactVersion`, `workflowVersion`, and
+an optional reason; rejection requires a reason. Supply
+`Authorization: Bearer <ORCHESTRATOR_LOCAL_REVIEWER_TOKEN>` and an explicit
+`X-Reviewer-Id`. The local token is a prototype credential for a trusted local
+reviewer process and must not be exposed to agents or candidate workspaces.
+
+The orchestrator pauses a running workflow when it requests architecture,
+high-impact-change, assumption, or release approval. Approval resumes only when
+no other checkpoint is pending. Rejection leaves the workflow waiting. A new
+version of the same logical artifact invalidates its older pending or approved
+decisions. Completion additionally requires a current exact-version `RELEASE`
+approval. Approval request, decision/invalidation, and workflow state events are
+committed atomically where they occur.

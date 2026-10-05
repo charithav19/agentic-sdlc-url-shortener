@@ -433,7 +433,32 @@ endpoint or human authentication behavior was added.
 
 **Risks:** A claimed actor name mistaken for authentication, lost approval during restart, and blanket approval covering unrelated future changes.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED for the requested approval-checkpoint scope on 2026-10-04.
+
+**Implementation record:** Added the four approval types and four persisted
+statuses, a locally authenticated human decision API, database constraints for
+the vocabulary and one pending request per exact artifact, and orchestrator-owned
+checkpoint/decision transactions. Every record retains artifact ID, version,
+and hash. Checkpoint creation pauses `RUNNING → WAITING_FOR_APPROVAL`; an exact
+approval resumes only when no other request is pending; rejection remains
+blocked. Stage start is denied while the workflow is waiting. A newer logical
+artifact version invalidates older pending/approved records and writes an audit
+event. `COMPLETED` now requires both verified release gates and a current exact
+`RELEASE` approval.
+
+**Verification:** Ruff lint/format passed. The offline suite passed 164 tests
+with one opt-in live-SDK skip and 31 integration/runner deselections. The real
+PostgreSQL suite passed 24 tests, including six approval workflow/API cases.
+Coverage includes pause, resume, rejection, wrong-version conflict, stale
+invalidation, blocked stage start, release pause/completion, migration constraints,
+atomic audit records, and separate local reviewer credentials. See
+`docs/evidence/phase-13-approvals/`.
+
+**Scope boundary:** This request implemented approval checkpoints only. The
+planned clarification question/answer API, requirement regeneration, production
+identity provider, approval listing endpoint, policy-driven selection of
+high-impact/assumption checkpoints, and selective invalidation through full
+lineage remain in their later authorized work. No Phase 14 scheduler was added.
 
 ## PHASE 14 — Parallel stage execution
 

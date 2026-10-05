@@ -1,16 +1,19 @@
-"""Verify the service remains limited to its Phase 5 API."""
+"""Verify the currently published API surface and documentation."""
 
 import psycopg
 import pytest
 from fastapi.testclient import TestClient
 
 
-def test_openapi_exposes_only_health(client: TestClient) -> None:
+def test_openapi_exposes_health_and_approval_decisions(client: TestClient) -> None:
     response = client.get("/openapi.json")
     assert response.status_code == 200
     schema = response.json()
     assert schema["info"]["title"] == "Agentic SDLC Orchestrator"
-    assert set(schema["paths"]) == {"/health"}
+    assert set(schema["paths"]) == {
+        "/health",
+        "/api/v1/workflows/{workflow_id}/approvals",
+    }
 
 
 def test_api_docs_are_available(client: TestClient) -> None:

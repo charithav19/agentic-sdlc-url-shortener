@@ -1,12 +1,15 @@
 """Internal repositories for creating and reading Phase 6 records."""
 
 import uuid
+from datetime import UTC, datetime
 from typing import Any
 
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import aliased
 
 from app.artifacts.schemas import ArtifactRef
+from app.governance.approvals import ApprovalStatus, ApprovalType
 from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatus
 from app.persistence.models import (
     Approval,
@@ -185,6 +188,7 @@ class ApprovalRepository:
     async def request(
         self, workflow_id: uuid.UUID, *, artifact_id: uuid.UUID, approval_type: str
     ) -> Approval:
+        approval_kind = ApprovalType(approval_type)
         artifact = await self.session.get(Artifact, artifact_id)
         if artifact is None or artifact.workflow_id != workflow_id:
             raise ValueError("Approval artifact must belong to the workflow")
@@ -193,9 +197,34 @@ class ApprovalRepository:
             artifact_id=artifact_id,
             artifact_version=artifact.version,
             artifact_hash=artifact.content_sha256,
-            approval_type=approval_type,
-            status="PENDING",
+            approval_type=approval_kind.value,
+            status=ApprovalStatus.PENDING.value,
         )
         self.session.add(approval)
         await self.session.flush()
         return approval
+
+    async def invalidate_for_new_artifact(self, artifact: Artifact) -> list[Approval]:
+        """Invalidate active decisions attached to older versions of this logical artifact."""
+
+        approved_artifact = aliased(Artifact)
+        result = await self.session.scalars(
+            select(Approval)
+            .join(approved_artifact, approved_artifact.id == Approval.artifact_id)
+            .where(
+                Approval.workflow_id == artifact.workflow_id,
+                approved_artifact.logical_name == artifact.logical_name,
+                approved_artifact.version < artifact.version,
+                Approval.status.in_((ApprovalStatus.PENDING.value, ApprovalStatus.APPROVED.value)),
+            )
+            .with_for_update()
+        )
+        invalidated = list(result)
+        now = datetime.now(UTC)
+        for approval in invalidated:
+            approval.status = ApprovalStatus.INVALIDATED.value
+            approval.decided_at = now
+            approval.reason = "A newer artifact version was created"
+        if invalidated:
+            await self.session.flush()
+        return invalidated

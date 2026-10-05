@@ -20,6 +20,7 @@ from sqlalchemy import (
     event,
     func,
     inspect,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -221,7 +222,21 @@ class Approval(Base):
             "status IN ('PENDING', 'APPROVED', 'REJECTED', 'INVALIDATED')",
             name="ck_approval_status",
         ),
+        CheckConstraint(
+            "approval_type IN ('ARCHITECTURE', 'HIGH_IMPACT_CHANGE', 'ASSUMPTION', 'RELEASE')",
+            name="ck_approval_type",
+        ),
+        CheckConstraint("artifact_version > 0", name="ck_approval_artifact_version"),
         Index("ix_approval_workflow_status", "workflow_id", "status"),
+        Index(
+            "uq_approval_pending_exact",
+            "workflow_id",
+            "approval_type",
+            "artifact_id",
+            "artifact_version",
+            unique=True,
+            postgresql_where=text("status = 'PENDING'"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=new_id)

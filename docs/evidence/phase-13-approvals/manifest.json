@@ -1,0 +1,37 @@
+{
+  "phase": 13,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_APPROVAL_CHECKPOINT_SCOPE_VERIFIED",
+  "base_commit": "407fef2d48b60d23e89be32d11222f8315dd5cbf",
+  "source_state": "Uncommitted Phase 13 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && .venv/bin/ruff check app tests && .venv/bin/ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && .venv/bin/pytest -q -m 'not integration and not runner'",
+      "passed": 164,
+      "failed": 0,
+      "skipped": 1,
+      "deselected": 31
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db",
+      "passed": 24,
+      "failed": 0,
+      "deselected": 172
+    }
+  ],
+  "requirements": ["SW-12", "SW-21", "SW-28", "SW-37", "SP-13", "SP-15", "SP-16", "SP-33"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "Clarification persistence and API are not part of this requested scope",
+    "GET approval listing and CLI approval commands remain later work",
+    "The local reviewer bearer token is not a production identity system",
+    "Policy-driven high-impact and assumption checkpoint selection remains Phase 20",
+    "Full lineage-driven selective invalidation remains Phase 19",
+    "No scheduler or live-agent workflow was executed"
+  ]
+}

@@ -10,7 +10,10 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.artifacts.schemas import ArtifactInput, ArtifactRef
+from app.governance.approvals import ApprovalType
+from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatus
+from app.orchestration.orchestrator import WorkflowOrchestrator
 from app.persistence.models import (
     Approval,
     ArtifactLineage,
@@ -119,8 +122,17 @@ async def test_all_entities_round_trip_and_reload(
         related_artifact_ids=[second.id],
         requirement_ids=["REQ-1"],
     )
+    await WorkflowOrchestrator(phase6_factory).transition_workflow(
+        workflow_id,
+        WorkflowStatus.RUNNING,
+        TransitionContext(actor_type="SYSTEM", actor_id="orchestrator", expected_version=1),
+    )
     approval_id = await service.request_approval(
-        workflow_id, artifact_id=second.id, approval_type="DESIGN"
+        workflow_id,
+        artifact_id=second.id,
+        artifact_version=second.version,
+        approval_type=ApprovalType.ARCHITECTURE,
+        expected_workflow_version=2,
     )
 
     assert isinstance(workflow_id, uuid.UUID)
@@ -141,7 +153,7 @@ async def test_all_entities_round_trip_and_reload(
             approval = await unit.session.get(Approval, approval_id)
             events = await unit.audit.page(workflow_id, limit=20)
             assert workflow.scenario_type == ScenarioType.GREENFIELD
-            assert workflow.status == WorkflowStatus.CREATED
+            assert workflow.status == WorkflowStatus.WAITING_FOR_APPROVAL
             assert workflow.created_at.tzinfo is not None
             assert first_stage.attempt == 1
             assert second_stage.attempt == 2
@@ -154,8 +166,9 @@ async def test_all_entities_round_trip_and_reload(
             assert decision is not None and decision.related_artifact_ids == [str(second.id)]
             assert approval is not None and approval.artifact_hash == second.sha256
             assert approval.artifact_version == 2 and approval.status == "PENDING"
-            assert [event.sequence for event in events] == list(range(1, 9))
-            assert events[-1].event_type == "APPROVAL_REQUESTED"
+            assert [event.sequence for event in events] == list(range(1, 11))
+            assert events[-2].event_type == "APPROVAL_REQUESTED"
+            assert events[-1].event_type == "WORKFLOW_STATUS_CHANGED"
     finally:
         await engine.dispose()
 

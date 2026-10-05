@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 and the requested Phase 12 deterministic gate scope are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Phases 13–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9 and the requested Phase 12 gate and Phase 13 approval-checkpoint scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. The Phase 13 clarification scope and Phases 14–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -143,6 +143,28 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 13 approval verification record
+
+Phase 13 is **VERIFIED on 2026-10-04** for the requested human-approval
+checkpoint scope. PostgreSQL tests demonstrate that architecture and release
+requests pause the workflow, a matching human approval resumes it, rejection
+keeps it blocked, wrong versions return `409`, and newer artifact versions
+invalidate older approvals. `WorkflowOrchestrator` also rejects stage start
+while waiting and requires a current exact-version release approval before
+completion.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-21, SP-16 | `test_approvals.py` pause/resume/version/invalidation cases | Four types/statuses; exact ID/version/hash record; stale invalidation; rejection blocks | Policy-driven high-impact/assumption selection in Phase 20 |
+| SW-37, SP-13 | Stage-start and reviewer credential tests | Only orchestrator changes status; waiting workflow cannot start work; separate local human token | Production identity/authorization hardening |
+| SW-12, SP-15 | Release checkpoint/completion test | Release pauses before completion; current exact approval and verified release gates are both required | Scheduler and complete release evidence assembly |
+| SW-28, SP-33 | PostgreSQL audit assertions | Request, decision, invalidation, pause, and resume events persist transactionally | Full audit projections and metrics in Phase 21 |
+
+The offline suite passed 164 tests with one opt-in live skip; the PostgreSQL
+suite passed 24 tests. Clarification handling, approval listing, full policy
+selection, and selective lineage invalidation were outside this request. See
+[the Phase 13 evidence manifest](evidence/phase-13-approvals/manifest.json).
 
 ## Phase 12 verification record
 

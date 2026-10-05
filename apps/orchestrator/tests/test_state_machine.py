@@ -83,6 +83,8 @@ async def test_orchestrator_persists_legal_stage_transition_chain(
     orchestrator = WorkflowOrchestrator(phase6_factory)
     context = TransitionContext(actor_type="SYSTEM", actor_id="orchestrator")
 
+    await orchestrator.transition_workflow(workflow_id, WorkflowStatus.RUNNING, context)
+
     for status in (
         StageStatus.BLOCKED,
         StageStatus.READY,

@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     db_password: SecretStr = SecretStr("")
     db_connect_timeout_seconds: int = Field(default=3, ge=1, le=30)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
+    local_reviewer_token: SecretStr = SecretStr("")
 
     @property
     def database_url(self) -> URL:

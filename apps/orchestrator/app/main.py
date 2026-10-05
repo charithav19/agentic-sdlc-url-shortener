@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 
+from app.api.approvals import router as approvals_router
 from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
 from app.config import get_settings
@@ -30,10 +31,11 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title="Agentic SDLC Orchestrator",
     version="0.1.0",
-    description="Orchestrator service and PostgreSQL readiness API.",
+    description="Deterministic SDLC orchestration, readiness, and human approval API.",
     lifespan=lifespan,
 )
 app.include_router(health_router)
+app.include_router(approvals_router)
 register_error_handlers(app)
 
 

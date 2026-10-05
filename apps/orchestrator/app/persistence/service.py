@@ -5,7 +5,10 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.artifacts.schemas import ArtifactInput, ArtifactRef
+from app.governance.approvals import ApprovalType
+from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import ScenarioType, WorkflowStatus
+from app.orchestration.orchestrator import WorkflowOrchestrator
 from app.persistence.unit_of_work import UnitOfWork
 from app.tools.workspaces import WorkspaceManager
 
@@ -91,29 +94,50 @@ class WorkflowPersistenceService:
                 stage_run_id=artifact.producer_stage_run_id,
                 artifact_refs=[ref.model_dump(mode="json")],
             )
+            invalidated = await unit.approvals.invalidate_for_new_artifact(artifact)
+            for approval in invalidated:
+                await unit.audit.append(
+                    workflow_id,
+                    event_type="APPROVAL_INVALIDATED",
+                    actor_type="SYSTEM",
+                    actor_id="orchestrator",
+                    artifact_refs=[
+                        {
+                            "id": str(approval.artifact_id),
+                            "version": approval.artifact_version,
+                            "sha256": approval.artifact_hash,
+                        },
+                        ref.model_dump(mode="json"),
+                    ],
+                    reason=approval.reason,
+                    payload={
+                        "approval_id": str(approval.id),
+                        "approval_type": approval.approval_type,
+                    },
+                )
             return ref
 
     async def request_approval(
-        self, workflow_id: uuid.UUID, *, artifact_id: uuid.UUID, approval_type: str
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        artifact_id: uuid.UUID,
+        artifact_version: int,
+        approval_type: ApprovalType,
+        expected_workflow_version: int,
     ) -> uuid.UUID:
-        async with UnitOfWork.open(self.session_factory) as unit:
-            approval = await unit.approvals.request(
-                workflow_id, artifact_id=artifact_id, approval_type=approval_type
-            )
-            await unit.audit.append(
-                workflow_id,
-                event_type="APPROVAL_REQUESTED",
+        checkpoint = await WorkflowOrchestrator(self.session_factory).request_approval_checkpoint(
+            workflow_id,
+            approval_type=approval_type,
+            artifact_id=artifact_id,
+            artifact_version=artifact_version,
+            context=TransitionContext(
                 actor_type="SYSTEM",
                 actor_id="orchestrator",
-                artifact_refs=[
-                    {
-                        "id": str(approval.artifact_id),
-                        "version": approval.artifact_version,
-                        "sha256": approval.artifact_hash,
-                    }
-                ],
-            )
-            return approval.id
+                expected_version=expected_workflow_version,
+            ),
+        )
+        return checkpoint.approval_id
 
     async def link_artifacts(
         self,

@@ -1,0 +1,14 @@
+scenario: AMBIGUOUS
+requirement_file: requirement.md
+seed: seed
+provider_mode: fake
+expected_checkpoints:
+  - REQUIREMENT_ANALYSIS
+  - WAITING_FOR_CLARIFICATION
+  - CLARIFICATION
+  - REQUIREMENT_REANALYSIS
+expected_artifacts:
+  - requirement
+  - requirement-analysis
+  - clarification
+expected_affected_responsibilities: []

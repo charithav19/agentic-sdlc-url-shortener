@@ -74,7 +74,7 @@ async def artifact(
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_requirement_update_selectively_stales_descendants_and_returns_to_planning(
+async def _requirement_update_selectively_stales_descendants_and_returns_to_planning(
     phase6_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     persistence = WorkflowPersistenceService(phase6_factory)
@@ -344,3 +344,14 @@ async def test_requirement_update_selectively_stales_descendants_and_returns_to_
             if event.event_type in {"REPLAN_STARTED", "REPLAN_COMPLETED"}
         ]
         assert replan_events == ["REPLAN_STARTED", "REPLAN_COMPLETED"]
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+class ReplanningScenarioIT:
+    async def test_selective_replanning_preserves_unaffected_work(
+        self, phase6_factory: async_sessionmaker[AsyncSession]
+    ) -> None:
+        await _requirement_update_selectively_stales_descendants_and_returns_to_planning(
+            phase6_factory
+        )

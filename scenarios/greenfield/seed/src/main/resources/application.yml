@@ -1,0 +1,3 @@
+spring:
+  application:
+    name: greenfield-url-shortener-seed

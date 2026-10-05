@@ -1,0 +1,29 @@
+{
+  "RequirementAgent": {
+    "normalized_requirement": "Improve URL-shortener safety controls.",
+    "acceptance_criteria": [
+      "Safety behavior is explicitly defined before implementation."
+    ],
+    "ambiguities": [
+      "Destination policy",
+      "Transport policy",
+      "Expiry policy",
+      "Authentication policy",
+      "Private-network policy",
+      "Identifier enumeration policy"
+    ],
+    "clarifying_questions": [
+      "Should malicious destination URLs be rejected?",
+      "Should HTTPS be enforced?",
+      "Should links expire automatically?",
+      "Is authentication required to create links?",
+      "Should private network URLs be blocked?",
+      "Is anti-enumeration required for short codes?"
+    ],
+    "assumptions": [],
+    "blocking_ambiguity": true,
+    "risks": [
+      "Implementing an unspecified safety policy can block valid users."
+    ]
+  }
+}

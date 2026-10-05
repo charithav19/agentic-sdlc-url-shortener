@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: brownfield-url-shortener-seed
+  datasource:
+    url: "${URL_DB_URL:jdbc:postgresql://localhost:5432/url_shortener}"
+    username: "${URL_DB_USER:url_shortener}"
+  jpa:
+    hibernate:
+      ddl-auto: validate

@@ -1,0 +1,22 @@
+scenario: GREENFIELD
+requirement_file: requirement.md
+seed: seed
+provider_mode: fake
+expected_checkpoints:
+  - REQUIREMENT_ANALYSIS
+  - TASK_DECOMPOSITION
+  - ARCHITECTURE_APPROVAL
+  - PARALLEL_ENGINEERING
+  - BUILD_VALIDATION
+  - PARALLEL_VALIDATION
+  - RELEASE_APPROVAL
+  - COMPLETED
+expected_artifacts:
+  - requirement
+  - task-plan
+  - architecture
+  - implementation-candidate
+  - test-plan
+  - documentation
+  - release-manifest
+expected_affected_responsibilities: []

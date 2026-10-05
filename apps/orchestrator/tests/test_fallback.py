@@ -14,7 +14,7 @@ from tests.recovery_fixtures import recovery_graph, running_workflow
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_real_provider_exhaustion_uses_deterministic_fallback(
+async def _real_provider_exhaustion_uses_deterministic_fallback(
     phase6_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     workflow_id, _, _, _ = await running_workflow(phase6_factory)
@@ -63,3 +63,12 @@ async def test_real_provider_exhaustion_uses_deterministic_fallback(
         assert attempts[-1].fallback_source_stage_run_id == attempts[1].id
         assert attempts[-1].status is StageStatus.SUCCEEDED
         assert any(event.event_type == "STAGE_FALLBACK_SCHEDULED" for event in events)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+class FailureRecoveryScenarioIT:
+    async def test_retry_exhaustion_recovers_through_deterministic_fallback(
+        self, phase6_factory: async_sessionmaker[AsyncSession]
+    ) -> None:
+        await _real_provider_exhaustion_uses_deterministic_fallback(phase6_factory)

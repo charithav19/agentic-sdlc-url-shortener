@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. The requested Phase 21 metrics and Phase 22 CLI command scopes are implemented and verified offline. The Phase 21 PostgreSQL endpoint test was blocked by sandbox denial of the Docker socket; Phase 22 live-server coverage awaits the SP-28 read/create routes. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, the rest of Phases 21–22, Phase 25 demo packaging, and Phases 23–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9, the requested Phase 12–22 scopes, and the deterministic Phase 23–25 scenario fixtures are verified. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate release rerun, deployed CLI/API coverage, live engineering evidence, and Phases 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run or performance result is claimed.
 
 ## Sources and notation
 
@@ -12,6 +12,25 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 - `Pnn` identifies implementation phase nn. Test prefixes `JT/` and `OT/` expand exactly as defined in the plan. A suffix after `::` is a planned behavioral case, not an existing test result.
 - Evidence IDs `E01`–`E16` refer to the catalog below. Each evidence bundle must include `docs/evidence/<run-id>/manifest.json`. Replace `<run-id>` with an actual recorded run; never create a success-looking placeholder.
 - Each row's final evidence update must include commit, module, exact command/test selector, outcome, report link, demonstration link, provider mode and outstanding limitations. Shared test files are intentional; cases distinguish assertions.
+
+## Phases 23–25 scenario verification record
+
+The deterministic scenario fixtures are **VERIFIED on 2026-10-05**. The
+[scenario evidence manifest](evidence/phases-23-25-scenarios/manifest.json)
+records 54 passing PostgreSQL tests, 252 passing offline tests, three passing
+seed tests, and 37 passing URL-shortener tests.
+
+| Schwab requirement | Implementation phase | Test | Demonstration evidence |
+|---|---|---|---|
+| SW-01, SW-05, SW-12, SW-41 | P23 greenfield fixture, DAG harness and artifact lineage | `GreenfieldScenarioIT::test_complete_requirement_to_release_path` | Minimal seed, requirement/plan/architecture artifacts, exact architecture and release approvals, both overlapping fan-outs, joins, documentation and completed release in [GREENFIELD.md](scenarios/GREENFIELD.md) |
+| SW-06, SW-11, SW-35, SW-41 | P24 brownfield seed and source impact analyzer | `BrownfieldScenarioIT::test_source_driven_impact_and_complete_release_path`; rename-proof impact test; `CoreRegressionTest` | Exact inspected controller/service/domain/repository/redirect/migration/test/OpenAPI paths and preserved core regression in [BROWNFIELD.md](scenarios/BROWNFIELD.md) |
+| SW-08, SW-09, SW-41 | P25 ambiguity checkpoint | `AmbiguousScenarioIT::test_pauses_for_clarification_before_any_implementation`; existing clarification integration | Six safety question categories, persisted wait state, blocked unstarted implementation and versioned answer fixture in [AMBIGUOUS.md](scenarios/AMBIGUOUS.md) |
+| SW-34, SP-26 | P19/P25 selective replanning fixture | `ReplanningScenarioIT::test_selective_replanning_preserves_unaffected_work` | Affected architecture/code/tests/docs stale, approval invalid, independent analytics active, planning resumed |
+| SW-17, SW-18, SW-23 | P14–16 failure and synchronization fixtures | `FailureRecoveryScenarioIT`; `ParallelJoinScenarioIT` | Preserved attempts and labeled fallback; delayed test design keeps build blocked until the join completes |
+
+The specialist content in these scenarios uses the deterministic fake provider.
+It verifies orchestration, persistence and governance and is not represented as
+a live model-authored code change. The live engineering workflow remains open.
 
 ## Schwab assignment requirements → phases → tests → demonstration evidence
 

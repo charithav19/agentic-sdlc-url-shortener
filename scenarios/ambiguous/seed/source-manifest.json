@@ -1,0 +1,5 @@
+{
+  "sourceScenario": "brownfield",
+  "sourcePath": "../../brownfield/seed",
+  "policy": "materialize and verify the source at scenario start; do not preselect clarification answers"
+}

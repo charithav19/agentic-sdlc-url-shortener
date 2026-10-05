@@ -199,6 +199,8 @@ async def test_metrics_endpoint_exposes_prometheus_text(
 async def test_metrics_endpoint_reads_committed_workflow_and_stage_events(
     phase6_factory: async_sessionmaker[AsyncSession],
 ) -> None:
+    async with session_scope(phase6_factory) as session:
+        baseline = await MetricsReporter(session).snapshot()
     base = datetime(2026, 1, 1, tzinfo=UTC)
     workflow_id = uuid.uuid4()
     workflow = WorkflowRun(
@@ -288,9 +290,26 @@ async def test_metrics_endpoint_reads_committed_workflow_and_stage_events(
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/plain; version=0.0.4")
-    assert "workflow_started_total 1" in response.text
-    assert "workflow_completed_total 1" in response.text
-    assert "stage_execution_total 1" in response.text
-    assert "workflow_duration_seconds_sum 35" in response.text
-    assert "workflow_end_to_end_latency_seconds_sum 40" in response.text
-    assert "workflow_mttr_seconds_sum 15" in response.text
+
+    def metric(name: str) -> float:
+        prefix = f"{name} "
+        return float(
+            next(
+                line.removeprefix(prefix)
+                for line in response.text.splitlines()
+                if line.startswith(prefix)
+            )
+        )
+
+    assert metric("workflow_started_total") == baseline.workflow_started_total + 1
+    assert metric("workflow_completed_total") == baseline.workflow_completed_total + 1
+    assert metric("stage_execution_total") == baseline.stage_execution_total + 1
+    assert metric("workflow_duration_seconds_sum") == pytest.approx(
+        sum(baseline.workflow_durations) + 35, abs=1e-3
+    )
+    assert metric("workflow_end_to_end_latency_seconds_sum") == pytest.approx(
+        sum(baseline.end_to_end_latencies) + 40, abs=1e-3
+    )
+    assert metric("workflow_mttr_seconds_sum") == pytest.approx(
+        sum(baseline.mttr_durations) + 15, abs=1e-3
+    )

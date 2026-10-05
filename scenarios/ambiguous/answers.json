@@ -1,0 +1,8 @@
+{
+  "Should malicious destination URLs be rejected?": "Yes, reject known malicious destinations.",
+  "Should HTTPS be enforced?": "No, continue to allow HTTP and HTTPS.",
+  "Should links expire automatically?": "Expiration remains optional.",
+  "Is authentication required to create links?": "No authentication is required for this scope.",
+  "Should private network URLs be blocked?": "Yes, block localhost and private network destinations.",
+  "Is anti-enumeration required for short codes?": "Yes, retain unpredictable Base62 short codes."
+}

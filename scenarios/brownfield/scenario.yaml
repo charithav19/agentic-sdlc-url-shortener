@@ -1,0 +1,30 @@
+scenario: BROWNFIELD
+requirement_file: requirement.md
+seed: seed
+provider_mode: fake
+expected_checkpoints:
+  - SOURCE_INSPECTION
+  - IMPACT_ANALYSIS
+  - ARCHITECTURE_APPROVAL
+  - PARALLEL_ENGINEERING
+  - REGRESSION_VALIDATION
+  - RELEASE_APPROVAL
+  - COMPLETED
+expected_artifacts:
+  - requirement
+  - source-impact
+  - task-plan
+  - architecture
+  - implementation-candidate
+  - regression-evidence
+  - openapi-documentation
+  - release-manifest
+expected_affected_responsibilities:
+  - controller
+  - service
+  - domain_entity
+  - repository
+  - redirect_behavior
+  - migration
+  - tests
+  - openapi_docs

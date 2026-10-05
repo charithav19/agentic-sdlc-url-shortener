@@ -817,7 +817,16 @@ revision persistence remain in the full Phase 19 plan.
 
 **Risks:** Prebuilt outputs presented as generated work, fake transcript substituted for execution, flaky model results, and uncontrolled candidate dependencies.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** REQUESTED_SCOPE_COMPLETE — the greenfield package now contains a
+minimal buildable Spring Boot seed, strict scenario metadata and deterministic
+specialist fixtures. `GreenfieldScenarioIT` executes the persisted 16-stage DAG,
+proves both exact-version approval pauses, both bounded three-way fan-outs and
+their joins, creates versioned lineage-connected artifacts, and completes only
+after release approval. The seed passed its Maven test. Full-plan acceptance
+still requires the separately identified opt-in live engineering run; no fake
+result is presented as live model or candidate-build evidence. See the
+[greenfield guide](docs/scenarios/GREENFIELD.md) and
+[scenario evidence manifest](docs/evidence/phases-23-25-scenarios/manifest.json).
 
 ## PHASE 24 — Brownfield scenario
 
@@ -837,7 +846,17 @@ revision persistence remain in the full Phase 19 plan.
 
 **Risks:** Copying the complete product into the seed, inventing nonexistent impacted files, destructive migration, and tests passing only on empty databases.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** REQUESTED_SCOPE_COMPLETE — the brownfield package now preserves a
+buildable pre-feature creation/redirect service with controller, services,
+entity, generator, repository, Flyway V1, regression tests and OpenAPI markers.
+The scenario materializes that seed in the workflow workspace and derives its
+impact artifact by inspecting annotation, interface, redirect, SQL, test and
+OpenAPI evidence in the actual files. A rename test proves discovery does not
+depend on hard-coded class names. `BrownfieldScenarioIT` carries the resulting
+plan and implementation report through both approvals, parallel stages,
+validations, documentation and release; the two seed regression tests passed.
+Live model changes and an isolated generated-candidate build remain distinct
+final-demo evidence. See the [brownfield guide](docs/scenarios/BROWNFIELD.md).
 
 ## PHASE 25 — Ambiguous requirement scenario
 
@@ -857,7 +876,9 @@ revision persistence remain in the full Phase 19 plan.
 
 **Risks:** Baking answers into the model, counting a no-op update as replanning, and preserving stale whole-candidate tests.
 
-**Status:** REQUESTED_SCOPE_COMPLETE — `RequirementAgent` explicitly treats
+**Status:** REQUESTED_SCOPE_COMPLETE — the packaged ambiguous fixture now adds
+the exact input, question answers, expiry-change checkpoint and preserved seed
+manifest. `RequirementAgent` explicitly treats
 broad link-safety requests as blocking until malicious destinations, HTTPS,
 expiration, authentication, private networks and anti-enumeration are defined.
 `RequirementAnalysisRunner` invokes the provider without workflow mutation
@@ -869,7 +890,7 @@ Requirement V2 with `SUPERSEDES`/`DERIVED_FROM` lineage, stales generation-1
 downstream attempts, and starts generation 2 with only requirement analysis
 ready.
 
-**Verification:** The PostgreSQL scenario submits “Make links safer.” through a
+**Verification:** `AmbiguousScenarioIT` submits “Make links safer.” through a
 deterministic fake `RequirementAgent` and verifies `blocking_ambiguity=true`
 with all six required question categories. A scheduler cycle while paused
 executes zero stages, and a direct implementation start is rejected. After the
@@ -877,16 +898,18 @@ human submits every answer through `POST
 /api/v1/workflows/{workflowId}/clarifications`, both clarification and
 requirement artifacts advance from V1 to V2, the prior downstream stages become
 `STALE`, preserved intake succeeds in the new generation, and the scheduler
-executes only `REQUIREMENT_ANALYSIS`. The full PostgreSQL suite passed 47 tests;
-the offline suite passed 176 with one opt-in live smoke skipped. Ruff,
-formatting, lock, package build, structure, and diff checks passed. See the
-[ambiguity evidence manifest](docs/evidence/phase-25-ambiguity/manifest.json).
+executes only `REQUIREMENT_ANALYSIS`. `ReplanningScenarioIT` verifies the
+separate `404 → 410` selective invalidation path; `FailureRecoveryScenarioIT`
+and `ParallelJoinScenarioIT` verify fallback and delayed fan-in. On 2026-10-05,
+the full PostgreSQL suite passed 54 tests, the offline suite passed 252 with
+eight explicit opt-in runner/live skips, the greenfield and brownfield seeds
+passed one and two tests respectively, and the URL-shortener `mvn verify`
+passed all 37 tests. See the [scenario evidence
+manifest](docs/evidence/phases-23-25-scenarios/manifest.json).
 
-**Scope boundary:** This requested increment implements the ambiguity pause,
-human answer API, artifact versioning and analysis restart. Full Phase 25 demo
-packaging under `scenarios/ambiguous/`, the separate `404 → 410` checkpoint's
-aggregate validation/release completion, CLI walkthrough and live-provider run
-remain open.
+**Scope boundary:** Deterministic scenario packaging and the requested named
+end-to-end tests are complete. A live-provider engineering run and the later
+deployed CLI walkthrough remain open final-demo evidence.
 
 ## PHASE 26 — Docker Compose
 

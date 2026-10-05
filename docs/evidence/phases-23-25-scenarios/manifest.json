@@ -1,0 +1,51 @@
+{
+  "recordedAt": "2026-10-05",
+  "providerMode": "fake",
+  "liveProviderRun": false,
+  "commands": [
+    {
+      "name": "greenfield-seed",
+      "result": "PASS",
+      "tests": 1
+    },
+    {
+      "name": "brownfield-seed",
+      "result": "PASS",
+      "tests": 2
+    },
+    {
+      "name": "orchestrator-offline",
+      "result": "PASS",
+      "passed": 252,
+      "skipped": 8,
+      "deselected": 54
+    },
+    {
+      "name": "orchestrator-postgresql",
+      "result": "PASS",
+      "passed": 54,
+      "deselected": 260
+    },
+    {
+      "name": "url-shortener-verify",
+      "result": "PASS",
+      "passed": 37,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  ],
+  "namedTests": [
+    "GreenfieldScenarioIT",
+    "BrownfieldScenarioIT",
+    "AmbiguousScenarioIT",
+    "ReplanningScenarioIT",
+    "FailureRecoveryScenarioIT",
+    "ParallelJoinScenarioIT"
+  ],
+  "limitations": [
+    "No live OpenAI provider run was requested or executed.",
+    "Fake-provider implementation reports are orchestration fixtures, not proof of model-authored code changes."
+  ],
+  "sourceHashes": "source-sha256.json"
+}

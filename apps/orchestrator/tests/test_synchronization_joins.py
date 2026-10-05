@@ -19,7 +19,7 @@ from tests.test_parallel_execution import (
 
 @pytest.mark.integration
 @pytest.mark.asyncio
-async def test_build_waits_for_delayed_test_design_then_becomes_ready(
+async def _build_waits_for_delayed_test_design_then_becomes_ready(
     phase6_factory: async_sessionmaker[AsyncSession],
 ) -> None:
     workflow_id, persistence, orchestrator = await create_running_workflow(
@@ -102,3 +102,12 @@ async def test_build_waits_for_delayed_test_design_then_becomes_ready(
         assert all(event.event_type == "STAGE_READINESS_CHANGED" for event in build_events)
         assert any(event.event_type == "STAGE_CLAIMED" for event in events)
         assert any(event.event_type == "STAGE_CLAIM_COMPLETED" for event in events)
+
+
+@pytest.mark.integration
+@pytest.mark.asyncio
+class ParallelJoinScenarioIT:
+    async def test_build_waits_for_every_required_parallel_predecessor(
+        self, phase6_factory: async_sessionmaker[AsyncSession]
+    ) -> None:
+        await _build_waits_for_delayed_test_design_then_becomes_ready(phase6_factory)

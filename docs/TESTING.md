@@ -1,5 +1,36 @@
 # Testing and verification
 
+## Phases 23–25 scenario fixtures — verified on 2026-10-05
+
+The packaged greenfield and brownfield Maven seeds passed **1** and **2** tests.
+The orchestrator offline suite passed **252 tests**, with eight explicit live or
+isolated-runner skips and 54 PostgreSQL tests deselected. The disposable
+PostgreSQL suite passed all **54 tests**. The completed URL-shortener
+`mvn verify` run passed all **37 tests** and built the executable JAR.
+
+```sh
+JAVA_HOME=$(/usr/libexec/java_home -v 21) \
+  apps/url-shortener/mvnw --batch-mode verify
+JAVA_HOME=$(/usr/libexec/java_home -v 21) \
+  apps/url-shortener/mvnw --batch-mode \
+  -f scenarios/greenfield/seed/pom.xml test
+JAVA_HOME=$(/usr/libexec/java_home -v 21) \
+  apps/url-shortener/mvnw --batch-mode \
+  -f scenarios/brownfield/seed/pom.xml test
+cd apps/orchestrator
+.venv/bin/python -m pytest -m 'not integration'
+cd ../..
+UV=/absolute/path/to/uv scripts/test-postgres.sh
+```
+
+The six named integration suites are `GreenfieldScenarioIT`,
+`BrownfieldScenarioIT`, `AmbiguousScenarioIT`, `ReplanningScenarioIT`,
+`FailureRecoveryScenarioIT`, and `ParallelJoinScenarioIT`. Deterministic
+specialist fixtures exercise the real workflow persistence, scheduler,
+approvals, audit, lineage, retry/fallback and replan services. No live OpenAI
+run was made, and fake specialist output is not candidate-build evidence. See
+the [scenario evidence manifest](evidence/phases-23-25-scenarios/manifest.json).
+
 ## Phases 14–15 parallel scheduling and joins — verified on 2026-10-04
 
 Five focused PostgreSQL tests passed for the two configured fan-outs, bounded

@@ -15,6 +15,9 @@ class RequirementAgent(Specialist[RequirementOutput]):
                 "acceptance criteria. Identify ambiguities and ask precise clarifying "
                 "questions. Mark blocking_ambiguity when unresolved intent prevents a safe "
                 "plan. Make assumptions explicit; do not silently decide requirements. "
+                "Broad safety requests such as 'Make links safer' are blocking until the "
+                "human defines malicious destinations, HTTPS enforcement, automatic "
+                "expiration, authentication, private-network URLs, and anti-enumeration. "
             ),
             output_type=RequirementOutput,
             allowed_tools=("read_artifact",),

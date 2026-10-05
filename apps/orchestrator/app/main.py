@@ -8,6 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 
 from app.api.approvals import router as approvals_router
+from app.api.clarifications import router as clarifications_router
 from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
 from app.api.recovery import router as recovery_router
@@ -38,6 +39,7 @@ app = FastAPI(
 )
 app.include_router(health_router)
 app.include_router(approvals_router)
+app.include_router(clarifications_router)
 app.include_router(recovery_router)
 app.include_router(requirements_router)
 register_error_handlers(app)

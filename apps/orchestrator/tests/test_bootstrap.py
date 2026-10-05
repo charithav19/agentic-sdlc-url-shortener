@@ -13,6 +13,7 @@ def test_openapi_exposes_current_endpoints(client: TestClient) -> None:
     assert set(schema["paths"]) == {
         "/health",
         "/api/v1/workflows/{workflow_id}/approvals",
+        "/api/v1/workflows/{workflow_id}/clarifications",
         "/api/v1/workflows/{workflow_id}/requirements",
         "/api/v1/workflows/{workflow_id}/resume",
     }

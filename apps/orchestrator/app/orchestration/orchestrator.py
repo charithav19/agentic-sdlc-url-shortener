@@ -8,6 +8,8 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.agents.contracts import AgentResult
+from app.agents.output_schemas import RequirementOutput
 from app.artifacts.candidate_refs import ArtifactStatus
 from app.artifacts.impact import ArtifactImpactAnalyzer
 from app.artifacts.lineage import ArtifactLineageService, LineageRelationship
@@ -28,6 +30,10 @@ from app.orchestration.claims import (
     StageClaim,
     StageCompletion,
     StaleClaimError,
+)
+from app.orchestration.clarifications import (
+    ClarificationSubmissionResult,
+    RequirementAnalysisResult,
 )
 from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import StageStatus, WorkflowStatus
@@ -509,6 +515,502 @@ class WorkflowOrchestrator:
                 affected_stages=affected_stages,
                 current_stage="TASK_DECOMPOSITION",
                 architecture_approval_required=True,
+            )
+
+    async def record_requirement_analysis(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        requirement_artifact_id: uuid.UUID,
+        result: AgentResult[RequirementOutput],
+        context: TransitionContext,
+    ) -> RequirementAnalysisResult:
+        """Persist agent evidence and pause when its structured result is blocking."""
+
+        if result.workflow_id != workflow_id:
+            raise ValueError("Agent result belongs to another workflow")
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            stage = await session.scalar(
+                select(StageRun)
+                .where(
+                    StageRun.id == result.stage_run_id,
+                    StageRun.workflow_id == workflow_id,
+                )
+                .with_for_update()
+            )
+            requirement = await session.scalar(
+                select(Artifact).where(
+                    Artifact.id == requirement_artifact_id,
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.artifact_type == "requirement",
+                )
+            )
+            if workflow is None or stage is None or requirement is None:
+                raise KeyError("Workflow, requirement, or analysis stage was not found")
+            if (
+                workflow.status is not WorkflowStatus.RUNNING
+                or stage.stage_name != "REQUIREMENT_ANALYSIS"
+                or stage.generation != workflow.generation
+                or stage.status is not StageStatus.RUNNING
+                or result.generation != workflow.generation
+                or result.attempt != stage.attempt
+            ):
+                raise InvalidTransitionError("Requirement analysis result is not current")
+
+            store = ArtifactStore(session)
+            lineage = ArtifactLineageService(session)
+            audit = self.audit_store_factory(session)
+            analysis = await store.put(
+                workflow_id,
+                ArtifactInput(
+                    logical_name="requirement-analysis",
+                    artifact_type="requirement_analysis",
+                    schema_version=result.schema_version,
+                    content=result.output.model_dump(mode="json"),
+                    producer_stage_run_id=stage.id,
+                    requirement_ids=list(requirement.requirement_ids),
+                    component_ids=list(requirement.component_ids),
+                ),
+            )
+            await lineage.add_relationship(
+                workflow_id,
+                parent_artifact_id=requirement.id,
+                child_artifact_id=analysis.id,
+                relationship=LineageRelationship.DERIVED_FROM,
+                requirement_ids=list(requirement.requirement_ids),
+                component_ids=list(requirement.component_ids),
+            )
+            await self._move_stage_record(
+                session,
+                workflow,
+                stage,
+                StageStatus.SUCCEEDED,
+                context,
+                event_type="STAGE_CLAIM_COMPLETED",
+                reason="Requirement analysis evidence persisted",
+            )
+
+            clarification: Artifact | None = None
+            if result.output.blocking_ambiguity:
+                clarification = await store.put(
+                    workflow_id,
+                    ArtifactInput(
+                        logical_name="clarification",
+                        artifact_type="clarification",
+                        schema_version="1",
+                        content={
+                            "status": "PENDING",
+                            "questions": result.output.clarifying_questions,
+                            "answers": [],
+                            "ambiguities": result.output.ambiguities,
+                            "sourceAnalysisArtifactId": str(analysis.id),
+                        },
+                        producer_stage_run_id=stage.id,
+                        requirement_ids=list(requirement.requirement_ids),
+                        component_ids=list(requirement.component_ids),
+                    ),
+                )
+                await lineage.add_relationship(
+                    workflow_id,
+                    parent_artifact_id=analysis.id,
+                    child_artifact_id=clarification.id,
+                    relationship=LineageRelationship.DERIVED_FROM,
+                    requirement_ids=list(requirement.requirement_ids),
+                    component_ids=list(requirement.component_ids),
+                )
+                clarification_stage = StageRun(
+                    workflow_id=workflow_id,
+                    stage_name="CLARIFICATION",
+                    generation=workflow.generation,
+                    attempt=1,
+                    _status=StageStatus.PENDING,
+                    executor="clarification",
+                    input_artifact_refs=[self._artifact_ref(clarification)],
+                    version=1,
+                )
+                session.add(clarification_stage)
+                await session.flush()
+                for target in (
+                    StageStatus.READY,
+                    StageStatus.RUNNING,
+                    StageStatus.WAITING_APPROVAL,
+                ):
+                    await self._move_stage_record(
+                        session,
+                        workflow,
+                        clarification_stage,
+                        target,
+                        context,
+                        event_type="STAGE_CLARIFICATION_CHANGED",
+                        reason="Blocking ambiguity requires human clarification",
+                    )
+                workflow.graph_hash = load_graph(blocking_ambiguity=True).sha256
+                await audit.append(
+                    workflow_id,
+                    event_type="CLARIFICATION_REQUESTED",
+                    actor_type="SYSTEM",
+                    actor_id="requirement-analysis",
+                    stage_run_id=clarification_stage.id,
+                    trace_id=context.trace_id,
+                    artifact_refs=[self._artifact_ref(clarification)],
+                    reason="RequirementAgent reported blocking ambiguity",
+                    payload={
+                        "questions": result.output.clarifying_questions,
+                        "analysis_artifact_id": str(analysis.id),
+                        "provider": result.provider,
+                        "model": result.model,
+                        "context_sha256": result.context_sha256,
+                    },
+                )
+                await self._transition_workflow_record(
+                    session,
+                    workflow,
+                    WorkflowStatus.WAITING_FOR_CLARIFICATION,
+                    TransitionContext(
+                        actor_type="SYSTEM",
+                        actor_id="requirement-analysis",
+                        trace_id=context.trace_id,
+                        reason="Blocking requirement ambiguity",
+                    ),
+                    completion_verified=False,
+                )
+            return RequirementAnalysisResult(
+                workflow_id=workflow_id,
+                workflow_status=workflow.status,
+                workflow_version=workflow.version,
+                analysis_artifact_id=analysis.id,
+                analysis_artifact_version=analysis.version,
+                clarification_artifact_id=clarification.id if clarification else None,
+                clarification_artifact_version=clarification.version if clarification else None,
+                blocking_ambiguity=result.output.blocking_ambiguity,
+                questions=tuple(result.output.clarifying_questions),
+            )
+
+    async def submit_clarification(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        clarification_artifact_id: uuid.UUID,
+        clarification_artifact_version: int,
+        answers: dict[str, str],
+        context: TransitionContext,
+    ) -> ClarificationSubmissionResult:
+        """Version human answers and restart requirement analysis in a new generation."""
+
+        if context.actor_type != "HUMAN":
+            raise InvalidTransitionError("Clarifications require a human actor")
+        normalized_answers = {
+            question.strip(): answer.strip() for question, answer in answers.items()
+        }
+        if not normalized_answers or any(
+            not key or not value for key, value in normalized_answers.items()
+        ):
+            raise ValueError("Every clarification question requires a nonblank answer")
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            if workflow is None:
+                raise KeyError(f"Unknown workflow {workflow_id}")
+            self._require_version(workflow.version, context.expected_version)
+            if workflow.status is not WorkflowStatus.WAITING_FOR_CLARIFICATION:
+                raise InvalidTransitionError("Workflow is not waiting for clarification")
+            clarification = await session.scalar(
+                select(Artifact)
+                .where(
+                    Artifact.id == clarification_artifact_id,
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.version == clarification_artifact_version,
+                    Artifact.logical_name == "clarification",
+                    Artifact.artifact_type == "clarification",
+                )
+                .with_for_update()
+            )
+            if clarification is None or clarification.content.get("status") != "PENDING":
+                raise InvalidTransitionError(
+                    "Clarification artifact is missing or no longer pending"
+                )
+            latest_clarification_version = await session.scalar(
+                select(func.max(Artifact.version)).where(
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.logical_name == "clarification",
+                )
+            )
+            if latest_clarification_version != clarification.version:
+                raise InvalidTransitionError("Clarification artifact is stale")
+            questions = tuple(str(value) for value in clarification.content.get("questions", []))
+            if set(normalized_answers) != set(questions):
+                raise ValueError("Answers must match every pending clarification question exactly")
+            requirement = await session.scalar(
+                select(Artifact)
+                .where(
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.logical_name == "requirement",
+                    Artifact.artifact_type == "requirement",
+                )
+                .order_by(Artifact.version.desc())
+                .limit(1)
+                .with_for_update()
+            )
+            clarification_stage = await session.scalar(
+                select(StageRun)
+                .where(
+                    StageRun.workflow_id == workflow_id,
+                    StageRun.generation == workflow.generation,
+                    StageRun.stage_name == "CLARIFICATION",
+                    StageRun._status == StageStatus.WAITING_APPROVAL,
+                )
+                .with_for_update()
+            )
+            if requirement is None or clarification_stage is None:
+                raise InvalidTransitionError("Clarification context is incomplete")
+
+            audit = self.audit_store_factory(session)
+            store = ArtifactStore(session)
+            lineage = ArtifactLineageService(session)
+            await audit.append(
+                workflow_id,
+                event_type="REPLAN_STARTED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                trace_id=context.trace_id,
+                artifact_refs=[self._artifact_ref(clarification)],
+                reason=context.reason or "Clarification submitted",
+                payload={"from_generation": workflow.generation},
+            )
+            await self._transition_workflow_record(
+                session,
+                workflow,
+                WorkflowStatus.REPLANNING,
+                context,
+                completion_verified=False,
+            )
+            answered = await store.put(
+                workflow_id,
+                ArtifactInput(
+                    logical_name="clarification",
+                    artifact_type="clarification",
+                    schema_version=clarification.schema_version,
+                    content={
+                        **clarification.content,
+                        "status": "ANSWERED",
+                        "answers": [
+                            {"question": question, "answer": normalized_answers[question]}
+                            for question in questions
+                        ],
+                    },
+                    requirement_ids=list(clarification.requirement_ids),
+                    component_ids=list(clarification.component_ids),
+                ),
+            )
+            await lineage.add_relationship(
+                workflow_id,
+                parent_artifact_id=clarification.id,
+                child_artifact_id=answered.id,
+                relationship=LineageRelationship.SUPERSEDES,
+                requirement_ids=list(clarification.requirement_ids),
+                component_ids=list(clarification.component_ids),
+            )
+            revised_requirement = await store.put(
+                workflow_id,
+                ArtifactInput(
+                    logical_name="requirement",
+                    artifact_type="requirement",
+                    schema_version=requirement.schema_version,
+                    content={
+                        "requirement": requirement.content.get("requirement", ""),
+                        "clarifications": answered.content["answers"],
+                        "sourceClarificationArtifactId": str(answered.id),
+                    },
+                    requirement_ids=list(requirement.requirement_ids),
+                    component_ids=list(requirement.component_ids),
+                ),
+            )
+            await lineage.add_relationship(
+                workflow_id,
+                parent_artifact_id=requirement.id,
+                child_artifact_id=revised_requirement.id,
+                relationship=LineageRelationship.SUPERSEDES,
+                requirement_ids=list(requirement.requirement_ids),
+                component_ids=list(requirement.component_ids),
+            )
+            await lineage.add_relationship(
+                workflow_id,
+                parent_artifact_id=answered.id,
+                child_artifact_id=revised_requirement.id,
+                relationship=LineageRelationship.DERIVED_FROM,
+                requirement_ids=list(requirement.requirement_ids),
+                component_ids=list(requirement.component_ids),
+            )
+            await self._move_stage_record(
+                session,
+                workflow,
+                clarification_stage,
+                StageStatus.SUCCEEDED,
+                context,
+                event_type="STAGE_CLARIFICATION_CHANGED",
+                reason="All clarification questions answered",
+            )
+
+            old_generation = workflow.generation
+            old_stages = list(
+                await session.scalars(
+                    select(StageRun)
+                    .where(
+                        StageRun.workflow_id == workflow_id,
+                        StageRun.generation == old_generation,
+                        StageRun.stage_name != "CLARIFICATION",
+                    )
+                    .with_for_update()
+                )
+            )
+            for old_stage in old_stages:
+                if old_stage.status not in {
+                    StageStatus.STALE,
+                    StageStatus.CANCELLED,
+                    StageStatus.ROLLED_BACK,
+                    StageStatus.SAFE_STOPPED,
+                }:
+                    await self._move_stage_record(
+                        session,
+                        workflow,
+                        old_stage,
+                        StageStatus.STALE,
+                        context,
+                        event_type="STAGE_STALE",
+                        reason="Clarification created a new requirement generation",
+                    )
+
+            prior_analysis = await session.scalar(
+                select(Artifact)
+                .where(
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.logical_name == "requirement-analysis",
+                )
+                .order_by(Artifact.version.desc())
+                .limit(1)
+            )
+            for stale_artifact in (clarification, prior_analysis):
+                if stale_artifact is None:
+                    continue
+                lifecycle = await session.get(ArtifactLifecycle, stale_artifact.id)
+                if lifecycle is None:
+                    session.add(
+                        ArtifactLifecycle(
+                            artifact_id=stale_artifact.id,
+                            workflow_id=workflow_id,
+                            status=ArtifactStatus.STALE.value,
+                            active=False,
+                            version=1,
+                        )
+                    )
+                else:
+                    lifecycle.status = ArtifactStatus.STALE.value
+                    lifecycle.active = False
+                    lifecycle.version += 1
+
+            workflow.generation += 1
+            workflow.requirement_version = revised_requirement.version
+            workflow.graph_hash = load_graph().sha256
+            reused_intake_stage = StageRun(
+                workflow_id=workflow_id,
+                stage_name="INTAKE",
+                generation=workflow.generation,
+                attempt=1,
+                _status=StageStatus.PENDING,
+                executor="intake",
+                input_artifact_refs=[self._artifact_ref(revised_requirement)],
+                result={
+                    "source": "preserved_intake",
+                    "clarification_artifact_id": str(answered.id),
+                },
+                version=1,
+            )
+            session.add(reused_intake_stage)
+            await session.flush()
+            for target in (StageStatus.READY, StageStatus.RUNNING, StageStatus.SUCCEEDED):
+                await self._move_stage_record(
+                    session,
+                    workflow,
+                    reused_intake_stage,
+                    target,
+                    context,
+                    event_type="STAGE_REPLAN_CREATED",
+                    reason="Preserve validated intake for clarified requirement",
+                )
+            new_analysis_stage = StageRun(
+                workflow_id=workflow_id,
+                stage_name="REQUIREMENT_ANALYSIS",
+                generation=workflow.generation,
+                attempt=1,
+                _status=StageStatus.PENDING,
+                executor="requirements_specialist",
+                input_artifact_refs=[self._artifact_ref(revised_requirement)],
+                version=1,
+            )
+            session.add(new_analysis_stage)
+            await session.flush()
+            await self._move_stage_record(
+                session,
+                workflow,
+                new_analysis_stage,
+                StageStatus.READY,
+                context,
+                event_type="STAGE_REPLAN_CREATED",
+                reason="Clarified requirement requires fresh analysis",
+            )
+            await audit.append(
+                workflow_id,
+                event_type="CLARIFICATION_SUBMITTED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=clarification_stage.id,
+                trace_id=context.trace_id,
+                artifact_refs=[
+                    self._artifact_ref(answered),
+                    self._artifact_ref(revised_requirement),
+                ],
+                reason=context.reason,
+                payload={"question_count": len(questions), "generation": workflow.generation},
+            )
+            await audit.append(
+                workflow_id,
+                event_type="REPLAN_COMPLETED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                trace_id=context.trace_id,
+                artifact_refs=[self._artifact_ref(revised_requirement)],
+                reason="Fresh requirement analysis is ready",
+                payload={
+                    "generation": workflow.generation,
+                    "current_stage": "REQUIREMENT_ANALYSIS",
+                },
+            )
+            await self._transition_workflow_record(
+                session,
+                workflow,
+                WorkflowStatus.RUNNING,
+                TransitionContext(
+                    actor_type=context.actor_type,
+                    actor_id=context.actor_id,
+                    trace_id=context.trace_id,
+                    reason="Clarification accepted; rerun requirement analysis",
+                ),
+                completion_verified=False,
+            )
+            return ClarificationSubmissionResult(
+                workflow_id=workflow_id,
+                workflow_status=workflow.status,
+                workflow_version=workflow.version,
+                generation=workflow.generation,
+                clarification_artifact_id=answered.id,
+                clarification_artifact_version=answered.version,
+                requirement_artifact_id=revised_requirement.id,
+                requirement_version=revised_requirement.version,
+                requirement_analysis_stage_run_id=new_analysis_stage.id,
             )
 
     async def request_approval_checkpoint(
@@ -1406,6 +1908,59 @@ class WorkflowOrchestrator:
                     completion_verified=False,
                 )
         return self._approval_result(approval, workflow)
+
+    async def _move_stage_record(
+        self,
+        session: AsyncSession,
+        workflow: WorkflowRun,
+        stage: StageRun,
+        target: StageStatus,
+        context: TransitionContext,
+        *,
+        event_type: str,
+        reason: str,
+    ) -> None:
+        previous = stage.status
+        require_stage_transition(previous, target)
+        now = datetime.now(UTC)
+        with orchestrator_transition():
+            stage._status = target
+        stage.version += 1
+        if target in {StageStatus.RUNNING, StageStatus.FALLBACK_RUNNING}:
+            stage.started_at = stage.started_at or now
+        if target in {
+            StageStatus.SUCCEEDED,
+            StageStatus.FAILED,
+            StageStatus.ROLLED_BACK,
+            StageStatus.STALE,
+            StageStatus.SKIPPED,
+            StageStatus.SAFE_STOPPED,
+            StageStatus.CANCELLED,
+        }:
+            stage.completed_at = now
+        if target is StageStatus.STALE:
+            stage.lease_token = None
+            stage.claim_owner = None
+            stage.lease_expires_at = None
+        if target is StageStatus.SUCCEEDED:
+            workflow.last_successful_stage = stage.stage_name
+        await self.audit_store_factory(session).append(
+            workflow.id,
+            event_type=event_type,
+            actor_type=context.actor_type,
+            actor_id=context.actor_id,
+            stage_run_id=stage.id,
+            trace_id=context.trace_id,
+            before_state=previous.value,
+            after_state=target.value,
+            reason=reason,
+            payload={
+                "entity_version": stage.version,
+                "stage_name": stage.stage_name,
+                "generation": stage.generation,
+                "attempt": stage.attempt,
+            },
+        )
 
     async def _transition_workflow_record(
         self,

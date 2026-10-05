@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 and the requested Phase 12–19 scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification, candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, and Phases 20–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9, the requested Phase 12–19 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, Phase 25 demo packaging, and Phases 20–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -24,8 +24,8 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-05 | Greenfield scenario for new systems/features (p1 §3; p2 §5) | P23; `scenarios/greenfield/` | `OT/scenarios/test_greenfield.py::minimal_seed_to_working_service` | E02: decomposition, orchestration, approvals and actual validation |
 | SW-06 | Brownfield enhancements/refactors/bug-fix scope (p1 §3; p2 §5) | P24; `scenarios/brownfield/` | `OT/scenarios/test_brownfield.py::enhancement_preserves_regressions_and_data` | E03: enhancement scenario, inspected baseline, data-preserving migration, before/after regressions. Enhancement is the chosen required brownfield demonstration, not a claim that every example subtype has its own demo |
 | SW-07 | Test and documentation improvements (p1 §3) | P11–12, P15, P23–25; test/documentation specialists and gates | `OT/test_specialist_contracts.py::test_and_documentation_outputs`; scenario generated-test execution and documentation-currentness cases | E02–E04: generated test/doc diffs mapped to criteria and executed validation |
-| SW-08 | Well-defined and ambiguous requirements (p1 §3) | P13, P23, P25; clarification service | `OT/test_clarifications.py::blocks_until_answered`; `OT/scenarios/test_ambiguous.py::no_implementation_during_ambiguity` | E02 + E04: well-defined progress and visible clarification pause |
-| SW-09 | Understand intent, identify ambiguity, normalize engineering problem (p1 §4.1) | P11–13, P25; RequirementAgent/schema | `OT/test_specialist_contracts.py::requirement_fields`; `OT/test_gates.py::unresolved_ambiguity_blocks` | E04: questions, assumptions, stable acceptance IDs and normalized version after human answer |
+| SW-08 | Well-defined and ambiguous requirements (p1 §3) | P13, P23, P25; clarification service | `OT/test_ambiguous_requirement.py::test_ambiguous_requirement_blocks_downstream_until_clarified`; future packaged scenario test | E04: visible clarification pause and zero downstream execution verified; packaged demo remains open |
+| SW-09 | Understand intent, identify ambiguity, normalize engineering problem (p1 §4.1) | P11–13, P25; RequirementAgent/schema | `OT/test_specialist_contracts.py::requirement_fields`; `OT/test_ambiguous_requirement.py::test_ambiguous_requirement_blocks_downstream_until_clarified` | E04: six safety questions, explicit blocking status, human answers and revised immutable requirement |
 | SW-10 | Decompose into actionable dependent/sequenced tasks (p1 §4.2) | P7–8, P11; PlanningAgent, graph, resolver | `OT/test_specialist_contracts.py::task_dependencies`; `OT/test_dependency_resolver.py::sequential_and_fan_out` | E02–E04: task plan, impacted components and versioned dependency graph |
 | SW-11 | Reason about actual brownfield modules/services/APIs/data flows (p1 §4.3) | P11, P24; search/read tools, architecture specialist | `OT/scenarios/test_brownfield.py::inspection_precedes_plan_and_maps_real_files` | E03: tool inspection receipts, impacted-file map, architecture/API/data-flow explanation |
 | SW-12 | Coordinate complete SDLC: requirements, design, implementation, tests, docs, release readiness (p1 §4.4) | P7, P9, P11–15, P23; default graph and orchestrator | `OT/test_graph_validation.py::full_lifecycle_contract`; `OT/scenarios/test_greenfield.py::all_required_stages_complete` | E02 + E05: complete graph and causal execution timeline |
@@ -102,7 +102,7 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-29 | All CLI commands, exact approval details, JSON/no-color/narrow display, watch interruption, explicit CI actors (spec §13.2) | P22–25 | `OT/test_cli.py`, `test_cli_api_contract.py`, scenario tests | E02–E04 CLI transcripts |
 | SP-30 | Minimal greenfield seed; real generated files/tests/docs; separate live proof (spec §14.1) | P23 | `OT/scenarios/test_greenfield.py`, `OT/live/test_live_engineering_workflow.py` | E02 + E15 |
 | SP-31 | Brownfield actual inspection and data-preserving alias/expiry upgrade (spec §14.2) | P24 | `OT/scenarios/test_brownfield.py` | E03 |
-| SP-32 | Blocking ambiguity/questions/answers/versioning and failure-injection scenario variants (spec §14.3) | P13, P23–25 | Clarification and all scenario failure-variant tests | E04 + E07–E08 |
+| SP-32 | Blocking ambiguity/questions/answers/versioning and failure-injection scenario variants (spec §14.3) | P13, P23–25 | `OT/test_ambiguous_requirement.py::test_ambiguous_requirement_blocks_downstream_until_clarified`; remaining scenario failure variants | E04 ambiguity checkpoint verified; packaged/failure variants remain open |
 | SP-33 | Precise metric formulas/windows/N/A, pending gauge, audit event fields/causal sequence (spec §15) | P6, P9, P21 | `OT/test_metrics.py`, `test_audit_coverage.py` | E11 |
 | SP-34 | Real PostgreSQL migration/constraint/concurrency tests, deterministic clocks/provider, separate live evidence (spec §16; AGENTS) | P1–28 as applicable | Java PostgreSQL tests; Python integration suite; live smoke and workflow tests | E12 + E14–E15 |
 | SP-35 | Durable Compose, health-gated startup, separate roles/migrations, loopback/non-root, graceful stop, fake default (spec §17) | P26 | `scripts/test-compose.sh`, `scripts/smoke-test.sh` | E13 |
@@ -143,6 +143,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 25 ambiguous requirement checkpoint verification record
+
+Phase 25 is **VERIFIED on 2026-10-04 for the requested ambiguity checkpoint
+scope**. This is a deterministic fake-provider integration scenario; it is not
+the complete packaged Phase 25 demonstration or live-provider evidence.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-08, SW-09, SP-17, SP-32 | `test_ambiguous_requirement_blocks_downstream_until_clarified` | RequirementAgent returns explicit normalized requirement, criteria, ambiguities, risks, six safety questions and `blocking_ambiguity=true` | Opt-in live-provider scenario evidence |
+| SW-13, SW-25, SP-14 | Same PostgreSQL scenario | Workflow transitions `RUNNING → WAITING_FOR_CLARIFICATION`; conditional clarification stage waits; scheduler and direct transition guards prevent architecture/implementation execution | CLI watch/status presentation |
+| SW-08, SW-34, SP-25, SP-32 | Clarification API assertions | Exact pending Clarification V1 receives complete human answers in immutable V2; Requirement V2 preserves answers and both supersession chains | Duplicate/concurrent submission fault injection |
+| SW-13, SP-13, SP-19 | Generation and scheduler assertions | Old downstream attempts become `STALE`; validated intake is preserved in generation 2 and only requirement analysis reruns | Continue through revised architecture approval and full candidate validation |
+
+The complete PostgreSQL suite passed 47 tests; the offline suite passed 176
+tests with one opt-in live smoke skipped. See the [Phase 25 ambiguity evidence
+manifest](evidence/phase-25-ambiguity/manifest.json).
 
 ## Phase 19 selective dynamic replanning verification record
 
@@ -268,7 +285,7 @@ and fails on active blocking policy violations.
 | Requirements | Test evidence | Verified behavior | Remaining integration |
 |---|---|---|---|
 | SW-15, SP-15 | `test_gates.py` (28 tests) and `test_graph_validation.py` release assertion | Typed gates reject missing, malformed, corrupt, stale and incompatible evidence; WAIT never becomes PASS | Scheduler claim/commit recheck and durable gate/audit record |
-| SW-09 | Requirement/architecture-entry gate tests | Normalized requirement, acceptance criteria, explicit ambiguity/assumptions; blocking ambiguity waits | Clarification persistence and resume in Phase 13 |
+| SW-09 | Requirement/architecture-entry gate tests | Normalized requirement, acceptance criteria, explicit ambiguity/assumptions; blocking ambiguity waits | Clarification persistence/resume is now verified in the Phase 25 requested scope |
 | SW-21, SP-16 | Implementation-entry approval tests | Only an exact current APPROVED architecture artifact passes | Reviewer authentication/API/invalidation in Phase 13 |
 | SW-12, SP-15 | Release-readiness tests | Build, unit, integration, security and documentation must all succeed; blocking policy finding fails | Policy engine rules in Phase 20 and scheduler execution in Phase 14 |
 
@@ -305,7 +322,7 @@ fixture/local-SDK and PostgreSQL results, not a live model demonstration.
 
 | Requirement | Phase/module | Tests | Actual evidence / outstanding scope |
 |---|---|---|---|
-| SW-09, SP-17 | P11 RequirementAgent | `test_specialist_contract`, `test_blocking_ambiguity_requires_questions` | Strict requirement fields and consistent ambiguity output; human clarification workflow pending |
+| SW-09, SP-17 | P11 RequirementAgent | `test_specialist_contract`, `test_blocking_ambiguity_requires_questions`, `test_ambiguous_requirement_blocks_downstream_until_clarified` | Strict requirement fields, blocking ambiguity output and human clarification workflow verified with fake provider; live quality remains open |
 | SW-10, SP-17 | P11 PlanningAgent | `test_invalid_task_graph` | Task references/cycles/parallel groups validated; live decomposition quality unverified |
 | SW-07, SW-11, SW-12, SP-17 | P11 eight specialists | `test_specialist_contract`, `test_specialists_bind_existing_graph_identifiers` | Instructions, schemas, tools and budgets for all eight; candidate editing/execution pending |
 | SW-19, SP-17 | P10 context/provider | `test_fake_provider_repeatable_and_validated` | Versioned bounded inputs and provenance hashes; durable result integration pending |

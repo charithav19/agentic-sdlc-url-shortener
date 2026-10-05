@@ -857,7 +857,36 @@ revision persistence remain in the full Phase 19 plan.
 
 **Risks:** Baking answers into the model, counting a no-op update as replanning, and preserving stale whole-candidate tests.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** REQUESTED_SCOPE_COMPLETE — `RequirementAgent` explicitly treats
+broad link-safety requests as blocking until malicious destinations, HTTPS,
+expiration, authentication, private networks and anti-enumeration are defined.
+`RequirementAnalysisRunner` invokes the provider without workflow mutation
+authority; the orchestrator persists its structured analysis and questions,
+creates a `CLARIFICATION` checkpoint and transitions `RUNNING →
+WAITING_FOR_CLARIFICATION`. The authenticated clarification endpoint binds
+answers to the exact pending artifact, creates immutable Clarification V2 and
+Requirement V2 with `SUPERSEDES`/`DERIVED_FROM` lineage, stales generation-1
+downstream attempts, and starts generation 2 with only requirement analysis
+ready.
+
+**Verification:** The PostgreSQL scenario submits “Make links safer.” through a
+deterministic fake `RequirementAgent` and verifies `blocking_ambiguity=true`
+with all six required question categories. A scheduler cycle while paused
+executes zero stages, and a direct implementation start is rejected. After the
+human submits every answer through `POST
+/api/v1/workflows/{workflowId}/clarifications`, both clarification and
+requirement artifacts advance from V1 to V2, the prior downstream stages become
+`STALE`, preserved intake succeeds in the new generation, and the scheduler
+executes only `REQUIREMENT_ANALYSIS`. The full PostgreSQL suite passed 47 tests;
+the offline suite passed 176 with one opt-in live smoke skipped. Ruff,
+formatting, lock, package build, structure, and diff checks passed. See the
+[ambiguity evidence manifest](docs/evidence/phase-25-ambiguity/manifest.json).
+
+**Scope boundary:** This requested increment implements the ambiguity pause,
+human answer API, artifact versioning and analysis restart. Full Phase 25 demo
+packaging under `scenarios/ambiguous/`, the separate `404 → 410` checkpoint's
+aggregate validation/release completion, CLI walkthrough and live-provider run
+remain open.
 
 ## PHASE 26 — Docker Compose
 

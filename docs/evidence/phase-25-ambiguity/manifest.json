@@ -1,0 +1,43 @@
+{
+  "phase": 25,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_AMBIGUITY_CHECKPOINT_SCOPE_VERIFIED",
+  "base_commit": "c4530d1",
+  "source_state": "Uncommitted ambiguity-checkpoint changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / FastAPI / SQLAlchemy 2 / asyncio / deterministic fake AgentProvider",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff check app tests && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run pytest -m 'not integration and not runner'",
+      "passed": 176,
+      "skipped": 1,
+      "failed": 0,
+      "deselected": 54
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache scripts/test-postgres.sh",
+      "passed": 47,
+      "failed": 0,
+      "deselected": 184
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv lock --check && UV_CACHE_DIR=/tmp/schwab-uv-cache uv build --no-sources",
+      "result": "passed"
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make structure",
+      "result": "passed"
+    }
+  ],
+  "requirements": ["SW-08", "SW-09", "SW-13", "SW-34", "SP-13", "SP-14", "SP-17", "SP-25", "SP-32"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "The integration test uses the deterministic fake AgentProvider; no live model call is claimed",
+    "The complete scenarios/ambiguous demo package and CLI walkthrough remain open",
+    "The scenario stops after proving the fresh requirement-analysis rerun and does not claim revised architecture approval or candidate validation",
+    "Concurrent duplicate clarification submission fault injection remains open"
+  ]
+}

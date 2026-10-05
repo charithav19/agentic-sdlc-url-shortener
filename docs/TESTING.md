@@ -1,5 +1,40 @@
 # Testing and verification
 
+## Phase 26 Docker Compose — verified on 2026-10-05
+
+The complete local stack built and started from the repository root. Compose
+resolved exactly four services: `orchestrator-db`, `orchestrator`,
+`shortener-db`, and `url-shortener`. Both PostgreSQL health checks and both
+application readiness checks passed. The application containers run as
+non-root UID/GID 10001, the URL service applied Flyway through rank 3, and the
+orchestrator applied Alembic through `0009_observability_indexes`.
+
+```sh
+docker compose config --quiet
+docker compose config --services
+ORCHESTRATOR_PORT=18000 make up
+ORCHESTRATOR_PORT=18000 \
+  ORCHESTRATOR_BASE_URL=http://127.0.0.1:18000 make demo
+ORCHESTRATOR_PORT=18000 make down
+ORCHESTRATOR_PORT=18000 make up
+```
+
+The verification host already had a listener on port 8000, so the documented
+port override was used for the actual run. The committed default remains 8000.
+`make demo` passed the database and application health checks and then exercised
+URL creation, metadata lookup, `302` redirect location, analytics, URL OpenAPI,
+orchestrator OpenAPI, and orchestration metrics. After `make down` and a fresh
+`make up`, a link created before shutdown remained queryable, proving that normal
+shutdown preserved the named database volume. The rebuilt containers again
+became healthy.
+
+The images use digest-pinned Java 21, Python 3.12.13, and PostgreSQL 17.7 bases.
+The Java build verifies the downloaded Maven 3.9.16 checksum; the Python build
+uses uv 0.11.8 with the checked-in lock. No Docker socket is mounted into an
+application, and the default orchestrator provider is the deterministic fake.
+No live OpenAI request was made. See the [Phase 26 evidence
+manifest](evidence/phase-26-compose/manifest.json).
+
 ## Phases 23–25 scenario fixtures — verified on 2026-10-05
 
 The packaged greenfield and brownfield Maven seeds passed **1** and **2** tests.

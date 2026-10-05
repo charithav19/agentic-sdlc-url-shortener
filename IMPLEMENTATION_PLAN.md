@@ -915,21 +915,21 @@ deployed CLI walkthrough remain open final-demo evidence.
 
 **Objective:** Package the verified local system into a reproducible reviewer startup with durable storage and restricted execution.
 
-**Exact modules/files expected:** `docker-compose.yml`, `apps/url-shortener/Dockerfile`, `apps/orchestrator/Dockerfile`, `infra/postgres/init-databases.sh`, `scripts/health-check.sh`, `scripts/smoke-test.sh`, `scripts/test-compose.sh`, `.dockerignore`; update runner files, `.env.example`, `Makefile`, `README.md`.
+**Exact modules/files expected:** `docker-compose.yml`, `apps/url-shortener/Dockerfile`, `apps/url-shortener/.dockerignore`, `apps/orchestrator/Dockerfile`, `apps/orchestrator/.dockerignore`, `scripts/health-check.sh`, `scripts/smoke-test.sh`, `.dockerignore`; updates to `.env.example`, `Makefile`, `README.md`, `scripts/verify-structure.py`, `docs/TESTING.md`, and `docs/TRACEABILITY.md`.
 
-**Data model changes:** Provision separate URL/orchestrator databases and roles on one PostgreSQL server; named persistent volumes; each service runs only its own migration history. No destructive reset in normal shutdown.
+**Data model changes:** Provision independent URL and orchestrator PostgreSQL containers, users, databases, and named volumes; each application runs only its own Flyway or Alembic migration history. No destructive reset occurs during normal shutdown.
 
 **APIs:** Loopback-bound URL/orchestrator endpoints and documented CLI execution path; `make up`, `down`, `health`, `test`, `lint`, `demo`, `smoke`; destructive reset, if supplied, explicitly separate. Default fake mode, live explicitly selected.
 
 **Dependencies:** Phases 4, 5, 11, 22–25.
 
-**Tests:** Clean checkout/env setup/build/start; health/readiness wait; migrations, URL smoke and minimal workflow; all scenario entry points; restart preserves links/workflows/approvals; graceful shutdown; cross-role DB access denied; keys absent from candidate runner; resource/mount/network boundaries and non-root app users.
+**Tests:** Compose configuration and exact service inventory; clean image build/start with health/readiness wait; Flyway and Alembic migration heads; URL creation/metadata/redirect/analytics smoke; both OpenAPI documents and orchestrator metrics; named-volume persistence across shutdown/startup; non-root application users; shell syntax and structure validation.
 
-**Acceptance criteria:** Documented reviewer sequence works; images pinned; persistent data survives `make down`; trusted provisioning boundary cannot be reached by agents; first-build downloads/prerequisites honestly documented.
+**Acceptance criteria:** `docker compose up --build` is the documented root command; all four requested services become healthy; images and locked dependencies are reproducible; `make up`, `down`, `test`, `health`, and `demo` are available; persistent data survives `make down`; no Docker socket reaches either application; first-build downloads and prerequisites are documented.
 
 **Risks:** Docker socket leaking into control-plane tools, migration races, platform-specific images, privileged runner, and false offline-start claims.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-05 for the requested Phase 26 Compose scope. `docker compose config --quiet` passed and resolved exactly `orchestrator-db`, `orchestrator`, `shortener-db`, and `url-shortener`. Both multi-stage application images built from digest-pinned bases with locked tool/dependency versions; startup applied Flyway through rank 3 and Alembic through `0009_observability_indexes`. All four services became healthy, both applications ran as UID/GID 10001, and the HTTP smoke covered URL creation, metadata, `302` redirect, analytics, both OpenAPI documents, orchestrator health, and metrics. `make demo` passed. Port 8000 was occupied on the verification host, so the actual orchestrator run used the documented `ORCHESTRATOR_PORT=18000` override while the committed default remains 8000. No live OpenAI provider was selected; Compose deliberately used the fake provider. See the [Phase 26 testing record](docs/TESTING.md#phase-26-docker-compose--verified-on-2026-10-05) and [evidence manifest](docs/evidence/phase-26-compose/manifest.json).
 
 ## PHASE 27 — GitHub Actions CI
 

@@ -18,9 +18,9 @@ help:
 	  '  lint / format   Check / apply pinned Java and Python formatting' \
 	  '  structure       Verify monorepo layout and build configuration' \
 	  '  compose-config  Validate Compose with example configuration' \
-	  '  up / down       Start / stop databases only; down preserves volumes' \
-	  '  health          Check database readiness only' \
-	  '  demo / smoke    Unavailable until scenario/packaging phases'
+	  '  up / down       Build and start / stop the complete Compose stack' \
+	  '  health          Check both databases and application readiness' \
+	  '  demo / smoke    Start and exercise the packaged services'
 
 bootstrap:
 	cd $(PYTHON_APP) && $(UV) sync --locked
@@ -60,18 +60,18 @@ structure:
 	$(PYTHON) scripts/verify-structure.py
 
 compose-config:
-	$(COMPOSE) --env-file .env.example config --quiet
+	$(COMPOSE) config --quiet
 
 up:
-	$(COMPOSE) up --detach --wait
+	$(COMPOSE) up --build --detach --wait
 
 down:
-	$(COMPOSE) down
+	$(COMPOSE) down --remove-orphans
 
 health:
-	$(COMPOSE) exec -T url-db sh -c 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
-	$(COMPOSE) exec -T orchestrator-db sh -c 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
+	scripts/health-check.sh
 
-demo smoke:
-	@printf '%s\n' '$@ is not implemented yet; see IMPLEMENTATION_PLAN.md.' >&2
-	@exit 2
+smoke: health
+	scripts/smoke-test.sh
+
+demo: up smoke

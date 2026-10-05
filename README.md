@@ -10,8 +10,9 @@ readiness, and a transactional orchestrator owns legal state changes with
 atomic audit events. Eight typed specialists now use an OpenAI Agents SDK
 provider or an explicit deterministic test provider. Bounded engineering tools
 edit only the assigned workflow workspace and run fixed Maven/pytest commands
-in disposable isolated containers. Workflow scheduling remains pending.
-Offline SDK and real runner tests pass; a live API run has not been verified.
+in disposable isolated containers. The complete local stack is packaged with
+Docker Compose and defaults to the deterministic fake provider. Offline SDK and
+real runner tests pass; a live OpenAI API run has not been verified.
 
 ## Repository layout
 
@@ -37,7 +38,7 @@ See [the implementation plan](IMPLEMENTATION_PLAN.md),
 - JDK 21 (the build rejects other major versions).
 - Python 3.12.13 and uv 0.11.8; uv can download the pinned Python version.
 - Docker with Compose v2 for Java Testcontainers tests and database checks.
-- GNU Make, a POSIX shell, and network access for the first dependency/image downloads.
+- GNU Make, a POSIX shell, curl, and network access for the first dependency/image downloads.
 
 Maven 3.9.16 is downloaded by the checked-in Apache Maven Wrapper 3.3.4 and
 verified against a pinned SHA-256. Spring Boot 3.5.16 manages Java dependency and
@@ -73,10 +74,11 @@ unavailable; it does not silently skip the database check.
 
 ## Run the URL service
 
-Create `.env` from `.env.example`, replace the URL database password, and start
-the two development databases with `make up`. The Spring Boot process needs the
-same `URL_DB_PASSWORD` value in its environment. Its default JDBC URL points to
-the URL database at `localhost:5433`; `URL_DB_JDBC_URL` overrides it.
+To run Spring Boot directly on the host, copy `.env.example` to `.env`, replace
+the URL database password, and start only its database with
+`docker compose up -d shortener-db`. The Spring Boot process needs the same
+`URL_DB_PASSWORD` value in its environment. Its default JDBC URL points to the
+URL database at `localhost:5433`; `URL_DB_JDBC_URL` overrides it.
 
 ```sh
 cd apps/url-shortener
@@ -162,31 +164,42 @@ and requirement decisions use `ORCHESTRATOR_LOCAL_REVIEWER_TOKEN` and
 `AGENTIC_REVIEWER_ID`; credentials are sent only as headers. The CLI never
 opens the orchestrator database or changes workflow state directly.
 
-## Compose skeleton
+## Docker Compose
 
-`docker-compose.yml` provisions **only two development PostgreSQL services**:
-`url-db` on loopback port 5433 and `orchestrator-db` on loopback port 5434. Each
-has its own database, role and persistent volume. PostgreSQL's initial roles are
-development bootstrap administrators; later persistence phases will introduce
-appropriate restricted application roles. Application containers, migration
-startup and the restricted engineering runner are not part of this skeleton.
+`docker-compose.yml` packages `shortener-db`, `orchestrator-db`,
+`url-shortener`, and `orchestrator`. Each application waits for its own healthy
+PostgreSQL service and runs its migration history at startup. Databases and
+orchestrator workspaces use separate named volumes. Published ports bind to
+loopback, and both application images run as non-root UID/GID 10001. The
+orchestrator defaults to the deterministic fake provider; select a live
+provider explicitly and supply its key only when needed.
 
 ```sh
-cp .env.example .env
-# Replace both example database passwords in .env.
+docker compose up --build
+```
+
+For detached startup with readiness waiting and the automated smoke path:
+
+```sh
+# Optional: copy .env.example to .env and change the local-only defaults.
 make up
 make health
+make demo
 make down
 ```
 
-`make health` checks databases only. `make down` preserves data. `make demo` and
-`make smoke` return a clear nonzero “not implemented yet” message rather
-than reporting success. No destructive reset command is provided.
+`make health` checks both databases and application readiness. `make demo`
+builds the stack and verifies URL creation, metadata, redirect, analytics,
+OpenAPI, orchestrator health, and metrics over HTTP. `make down` performs a
+graceful stop and preserves all named volumes; no destructive reset target is
+provided. The default loopback ports are 8080, 8000, 5433, and 5434 and can be
+overridden with the variables in `.env.example`. First startup requires network
+access to download the pinned images and locked build dependencies.
 
 ## Verification record and scope
 
 See [TESTING.md](docs/TESTING.md) for actual commands/results and the
-[traceability matrix](docs/TRACEABILITY.md) for requirement coverage. Later
-phase features remain unimplemented. Do not commit `.env`, credentials, generated
+[traceability matrix](docs/TRACEABILITY.md) for requirement coverage. Do not
+commit `.env`, credentials, generated
 workspaces, caches or transient logs. The assignment PDF is marked Schwab Internal;
 this work does not publish the repository or its contents.

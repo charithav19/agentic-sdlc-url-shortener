@@ -1,34 +1,30 @@
-# Phase 1 skeleton: databases only. Application images, migrations and the
-# restricted runner are added in their planned phases, not represented as working.
 name: schwab-agentic-engineering
 
-x-application-layout:
-  url-shortener: apps/url-shortener
-  orchestrator: apps/orchestrator
-
 services:
-  url-db:
+  shortener-db:
     image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
     environment:
       POSTGRES_DB: ${URL_DB_NAME:-url_shortener}
       POSTGRES_USER: ${URL_DB_USER:-url_shortener}
-      POSTGRES_PASSWORD: ${URL_DB_PASSWORD:?Set URL_DB_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${URL_DB_PASSWORD:-local-shortener-password}
     ports:
       - "127.0.0.1:${URL_DB_PORT:-5433}:5432"
     volumes:
-      - url-db-data:/var/lib/postgresql/data
+      - shortener-db-data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
 
   orchestrator-db:
     image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
     environment:
       POSTGRES_DB: ${ORCHESTRATOR_DB_NAME:-orchestrator}
       POSTGRES_USER: ${ORCHESTRATOR_DB_USER:-orchestrator}
-      POSTGRES_PASSWORD: ${ORCHESTRATOR_DB_PASSWORD:?Set ORCHESTRATOR_DB_PASSWORD in .env}
+      POSTGRES_PASSWORD: ${ORCHESTRATOR_DB_PASSWORD:-local-orchestrator-password}
     ports:
       - "127.0.0.1:${ORCHESTRATOR_DB_PORT:-5434}:5432"
     volumes:
@@ -37,8 +33,80 @@ services:
       test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
       interval: 5s
       timeout: 3s
-      retries: 10
+      retries: 12
+      start_period: 5s
+    restart: unless-stopped
+
+  url-shortener:
+    build:
+      context: apps/url-shortener
+      dockerfile: Dockerfile
+    environment:
+      URL_DB_JDBC_URL: jdbc:postgresql://shortener-db:5432/${URL_DB_NAME:-url_shortener}
+      URL_DB_USER: ${URL_DB_USER:-url_shortener}
+      URL_DB_PASSWORD: ${URL_DB_PASSWORD:-local-shortener-password}
+      URL_DB_CONNECTION_TIMEOUT_MS: ${URL_DB_CONNECTION_TIMEOUT_MS:-3000}
+      URL_BASE_URL: http://localhost:${URL_SHORTENER_PORT:-8080}
+      URL_CREATE_RATE_CAPACITY: ${URL_CREATE_RATE_CAPACITY:-60}
+      URL_CREATE_RATE_WINDOW: ${URL_CREATE_RATE_WINDOW:-1m}
+      URL_ANALYTICS_ENABLED: ${URL_ANALYTICS_ENABLED:-true}
+      URL_ANALYTICS_MAX_THREADS: ${URL_ANALYTICS_MAX_THREADS:-2}
+      URL_ANALYTICS_QUEUE_CAPACITY: ${URL_ANALYTICS_QUEUE_CAPACITY:-100}
+    ports:
+      - "127.0.0.1:${URL_SHORTENER_PORT:-8080}:8080"
+    depends_on:
+      shortener-db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "http://localhost:8080/actuator/health/readiness"]
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 20s
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 20s
+
+  orchestrator:
+    build:
+      context: apps/orchestrator
+      dockerfile: Dockerfile
+    environment:
+      ORCHESTRATOR_DB_HOST: orchestrator-db
+      ORCHESTRATOR_DB_PORT: 5432
+      ORCHESTRATOR_DB_NAME: ${ORCHESTRATOR_DB_NAME:-orchestrator}
+      ORCHESTRATOR_DB_USER: ${ORCHESTRATOR_DB_USER:-orchestrator}
+      ORCHESTRATOR_DB_PASSWORD: ${ORCHESTRATOR_DB_PASSWORD:-local-orchestrator-password}
+      ORCHESTRATOR_DB_CONNECT_TIMEOUT_SECONDS: ${ORCHESTRATOR_DB_CONNECT_TIMEOUT_SECONDS:-3}
+      ORCHESTRATOR_LOG_LEVEL: ${ORCHESTRATOR_LOG_LEVEL:-INFO}
+      ORCHESTRATOR_LOCAL_REVIEWER_TOKEN: ${ORCHESTRATOR_LOCAL_REVIEWER_TOKEN:-local-reviewer-token}
+      ORCHESTRATOR_MAX_PARALLEL_STAGES: ${ORCHESTRATOR_MAX_PARALLEL_STAGES:-3}
+      ORCHESTRATOR_STAGE_CLAIM_LEASE_SECONDS: ${ORCHESTRATOR_STAGE_CLAIM_LEASE_SECONDS:-300}
+      AGENT_PROVIDER: ${AGENT_PROVIDER:-fake}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+    ports:
+      - "127.0.0.1:${ORCHESTRATOR_PORT:-8000}:8000"
+    volumes:
+      - orchestrator-workspaces:/workspaces
+    depends_on:
+      orchestrator-db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2).read()"
+      interval: 5s
+      timeout: 3s
+      retries: 18
+      start_period: 15s
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 20s
 
 volumes:
-  url-db-data:
+  shortener-db-data:
   orchestrator-db-data:
+  orchestrator-workspaces:

@@ -74,7 +74,7 @@ a live model-authored code change. The live engineering workflow remains open.
 | SW-36 | Identify risks/tradeoffs/failure scenarios and validation/safety guardrails (p2 §4.6) | Every phase's risks; P12, P16–17, P20, P28 | Gate/retry/compensation/abuse tests; `docs/FINAL_REVIEW.md` risk-to-test review | E06–E09 + E16: fault-injection outcomes, ADR consequences and explicit limitations |
 | SW-37 | Agents execute multi-step work; humans retain oversight/approvals/final quality (p2 §4.7; p3 §7) | P9–13, P20, P23, P28 | `OT/test_state_machine.py::agent_cannot_transition`; `OT/test_reviewer_auth.py`; live workflow approval checkpoints | E02 + E06 + E15: agent tool work bounded by deterministic engine and authenticated decisions |
 | SW-38 | Final summary with plan/rationale, artifacts, risks/tradeoffs/validation, assumptions, limitations (p2 §4.8) | P28; `docs/FINAL_ENGINEERING_SUMMARY.md` | Final review confirms every named section and resolves each statement to report/artifact or limitation | E16: final summary, ADRs and traceability audit |
-| SW-39 | Runnable end-to-end working prototype (p2 §5) | P23–27; Compose/CLI/scenarios | `scripts/test-compose.sh`; `scripts/smoke-test.sh`; all three scenario tests | E13 + E14: clean-start command transcript, health, workflow completion and CI run |
+| SW-39 | Runnable end-to-end working prototype (p2 §5) | P23–27; Compose/CLI/scenarios | `docker compose config`; `scripts/smoke-test.sh`; all three scenario tests | E13 Compose packaging verified; E14 CI remains open |
 | SW-40 | Architecture overview: components, orchestration, control flow, decisions (p2 §5) | P1, P7, P9, P18, P28; ADRs/architecture docs | Graph validation + manual diagram/module/API consistency review | E16: implementation-matching architecture/DAG/state/trust-boundary diagrams and ADRs |
 | SW-41 | Three scenarios, each showing decomposition, orchestration and validation (p2 §5) | P23–25 | `OT/scenarios/test_greenfield.py`, `test_brownfield.py`, `test_ambiguous.py` | E02–E04: three separately reproducible complete evidence bundles |
 | SW-42 | Setup instructions (p2 §5) | P26, P28; README/Make/Compose | Clean-checkout rehearsal of every quick-start command | E13: environment, prerequisites, startup/readiness, CLI invocation and restart transcript |
@@ -124,15 +124,15 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-32 | Blocking ambiguity/questions/answers/versioning and failure-injection scenario variants (spec §14.3) | P13, P23–25 | `OT/test_ambiguous_requirement.py::test_ambiguous_requirement_blocks_downstream_until_clarified`; remaining scenario failure variants | E04 ambiguity checkpoint verified; packaged/failure variants remain open |
 | SP-33 | Precise metric formulas/windows/N/A, pending gauge, audit event fields/causal sequence (spec §15) | P6, P9, P21 | `OT/test_metrics.py`, `test_audit_coverage.py` | E11 |
 | SP-34 | Real PostgreSQL migration/constraint/concurrency tests, deterministic clocks/provider, separate live evidence (spec §16; AGENTS) | P1–28 as applicable | Java PostgreSQL tests; Python integration suite; live smoke and workflow tests | E12 + E14–E15 |
-| SP-35 | Durable Compose, health-gated startup, separate roles/migrations, loopback/non-root, graceful stop, fake default (spec §17) | P26 | `scripts/test-compose.sh`, `scripts/smoke-test.sh` | E13 |
-| SP-36 | Required Make targets; down preserves data; documented prerequisites/downloads/config (spec §17) | P1 incrementally, P26 | Clean-start and data-survival checks | E13 + E16 |
+| SP-35 | Durable Compose, health-gated startup, separate roles/migrations, loopback/non-root, graceful stop, fake default (spec §17) | P26 | `docker compose config`, `scripts/health-check.sh`, `scripts/smoke-test.sh`, container identity checks | E13 verified in `phase-26-compose/manifest.json` |
+| SP-36 | Required Make targets; down preserves data; documented prerequisites/downloads/config (spec §17) | P1 incrementally, P26 | `make up`, `make down`, `make health`, `make demo`, post-restart link lookup | E13 verified; E16 final review remains open |
 | SP-37 | 28 ordered phases; implement only requested phase; evidence/status after each; early lineage/policy/audit (spec §18; AGENTS) | Planning; every implementation phase | Plan structure/dependency audit; per-phase completion review | This plan now; actual completion records and E16 later |
 | SP-38 | CI build/lint/DB/scenarios/package/smoke/security; least privilege/pinned actions; protected opt-in live (spec §19.1) | P27 | Actual GitHub Actions runs and workflow permission review | E14–E15 |
 | SP-39 | Full docs/ADRs/scenario guides/traceability and honest final checklist (spec §19.2–20) | P28 | `docs/FINAL_REVIEW.md`: every checklist item linked to evidence or explicit gap | E16 |
 
 ## Demonstration evidence catalog
 
-Paths below are future run outputs. Store reports only after actual execution, sanitized for review. Bundle references may point to multiple runs; every run must say whether its provider is fake, live, or explicit deterministic fallback. A model's narrative is never a substitute for tool receipts or test reports.
+Paths below are planned or completed run outputs. Store reports only after actual execution, sanitized for review. Bundle references may point to multiple runs; every run must say whether its provider is fake, live, or explicit deterministic fallback. A model's narrative is never a substitute for tool receipts or test reports.
 
 | Evidence ID | Planned path under `docs/evidence/<run-id>/` | Minimum content / observable proof |
 |---|---|---|
@@ -148,7 +148,7 @@ Paths below are future run outputs. Store reports only after actual execution, s
 | E10 | `lineage/graph.json`, `lineage/decisions.json`, `lineage/impact.json` | Exact artifact hashes/versions/input refs/producers; rationales/alternatives; 404→410 affected closure; independently reused analytics; renewed release gates; immutable previous history |
 | E11 | `observability/audit.jsonl`, `observability/metrics.prom`, `observability/summary.json`, `observability/reconciliation.md` | All event classes, causal sequence/actors; declared metric windows/cohorts, underlying counts and controlled clock values; N/A handling; unresolved incidents distinct; no workflow-ID metric labels |
 | E12 | `persistence/restart.md`, `persistence/concurrency-tests.xml` | PostgreSQL atomic transition/audit failure test; competing claims; stopped/restarted process; approvals and succeeded stages retained; lease reconciliation and uncertain effects handled without blind replay |
-| E13 | `compose/clean-start.txt`, `compose/health.json`, `compose/restart.txt`, `compose/smoke.txt` | Fresh checkout prerequisites, build/migrations/readiness, CLI path, loopback services, role separation, runner constraints, durable data after down/up, graceful shutdown |
+| E13 | `phase-26-compose/manifest.json` | Actual build/migrations/readiness, loopback services, non-root users, fake-provider default, HTTP smoke, durable link data after down/up, graceful shutdown and known host-port override |
 | E14 | `ci/run.json`, `ci/reports/`, `ci/security-review.md` | Actual commit and CI URL/job outcomes; Java/Python lint/test/integration, fake scenarios, Compose/package/smoke, dependency/secret scans; preserved failed reports and honest skipped checks |
 | E15 | `live/sdk-smoke.json`, `live/workflow.json`, `live/changes.patch`, `live/tool-invocations.jsonl`, `live/tests.xml` | Actual configured model/SDK/provider, bounded execution, live output schema validation; real engineering edits, actual commands/tests and human approvals; explicit failed/skipped state if not achieved |
 | E16 | `review/final-checklist.md`, `review/walkthrough.txt`, `review/evidence-index.json` | Completed reviewer walkthrough, final engineering summary references, architecture/ADR consistency, requirement coverage, limits/assumptions, source reconciliation and unresolved gaps |
@@ -162,6 +162,25 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 26 Docker Compose verification record
+
+Phase 26 is **VERIFIED on 2026-10-05 for the requested Compose scope**. The
+actual four-service stack built, migrated, became healthy, passed its smoke
+test, stopped gracefully, restarted, and retained a previously created link.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-39, SP-35 | `docker compose config --quiet`, exact service inventory, `make up`, `make health` | Two independently owned PostgreSQL services gate startup of the Spring Boot and FastAPI services; all four report healthy | CI-hosted Compose run remains Phase 27 |
+| SP-01, SP-35 | Digest-pinned Dockerfiles, migration version queries, container `id` checks | Java 21 and Python 3.12 application images build from pinned bases; Flyway rank 3 and Alembic `0009_observability_indexes` are current; both apps run as UID/GID 10001 | Production secret injection and database role hardening remain deployment concerns |
+| SW-42, SP-36 | Root README, `.env.example`, `Makefile`, `make demo` | Root startup, overrides, downloads, health, smoke, shutdown, and default fake-provider behavior are documented and executable | Final Phase 28 reviewer walkthrough remains open |
+| SP-35, SP-36 | `make down`, subsequent `make up`, lookup of a pre-shutdown alias | Normal shutdown preserves named volumes and the previously created link | Backup/restore operations are outside this local Compose scope |
+| SW-39, SP-34 | `scripts/smoke-test.sh` | URL create, metadata, redirect, analytics, both OpenAPI documents, orchestrator health, and metrics pass over HTTP | Live OpenAI execution is deliberately not claimed |
+
+The verification host's port 8000 was occupied, so the run used
+`ORCHESTRATOR_PORT=18000`; the committed default is 8000. See the [testing
+record](TESTING.md#phase-26-docker-compose--verified-on-2026-10-05) and [run
+manifest](evidence/phase-26-compose/manifest.json).
 
 ## Phase 20 policy guardrails verification record
 

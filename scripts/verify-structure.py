@@ -1,8 +1,9 @@
 """Check the repository layout and bootstrap build contracts without downloads."""
 
 import pathlib
-import tomllib
 import xml.etree.ElementTree as ET
+
+import tomllib
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DIRECTORIES = (
@@ -23,13 +24,18 @@ FILES = (
     "README.md",
     "Makefile",
     "docker-compose.yml",
+    ".dockerignore",
     ".env.example",
     ".gitignore",
     ".editorconfig",
     "apps/url-shortener/mvnw",
+    "apps/url-shortener/Dockerfile",
     "apps/url-shortener/mvnw.cmd",
     "apps/url-shortener/.mvn/wrapper/maven-wrapper.properties",
     "apps/orchestrator/uv.lock",
+    "apps/orchestrator/Dockerfile",
+    "scripts/health-check.sh",
+    "scripts/smoke-test.sh",
     "workspaces/.gitkeep",
 )
 

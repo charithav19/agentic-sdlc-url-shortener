@@ -25,7 +25,10 @@ def upgrade() -> None:
         sa.Column("active", sa.Boolean(), nullable=False),
         sa.Column("version", sa.Integer(), nullable=False),
         sa.Column(
-            "updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.CheckConstraint(
             "status IN ('CANDIDATE', 'APPROVED', 'ROLLED_BACK', 'STALE')",
@@ -53,7 +56,10 @@ def upgrade() -> None:
         sa.Column("approved_artifact_id", sa.Uuid(), nullable=True),
         sa.Column("version", sa.Integer(), nullable=False),
         sa.Column(
-            "updated_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "updated_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.CheckConstraint("version > 0", name="ck_candidate_ref_version"),
         sa.ForeignKeyConstraint(
@@ -82,7 +88,10 @@ def upgrade() -> None:
         sa.Column("status", sa.String(length=16), nullable=False),
         sa.Column("failure_reason", sa.Text(), nullable=False),
         sa.Column(
-            "started_at", sa.DateTime(timezone=True), server_default=sa.text("now()"), nullable=False
+            "started_at",
+            sa.DateTime(timezone=True),
+            server_default=sa.text("now()"),
+            nullable=False,
         ),
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.CheckConstraint(
@@ -106,9 +115,7 @@ def upgrade() -> None:
             name="fk_compensation_restored",
             ondelete="RESTRICT",
         ),
-        sa.ForeignKeyConstraint(
-            ["cause_stage_run_id"], ["stage_runs.id"], ondelete="RESTRICT"
-        ),
+        sa.ForeignKeyConstraint(["cause_stage_run_id"], ["stage_runs.id"], ondelete="RESTRICT"),
         sa.ForeignKeyConstraint(["workflow_id"], ["workflow_runs.id"], ondelete="RESTRICT"),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint(
@@ -118,16 +125,12 @@ def upgrade() -> None:
             name="uq_compensation_cause",
         ),
     )
-    op.create_index(
-        "ix_compensation_workflow_status", "compensations", ["workflow_id", "status"]
-    )
+    op.create_index("ix_compensation_workflow_status", "compensations", ["workflow_id", "status"])
 
 
 def downgrade() -> None:
     op.drop_index("ix_compensation_workflow_status", table_name="compensations")
     op.drop_table("compensations")
     op.drop_table("candidate_references")
-    op.drop_index(
-        "ix_artifact_lifecycle_workflow_status", table_name="artifact_lifecycle"
-    )
+    op.drop_index("ix_artifact_lifecycle_workflow_status", table_name="artifact_lifecycle")
     op.drop_table("artifact_lifecycle")

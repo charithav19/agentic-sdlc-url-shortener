@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.api.dependencies import get_orchestrator
+from app.api.workflows import schedule_workflow
 from app.governance.approvals import (
     ApprovalConflictError,
     ApprovalDecision,
@@ -104,4 +105,5 @@ async def submit_approval_decision(
         raise HTTPException(status_code=404, detail="Workflow or approval was not found") from None
     except (ApprovalConflictError, InvalidTransitionError, StaleTransitionError) as error:
         raise HTTPException(status_code=409, detail=str(error)) from None
+    schedule_workflow(request, workflow_id)
     return ApprovalResponse.from_result(result)

@@ -524,6 +524,7 @@ class WorkflowOrchestrator:
         requirement_artifact_id: uuid.UUID,
         result: AgentResult[RequirementOutput],
         context: TransitionContext,
+        claim: StageClaim | None = None,
     ) -> RequirementAnalysisResult:
         """Persist agent evidence and pause when its structured result is blocking."""
 
@@ -559,6 +560,14 @@ class WorkflowOrchestrator:
                 or result.attempt != stage.attempt
             ):
                 raise InvalidTransitionError("Requirement analysis result is not current")
+            if claim is not None and (
+                claim.stage_run_id != stage.id
+                or stage.lease_token != claim.token
+                or stage.claim_owner != claim.owner
+                or stage.lease_expires_at is None
+                or stage.lease_expires_at <= datetime.now(UTC)
+            ):
+                raise StaleClaimError("Requirement analysis claim is stale or expired")
 
             store = ArtifactStore(session)
             lineage = ArtifactLineageService(session)
@@ -592,6 +601,10 @@ class WorkflowOrchestrator:
                 event_type="STAGE_CLAIM_COMPLETED",
                 reason="Requirement analysis evidence persisted",
             )
+            if claim is not None:
+                stage.lease_token = None
+                stage.claim_owner = None
+                stage.lease_expires_at = None
 
             clarification: Artifact | None = None
             if result.output.blocking_ambiguity:

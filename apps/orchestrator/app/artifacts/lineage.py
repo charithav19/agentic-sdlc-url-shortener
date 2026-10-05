@@ -7,7 +7,7 @@ from enum import StrEnum
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.persistence.models import Artifact, ArtifactLineage
+from app.persistence.models import Artifact, ArtifactLineage, WorkflowRun
 
 
 class LineageRelationship(StrEnum):
@@ -83,6 +83,13 @@ class ArtifactLineageService:
             raise ValueError(f"Unknown lineage relationship: {relationship}") from error
         if parent_artifact_id == child_artifact_id:
             raise ValueError("Lineage parent and child must differ")
+        # Match artifact/audit lock order before INSERT takes a foreign-key share lock.
+        # Concurrent fan-out stages would otherwise deadlock upgrading to the audit lock.
+        workflow = await self.session.scalar(
+            select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+        )
+        if workflow is None:
+            raise KeyError(f"Unknown workflow {workflow_id}")
         parent = await self._require_artifact(workflow_id, parent_artifact_id)
         child = await self._require_artifact(workflow_id, child_artifact_id)
         existing = await self.session.scalar(

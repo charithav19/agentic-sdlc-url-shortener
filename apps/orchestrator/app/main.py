@@ -14,9 +14,14 @@ from app.api.health import router as health_router
 from app.api.metrics import router as metrics_router
 from app.api.recovery import router as recovery_router
 from app.api.requirements import router as requirements_router
+from app.api.workflows import router as workflows_router
 from app.config import get_settings
 from app.observability.logging import configure_logging
+from app.orchestration.workflow_runtime import WorkflowRuntime
+from app.orchestration.workflows import WorkflowService
 from app.persistence.session import create_database_engine, create_session_factory
+from app.scenarios.fixtures import ScenarioFixtureLoader
+from app.tools.workspaces import WorkspaceManager
 
 
 @asynccontextmanager
@@ -26,9 +31,17 @@ async def lifespan(application: FastAPI) -> AsyncIterator[None]:
     engine = create_database_engine(settings)
     application.state.db_engine = engine
     application.state.session_factory = create_session_factory(engine)
+    service = WorkflowService(
+        application.state.session_factory,
+        workspaces=WorkspaceManager(),
+        loader=ScenarioFixtureLoader(),
+    )
+    application.state.workflow_runtime = WorkflowRuntime(service, settings=settings)
     try:
         yield
     finally:
+        await application.state.workflow_runtime.close()
+        del application.state.workflow_runtime
         await engine.dispose()
 
 
@@ -38,6 +51,7 @@ app = FastAPI(
     description="Deterministic SDLC orchestration, readiness, and human approval API.",
     lifespan=lifespan,
 )
+app.include_router(workflows_router)
 app.include_router(health_router)
 app.include_router(metrics_router)
 app.include_router(approvals_router)

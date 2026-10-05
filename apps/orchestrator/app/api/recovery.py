@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.api.dependencies import get_orchestrator
+from app.api.workflows import schedule_workflow
 from app.governance.auth import ReviewerIdentity, require_reviewer
 from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import WorkflowStatus
@@ -66,6 +67,7 @@ async def resume_workflow(
         ) from None
     except (InvalidTransitionError, StaleTransitionError) as error:
         raise HTTPException(status_code=409, detail=str(error)) from None
+    schedule_workflow(request, workflow_id)
     return ResumeResponse(
         workflow_id=workflow_id,
         stage_run_id=body.stage_run_id,

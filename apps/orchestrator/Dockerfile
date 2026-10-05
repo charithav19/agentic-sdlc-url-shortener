@@ -8,11 +8,13 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
 WORKDIR /opt/orchestrator
 
 RUN pip install uv==0.11.8
-COPY pyproject.toml uv.lock README.md ./
+COPY apps/orchestrator/pyproject.toml apps/orchestrator/uv.lock apps/orchestrator/README.md ./
 RUN uv sync --locked --no-dev --no-install-project
 
-COPY app/ app/
-COPY config/ config/
+COPY apps/orchestrator/app/ app/
+COPY apps/orchestrator/config/ config/
+COPY scenarios/ /scenarios/
+COPY scenarios/ app/resources/scenarios/
 RUN uv sync --locked --no-dev
 
 FROM python:3.12.13-slim-bookworm@sha256:4766d8b510c428e595d74b9cc5bbb2fae8e26316fffb4adc89908d79aacd58a2 AS runtime
@@ -29,8 +31,8 @@ WORKDIR /opt/orchestrator
 COPY --from=build --chown=orchestrator:orchestrator /opt/orchestrator/.venv .venv
 COPY --from=build --chown=orchestrator:orchestrator /opt/orchestrator/app app
 COPY --from=build --chown=orchestrator:orchestrator /opt/orchestrator/config config
-COPY --chown=orchestrator:orchestrator alembic alembic
-COPY --chown=orchestrator:orchestrator alembic.ini ./
+COPY --chown=orchestrator:orchestrator apps/orchestrator/alembic alembic
+COPY --chown=orchestrator:orchestrator apps/orchestrator/alembic.ini ./
 
 USER orchestrator
 EXPOSE 8000

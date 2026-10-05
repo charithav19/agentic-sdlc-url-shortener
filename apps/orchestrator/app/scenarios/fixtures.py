@@ -32,6 +32,8 @@ class ScenarioFixtureLoader:
     def __init__(self, repository_root: Path | None = None) -> None:
         self.repository_root = repository_root or Path(__file__).resolve().parents[4]
         self.scenario_root = self.repository_root / "scenarios"
+        if not self.scenario_root.is_dir() and repository_root is None:
+            self.scenario_root = Path(__file__).resolve().parents[1] / "resources" / "scenarios"
 
     def load(self, scenario: ScenarioType | str) -> ScenarioFixture:
         scenario_type = scenario if isinstance(scenario, ScenarioType) else ScenarioType(scenario)

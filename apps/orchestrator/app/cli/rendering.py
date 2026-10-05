@@ -40,6 +40,7 @@ def emit(console: Console, payload: Any, renderer, *, json_output: bool) -> None
             json.dumps(payload, indent=2, default=str),
             markup=False,
             highlight=False,
+            soft_wrap=True,
         )
     else:
         renderer(console, payload)

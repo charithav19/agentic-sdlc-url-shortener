@@ -5,7 +5,12 @@ from collections.abc import Awaitable, Callable, Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from app.orchestration.claims import ClaimUnavailableError, StageClaim, StaleClaimError
+from app.orchestration.claims import (
+    ClaimUnavailableError,
+    StageClaim,
+    StageCompletion,
+    StaleClaimError,
+)
 from app.orchestration.commands import TransitionContext
 from app.orchestration.failure_classifier import (
     FailureClassification,
@@ -14,7 +19,7 @@ from app.orchestration.failure_classifier import (
 )
 from app.orchestration.orchestrator import WorkflowOrchestrator
 
-StageExecutor = Callable[[StageClaim], Awaitable[dict[str, Any]]]
+StageExecutor = Callable[[StageClaim], Awaitable[dict[str, Any] | StageCompletion]]
 
 
 @dataclass(frozen=True)
@@ -83,6 +88,18 @@ class StageWorker:
         else:
             try:
                 payload = await executor(claim)
+                if isinstance(payload, StageCompletion):
+                    # Some domain operations persist evidence and complete their claim
+                    # atomically (requirement analysis can also pause the workflow).
+                    if payload.stage_run_id != claim.stage_run_id:
+                        raise InvalidWorkflowStateFailure("Executor completed a different stage")
+                    return StageWorkResult(
+                        stage_run_id=claim.stage_run_id,
+                        stage_name=claim.stage_name,
+                        claimed=True,
+                        committed=True,
+                        succeeded=payload.succeeded,
+                    )
             except Exception as error:  # noqa: BLE001 - executor failure becomes stage evidence
                 succeeded = False
                 failure = self.failure_classifier.classify(error)

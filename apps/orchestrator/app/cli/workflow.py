@@ -78,12 +78,13 @@ def watch_workflow(
     try:
         for poll in range(max_polls):
             result = api_json(runtime, "GET", f"/api/v1/workflows/{workflow_id}")
-            version = value(result, "version", "workflowVersion")
+            version = value(result, "stateVersion", "version", "workflowVersion")
             if runtime.json_output:
                 runtime.console.print(
                     json.dumps(result, separators=(",", ":"), default=str),
                     markup=False,
                     highlight=False,
+                    soft_wrap=True,
                 )
             elif poll == 0 or version != last_version:
                 render_workflow(runtime.console, result)

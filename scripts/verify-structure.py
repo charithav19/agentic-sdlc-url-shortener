@@ -1,9 +1,8 @@
 """Check the repository layout and bootstrap build contracts without downloads."""
 
 import pathlib
-import xml.etree.ElementTree as ET
-
 import tomllib
+import xml.etree.ElementTree as ET
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 DIRECTORIES = (

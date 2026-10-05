@@ -8,7 +8,13 @@ import tarfile
 from pathlib import Path
 
 COMMANDS = {
-    "mvn test": ("/usr/share/maven/bin/mvn", "-o", "-B", "-Dmaven.repo.local=/tmp/m2", "test"),
+    "mvn test": (
+        "/usr/share/maven/bin/mvn",
+        "-o",
+        "-B",
+        "-Dmaven.repo.local=/tmp/m2",
+        "test",
+    ),
     "mvn package": (
         "/usr/share/maven/bin/mvn",
         "-o",

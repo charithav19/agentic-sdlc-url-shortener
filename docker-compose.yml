@@ -69,8 +69,8 @@ services:
 
   orchestrator:
     build:
-      context: apps/orchestrator
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/orchestrator/Dockerfile
     environment:
       ORCHESTRATOR_DB_HOST: orchestrator-db
       ORCHESTRATOR_DB_PORT: 5432

@@ -1,0 +1,47 @@
+{
+  "phase": 21,
+  "scope": "orchestration reliability metrics",
+  "verified_at": "2026-10-04",
+  "base_commit": "a6fea97",
+  "reporting_cohort": "all retained PostgreSQL records",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration and not runner'",
+      "outcome": "211 passed, 1 skipped, 57 deselected"
+    },
+    {
+      "command": "cd apps/orchestrator && python -m pytest tests/test_metrics.py -m 'not integration' -q",
+      "outcome": "4 passed, 1 deselected"
+    },
+    {
+      "command": "cd apps/orchestrator && ruff check <Phase 21 Python paths> && ruff format <same paths>",
+      "outcome": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && alembic upgrade head --sql",
+      "outcome": "generated PostgreSQL DDL through 0009_observability_indexes"
+    },
+    {
+      "command": "cd apps/orchestrator && uv lock --check && uv build --no-sources",
+      "outcome": "lock verified; wheel and source distribution built"
+    },
+    {
+      "command": "scripts/test-postgres.sh apps/orchestrator/tests/test_metrics.py apps/orchestrator/tests/test_database.py",
+      "outcome": "blocked before test execution: sandbox denied the Docker Desktop Unix socket"
+    }
+  ],
+  "verified": [
+    "all requested counters and duration histograms are present in Prometheus output",
+    "success, retry and rollback ratios use documented denominators",
+    "MTTR pairs first failure with the next successful logical-stage attempt",
+    "end-to-end latency includes time from workflow creation through terminal transition",
+    "zero denominators render as NaN and unresolved recovery incidents remain visible",
+    "metrics have no workflow, stage, trace, actor or artifact labels",
+    "the metrics HTTP route returns Prometheus 0.0.4 text"
+  ],
+  "limitations": [
+    "the PostgreSQL-backed endpoint test was added but could not execute under the current Docker socket restriction",
+    "the current cohort is all retained data; long-retention deployments should add recording rules or materialized windows",
+    "the remaining Phase 21 audit API and complete cross-feature audit coverage are outside this metrics-only request"
+  ]
+}

@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, Phase 25 demo packaging, and Phases 21–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. The requested Phase 21 orchestration-metrics scope is implemented and verified offline; its PostgreSQL endpoint test is present but was blocked by sandbox denial of the Docker socket. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, the rest of Phase 21, Phase 25 demo packaging, and Phases 22–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -45,11 +45,11 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-26 | Security policy guardrails (p2 §4.4) | P11, P20; runner/tool policy/rules | `OT/test_tools.py`, `test_runner_isolation.py`, `test_policy_engine.py`, `test_guardrail_abuse.py` | E09: denied paths/secrets/commands/injection, runner restrictions and structured policy records |
 | SW-27 | Compliance and change-control policy guardrails (p2 §4.4) | P13, P19–20; versioned policies/approvals/replan | `OT/test_policy_engine.py::test_high_impact_changes_require_exact_current_approval`; `OT/test_replanning.py` | E06 + E09 + E10: rule/version decisions and exact renewed approval on affected changes; scope explicitly local, no regulatory certification claimed |
 | SW-28 | Audit-grade observability and traceability (p2 §4.4) | P6, P9, P18, P21; atomic audit/lineage | `OT/test_transition_atomicity.py`; `OT/test_audit_coverage.py::all_event_types_causal_order_redaction` | E11: sanitized causal audit with actors, versions, reasons and trace IDs; atomicity fault report |
-| SW-29 | Success rate metric (p2 §4.4) | P21; metrics/reporting | `OT/test_metrics.py::success_rate_cohort_and_zero_denominator` | E11: completed/(completed+failed), declared window, cancelled/stopped counts and N/A |
-| SW-30 | Retry frequency metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::retry_attempts_over_initial_attempts` | E11: raw counts and ratio reconciled with injected attempts |
-| SW-31 | Rollback frequency metric (p2 §4.4) | P17, P21 | `OT/test_metrics.py::workflows_compensated_over_started_cohort` | E11: declared cohort, workflow count (not compensation-event count) and ratio |
-| SW-32 | MTTR metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::resolved_incident_duration_unresolved_separate` | E11: controlled failure/recovery timestamps and unresolved incident count |
-| SW-33 | End-to-end latency metric (p2 §4.4) | P21 | `OT/test_metrics.py::creation_to_completion_includes_human_wait` | E11: total plus execution/wait components with defined overlap accounting |
+| SW-29 | Success rate metric (p2 §4.4) | P21; `observability/metrics.py`, `reporting.py` | `OT/test_metrics.py::test_required_metrics_and_ratios_use_documented_denominators`; `::test_zero_denominators_render_as_nan_and_histograms_are_empty` | E11: completed/(completed+failed), all-time cohort and N/A/NaN behavior |
+| SW-30 | Retry frequency metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::test_required_metrics_and_ratios_use_documented_denominators` | E11: durable retry-event count divided by every started stage attempt |
+| SW-31 | Rollback frequency metric (p2 §4.4) | P17, P21 | `OT/test_metrics.py::test_required_metrics_and_ratios_use_documented_denominators` | E11: distinct terminal workflows with compensation divided by terminal workflows |
+| SW-32 | MTTR metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::test_required_metrics_and_ratios_use_documented_denominators` | E11: first controlled failure to next logical-stage success; unresolved incidents separate |
+| SW-33 | End-to-end latency metric (p2 §4.4) | P21 | `OT/test_metrics.py::test_required_metrics_and_ratios_use_documented_denominators`; PostgreSQL endpoint test | E11: creation-to-terminal histogram including workflow waits |
 | SW-34 | Dynamic replanning on upstream changes while preserving governance (p2 §4.4) | P18–19, P25; impact/replan/generation fencing | `OT/test_replanning.py::test_requirement_update_selectively_stales_descendants_and_returns_to_planning`; `OT/test_replan_races.py::obsolete_result_rejected` | E04 + E10: 404→410 update, stale descendants/approvals and analytics reuse verified; renewed aggregate validation/release remains open |
 | SW-35 | Produce quality code, API/schema definitions, unit/integration tests and docs (p2 §4.5) | P2–4, P11–12, P23–24, P27–28 | `JT/LinkApiTest.java`, `LinkPersistenceTest.java`; all candidate tests; CI build/lint and review | E01–E03 + E14: actual code/migration/OpenAPI/test/doc diffs and executable reports |
 | SW-36 | Identify risks/tradeoffs/failure scenarios and validation/safety guardrails (p2 §4.6) | Every phase's risks; P12, P16–17, P20, P28 | Gate/retry/compensation/abuse tests; `docs/FINAL_REVIEW.md` risk-to-test review | E06–E09 + E16: fault-injection outcomes, ADR consequences and explicit limitations |
@@ -163,6 +163,27 @@ tests with one opt-in live SDK smoke skipped. Phase 20 sources pass Ruff and
 formatting; lock, package build, structure and diff checks pass. Repository-wide
 Ruff retains three pre-existing line-length findings in `0006_compensations.py`.
 See the [Phase 20 policy evidence manifest](evidence/phase-20-policy/manifest.json).
+
+## Phase 21 orchestration metrics verification record
+
+The requested orchestration-metrics scope is **IMPLEMENTED and VERIFIED
+OFFLINE on 2026-10-04**. Values are derived from committed PostgreSQL records,
+so a process restart cannot reset counters or replay increments. The real
+PostgreSQL endpoint test is implemented; execution was blocked because this
+sandbox denied Docker socket connections after explicit filesystem grants.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-29, SW-30, SW-31 | `test_required_metrics_and_ratios_use_documented_denominators` | Success uses completed/(completed+failed); retry frequency uses retries/started attempts; rollback frequency uses terminal workflows with completed compensation/terminal workflows | Execute the committed endpoint test against PostgreSQL outside the current socket restriction |
+| SW-32 | Same controlled-clock test plus zero-denominator test | Consecutive failures form one incident; next logical-stage success closes it; unresolved incidents remain separate | Add reporting-window materialization for long retention |
+| SW-33, SP-11 | Formula, histogram, and HTTP content tests | Workflow duration starts at first run; end-to-end begins at creation and includes waits; `/metrics` serves Prometheus 0.0.4 | PostgreSQL endpoint execution is pending |
+| SW-28 | Durable reporter review and Alembic offline generation | Counters reconstruct from workflow, stage, policy, approval, compensation, and audit records without high-cardinality labels; reporting indexes compile | Phase 21 audit query API and complete cross-feature audit coverage remain open |
+
+The focused offline metrics suite passed four tests. The complete offline suite
+passed 211 tests with one opt-in live SDK test skipped. Ruff and formatting pass
+for the metrics, API, migration, and test files; Alembic generated the complete
+PostgreSQL upgrade SQL through revision `0009_observability_indexes`.
+See the [Phase 21 metrics evidence manifest](evidence/phase-21-metrics/manifest.json).
 
 ## Phase 25 ambiguous requirement checkpoint verification record
 

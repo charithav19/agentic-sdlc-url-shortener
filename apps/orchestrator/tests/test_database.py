@@ -50,7 +50,14 @@ def test_clean_alembic_upgrade(
                 .scalars()
                 .all()
             )
-        assert version == "0008_policy_events"
+            indexes = set(
+                connection.execute(
+                    text("SELECT indexname FROM pg_indexes WHERE schemaname = 'public'")
+                )
+                .scalars()
+                .all()
+            )
+        assert version == "0009_observability_indexes"
         assert set(tables) == {
             "alembic_version",
             "workflow_runs",
@@ -65,6 +72,14 @@ def test_clean_alembic_upgrade(
             "compensations",
             "policy_events",
         }
+        assert {
+            "ix_workflow_status_created_at",
+            "ix_stage_started_completed",
+            "ix_audit_event_type_occurred",
+            "ix_audit_after_state_occurred",
+            "ix_approval_status_created_at",
+            "ix_compensation_status_completed",
+        } <= indexes
     finally:
         engine.dispose()
         get_settings.cache_clear()

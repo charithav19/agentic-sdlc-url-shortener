@@ -13,6 +13,7 @@ def test_openapi_exposes_health_and_approval_decisions(client: TestClient) -> No
     assert set(schema["paths"]) == {
         "/health",
         "/api/v1/workflows/{workflow_id}/approvals",
+        "/api/v1/workflows/{workflow_id}/resume",
     }
 
 

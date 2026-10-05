@@ -21,6 +21,7 @@ class StageClaim:
     executor: str
     generation: int
     attempt: int
+    execution_mode: str
     token: uuid.UUID
     owner: str
     lease_expires_at: datetime

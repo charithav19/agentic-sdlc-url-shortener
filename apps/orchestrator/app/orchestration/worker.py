@@ -7,6 +7,11 @@ from typing import Any
 
 from app.orchestration.claims import ClaimUnavailableError, StageClaim, StaleClaimError
 from app.orchestration.commands import TransitionContext
+from app.orchestration.failure_classifier import (
+    FailureClassification,
+    FailureClassifier,
+    InvalidWorkflowStateFailure,
+)
 from app.orchestration.orchestrator import WorkflowOrchestrator
 
 StageExecutor = Callable[[StageClaim], Awaitable[dict[str, Any]]]
@@ -20,6 +25,7 @@ class StageWorkResult:
     committed: bool
     succeeded: bool | None
     error: str | None = None
+    failure: FailureClassification | None = None
 
 
 class StageWorker:
@@ -30,11 +36,13 @@ class StageWorker:
         *,
         owner: str,
         lease_seconds: int,
+        failure_classifier: FailureClassifier | None = None,
     ) -> None:
         self.orchestrator = orchestrator
         self.executors = dict(executors)
         self.owner = owner
         self.lease_seconds = lease_seconds
+        self.failure_classifier = failure_classifier or FailureClassifier()
 
     async def run(self, stage_run_id: uuid.UUID) -> StageWorkResult:
         trace_id = uuid.uuid4()
@@ -64,14 +72,20 @@ class StageWorker:
         succeeded = True
         error_message: str | None = None
         payload: dict[str, Any] | None = None
+        failure: FailureClassification | None = None
         if executor is None:
             succeeded = False
-            error_message = f"No stage executor registered for {claim.executor}"
+            error = InvalidWorkflowStateFailure(
+                f"No stage executor registered for {claim.executor}"
+            )
+            failure = self.failure_classifier.classify(error)
+            error_message = f"{type(error).__name__}: {error}"[:2000]
         else:
             try:
                 payload = await executor(claim)
             except Exception as error:  # noqa: BLE001 - executor failure becomes stage evidence
                 succeeded = False
+                failure = self.failure_classifier.classify(error)
                 error_message = f"{type(error).__name__}: {error}"[:2000]
 
         try:
@@ -80,6 +94,8 @@ class StageWorker:
                 succeeded=succeeded,
                 result=payload,
                 error_message=error_message,
+                failure_code=failure.code.value if failure else None,
+                recommended_action=failure.recommended_human_action if failure else None,
                 context=context,
             )
         except StaleClaimError as error:
@@ -98,4 +114,5 @@ class StageWorker:
             committed=True,
             succeeded=succeeded,
             error=error_message,
+            failure=failure,
         )

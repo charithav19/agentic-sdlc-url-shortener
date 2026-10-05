@@ -1,0 +1,43 @@
+{
+  "phase": 16,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_RECOVERY_SCOPE_VERIFIED",
+  "base_commit": "9d8268b",
+  "source_state": "Uncommitted Phase 16 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / asyncio",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && uv run --locked ruff check app tests && uv run --locked ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration and not runner and not live' -q",
+      "passed": 176,
+      "failed": 0,
+      "deselected": 49
+    },
+    {
+      "command": "scripts/test-postgres.sh",
+      "passed": 42,
+      "failed": 0,
+      "deselected": 184
+    },
+    {
+      "command": "cd apps/orchestrator && uv lock --check && uv build --no-sources",
+      "result": "passed",
+      "artifacts": [
+        "schwab_agentic_orchestrator-0.1.0.tar.gz",
+        "schwab_agentic_orchestrator-0.1.0-py3-none-any.whl"
+      ]
+    }
+  ],
+  "requirements": ["SW-22", "SW-23", "SW-25", "SW-28", "SP-13", "SP-21", "SP-22", "SP-24", "SP-28"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "Recovery scheduling is driven by scheduler cycles; a daemon lifecycle is not implemented",
+    "Expired-lease and uncertain-external-effect reconciliation remain open",
+    "Fallback uses the configured stage identity and dependencies; complete runtime entry/exit gate execution remains open",
+    "Reliability metrics and a general workflow status projection remain Phase 21 work",
+    "No live OpenAI outage was induced; deterministic typed failures exercise the same scheduler boundary"
+  ]
+}

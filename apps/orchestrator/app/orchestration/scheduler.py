@@ -14,6 +14,8 @@ from app.orchestration.graph import WorkflowGraph
 from app.orchestration.joins import SynchronizationJoinCoordinator
 from app.orchestration.orchestrator import WorkflowOrchestrator
 from app.orchestration.readiness import ReadinessChange
+from app.orchestration.recovery import RecoveryCoordinator, RecoveryResult
+from app.orchestration.retries import RetryPlanner
 from app.orchestration.worker import StageExecutor, StageWorker, StageWorkResult
 from app.persistence.models import StageRun, WorkflowRun
 from app.persistence.session import session_scope
@@ -25,6 +27,7 @@ class SchedulerCycleResult:
     readiness_before: tuple[ReadinessChange, ...]
     work: tuple[StageWorkResult, ...]
     readiness_after: tuple[ReadinessChange, ...]
+    recovery: tuple[RecoveryResult, ...] = ()
 
 
 class WorkflowScheduler:
@@ -37,6 +40,7 @@ class WorkflowScheduler:
         max_parallel_stages: int = 3,
         lease_seconds: int = 300,
         scheduler_id: str | None = None,
+        retry_planner: RetryPlanner | None = None,
     ) -> None:
         if max_parallel_stages < 1:
             raise ValueError("max_parallel_stages must be positive")
@@ -48,6 +52,12 @@ class WorkflowScheduler:
         self.scheduler_id = scheduler_id or f"scheduler-{uuid.uuid4()}"
         self.orchestrator = WorkflowOrchestrator(session_factory)
         self.joins = SynchronizationJoinCoordinator(graph, self.orchestrator)
+        self.recovery = RecoveryCoordinator(
+            session_factory,
+            graph,
+            self.orchestrator,
+            retry_planner=retry_planner,
+        )
         self.worker = StageWorker(
             self.orchestrator,
             executors,
@@ -90,6 +100,18 @@ class WorkflowScheduler:
                 return await self.worker.run(stage_run_id)
 
         work = tuple(await asyncio.gather(*(run_bounded(stage_id) for stage_id in ready)))
+        recovery: list[RecoveryResult] = []
+        for item in work:
+            if item.committed and item.succeeded is False and item.failure is not None:
+                recovery.append(
+                    await self.recovery.recover(
+                        item.stage_run_id,
+                        failure=item.failure,
+                        failure_reason=item.error or item.failure.code.value,
+                        actor_id=self.scheduler_id,
+                        trace_id=trace_id,
+                    )
+                )
         after = await self.joins.synchronize(
             workflow_id, actor_id=self.scheduler_id, trace_id=trace_id
         )
@@ -98,6 +120,7 @@ class WorkflowScheduler:
             readiness_before=before.changes,
             work=work,
             readiness_after=after.changes,
+            recovery=tuple(recovery),
         )
 
     async def _ready_stage_ids(self, workflow_id: uuid.UUID) -> tuple[uuid.UUID, ...]:

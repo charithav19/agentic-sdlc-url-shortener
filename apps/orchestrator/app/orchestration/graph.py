@@ -17,8 +17,8 @@ class GraphValidationError(ValueError):
 class RetryPolicy(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    max_attempts: int = Field(ge=1, le=5)
-    retryable_errors: tuple[str, ...]
+    max_attempts: int = Field(default=2, ge=1, le=5)
+    retryable_errors: tuple[str, ...] = ()
 
 
 class StageDefinition(BaseModel):

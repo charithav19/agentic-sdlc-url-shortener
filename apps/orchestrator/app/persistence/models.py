@@ -60,6 +60,7 @@ class WorkflowRun(Base):
     version: Mapped[int] = mapped_column(Integer, default=1)
     last_successful_stage: Mapped[str | None] = mapped_column(String(128), nullable=True)
     stop_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
+    recommended_human_action: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
@@ -79,6 +80,9 @@ class StageRun(Base):
         CheckConstraint("generation > 0", name="ck_stage_generation"),
         CheckConstraint("attempt > 0", name="ck_stage_attempt"),
         CheckConstraint("version > 0", name="ck_stage_version"),
+        CheckConstraint(
+            "execution_mode IN ('PRIMARY', 'FALLBACK')", name="ck_stage_execution_mode"
+        ),
         Index("ix_stage_workflow_status", "workflow_id", "status"),
         Index(
             "uq_stage_active_claim",
@@ -110,6 +114,12 @@ class StageRun(Base):
         DateTime(timezone=True), nullable=True
     )
     retry_due_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    failure_code: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    recommended_action: Mapped[str | None] = mapped_column(Text, nullable=True)
+    execution_mode: Mapped[str] = mapped_column(String(16), default="PRIMARY")
+    fallback_source_stage_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("stage_runs.id", ondelete="RESTRICT"), nullable=True
+    )
     result: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)

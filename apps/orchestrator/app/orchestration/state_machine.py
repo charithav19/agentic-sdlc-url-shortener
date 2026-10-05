@@ -98,6 +98,7 @@ STAGE_TRANSITIONS = MappingProxyType(
             {
                 StageStatus.BLOCKED,
                 StageStatus.RUNNING,
+                StageStatus.FALLBACK_RUNNING,
                 StageStatus.SKIPPED,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,

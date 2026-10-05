@@ -38,10 +38,10 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-19 | Preserve cross-stage context (p2 §4.4) | P6, P10–11, P18; immutable inputs/provider context | `OT/test_lineage.py::exact_inputs_and_producer_attempts` | E10: exact requirement/design/candidate/evidence version chain |
 | SW-20 | Preserve decision lineage (p2 §4.4) | P6, P18; decisions/lineage | `OT/test_lineage.py::decision_rationale_and_alternatives` | E10: decision tree with reasons, alternatives, actors and source artifacts |
 | SW-21 | Human approvals for high-impact actions (p2 §4.4) | P13, P20; approvals/auth/policy | `OT/test_approvals.py::architecture_high_impact_assumption_release`; `OT/test_reviewer_auth.py::agent_cannot_approve` | E06 + E03: exact-version decisions before implementation/schema/API/security change and release |
-| SW-22 | Bounded retries (p2 §4.4) | P16; retry policy/failure classifier | `OT/test_retry_policy.py::two_total_attempts_transient_only` | E07: attempt history, persisted delay, success after transient error and exhaustion stop |
-| SW-23 | Fallback (p2 §4.4) | P16; fallback registry | `OT/test_fallback.py::configured_only_same_gates_with_provenance` | E07: labeled permitted fallback and unsupported-fallback safe-stop |
+| SW-22 | Bounded retries (p2 §4.4) | P16; retry policy/failure classifier | `OT/test_retry_policy.py::test_temporary_failure_retries_once_and_preserves_both_attempts`; `::test_retry_exhaustion_without_fallback_safe_stops` | E07: attempt history, persisted delay, success after transient error and exhaustion stop |
+| SW-23 | Fallback (p2 §4.4) | P16; fallback registry | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07: labeled configured fallback with source-attempt provenance |
 | SW-24 | Rollback (p2 §4.4) | P17; semantic compensation | `OT/test_compensation.py::restore_previous_approved_and_retain_failed`; `test_compensation_recovery.py::idempotent_restart` | E08: candidate rejected, previous approved reference restored, failed evidence retained |
-| SW-25 | Safe-stop controls (p2 §4.4) | P14, P16–17; cancellation/recovery | `OT/test_safe_stop.py::no_descendants_late_results_fenced_human_resume` | E07–E08: persisted reason, last successful stage, action required and validated recovery |
+| SW-25 | Safe-stop controls (p2 §4.4) | P14, P16–17; cancellation/recovery | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07–E08: persisted reason, last successful stage, action required and validated recovery |
 | SW-26 | Security policy guardrails (p2 §4.4) | P11, P20; runner/tool policy/rules | `OT/test_runner_isolation.py`; `OT/test_guardrail_abuse.py::escape_secrets_commands_injection` | E09: denied attacks, runner restrictions and structured policy records |
 | SW-27 | Compliance and change-control policy guardrails (p2 §4.4) | P13, P19–20; versioned policies/approvals/replan | `OT/test_policy_engine.py::versioned_rule_and_change_approval`; `OT/test_replanning.py::approval_invalidation` | E06 + E09 + E10: rule/version decisions and renewed approval on affected changes; scope explicitly local, no regulatory certification claimed |
 | SW-28 | Audit-grade observability and traceability (p2 §4.4) | P6, P9, P18, P21; atomic audit/lineage | `OT/test_transition_atomicity.py`; `OT/test_audit_coverage.py::all_event_types_causal_order_redaction` | E11: sanitized causal audit with actors, versions, reasons and trace IDs; atomicity fault report |
@@ -91,10 +91,10 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-18 | Restricted filesystem tools and actual build/test runner isolation; no host/API/CI secrets (spec §8.2) | P11, P20, P26–27 | `OT/test_tools.py`, `test_runner_isolation.py`, `test_guardrail_abuse.py` | E09 + E13–E14 |
 | SP-19 | Configurable bounded asyncio execution, durable claims, restart/cancellation/fencing (spec §9) | P14, P16 | `OT/test_parallel_execution.py`, `test_stage_claims.py`, `test_restart_recovery.py`, `test_safe_stop.py` | E05 + E07 + E12 |
 | SP-20 | Isolated overlays, conflict-aware candidate joins, read-only validations, separate build outputs (spec §9) | P11, P15 | `OT/test_candidate_assembly.py`, `test_synchronization_joins.py` | E05 candidate assembly/parallel validation records |
-| SP-21 | Two total attempts; classified transient errors; no retry multiplication or uncertain-effect replay (spec §10.1) | P10, P16 | `OT/test_retry_policy.py` | E07 |
-| SP-22 | Explicit fallback only, same gates/provenance, no manufactured validation/approval (spec §10.2) | P16 | `OT/test_fallback.py` | E07 |
+| SP-21 | Two total attempts; classified transient errors; no retry multiplication or uncertain-effect replay (spec §10.1) | P10, P16 | `OT/test_retry_policy.py`; `OT/test_agent_provider.py` | E07 |
+| SP-22 | Explicit fallback only, same gates/provenance, no manufactured validation/approval (spec §10.2) | P16 | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07 |
 | SP-23 | Semantic rollback preserves candidate/evidence; idempotent restore; no prior candidate and compensation-failure cases (spec §10.3) | P17 | `OT/test_compensation.py`, `test_compensation_recovery.py` | E08 |
-| SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py` | E07 |
+| SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_safe_stop_retains_last_successful_stage`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07 |
 | SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py` | E10 |
 | SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py`, `test_replan_races.py`, scenario ambiguous test | E04 + E10 |
 | SP-27 | Versioned ALLOW/DENY/REQUIRE_APPROVAL policies; instruction injection untrusted; scanner severity/evidence (spec §12) | P11, P20 | `OT/test_policy_engine.py`, `test_guardrail_abuse.py` | E09 |
@@ -143,6 +143,24 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 16 retry, fallback and safe-stop verification record
+
+Phase 16 is **VERIFIED on 2026-10-04** for the requested recovery scope. The
+tests use real PostgreSQL transactions and injected typed failures; no live
+provider call is represented as recovery evidence.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-22, SP-21 | `test_retry_policy.py` and retry classifier cases | Default two total primary attempts; deterministic bounded delay; timeout/provider/workspace failures alone retry; every attempt retained | Scheduler daemon timing and uncertain-effect reconciliation |
+| SW-23, SP-22 | `test_real_provider_exhaustion_uses_deterministic_fallback` | Fallback starts only after two transient primary failures; separate attempt, executor, claim state and source provenance | Live provider failure demonstration and full gate binding |
+| SW-25, SP-24 | Parameterized safe-stop injections and descendant assertions | Policy, assertion, invalid requirement, security, forbidden tool, invalid state and corrupt lineage do not retry; stage/workflow stop atomically; descendants receive no claim | General workflow status/read API and operational runbook |
+| SW-25, SP-24, SP-28 | Human recovery and request-schema tests | Explicit resolved cause, authenticated human actor, optimistic workflow version, exact latest stopped attempt and current artifact inputs required; recovery creates a new attempt | Production identity provider and broader policy reevaluation |
+| SW-28, SP-13 | Retry/fallback/safe-stop audit assertions | Causal events retain failure code, reason, attempt, fallback source and recommended action alongside state changes | Phase 21 audit query and reliability metrics |
+
+Ruff and formatting checks passed, 176 offline tests passed, all 42 PostgreSQL
+integration tests passed, and the Python source/wheel packages built. See the
+[Phase 16 evidence manifest](evidence/phase-16-recovery/manifest.json).
 
 ## Phases 14–15 parallel execution and synchronization verification record
 

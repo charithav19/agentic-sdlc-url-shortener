@@ -557,7 +557,41 @@ before executing real engineering branches against one assembled candidate.
 
 **Risks:** Retry storms, repeated side effects, hidden client retries, fallback masking failure, and bypassed approval on recovery.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** COMPLETE — requested Phase 16 retry, fallback, safe-stop and recovery scope
+verified on 2026-10-04.
+
+**Implementation record:** Added a stable exception-to-failure taxonomy for the
+three retryable and five non-retryable classes, plus invalid-state and corrupt-
+lineage hard stops. The scheduler now applies a default two-total-attempt bound,
+persists deterministic bounded retry timing, and creates a new `stage_runs` row
+for every retry. Exhausted transient failures invoke only the fallback named by
+the stage definition; fallback attempts are separately claimed as
+`FALLBACK_RUNNING` and retain their source attempt. The OpenAI adapter continues
+to use `max_retries=0`, leaving retry authority in the orchestrator.
+
+Migration `0005_recovery` stores failure code, recommended action, execution
+mode and fallback source on stage attempts, plus the recommended human action on
+the workflow. Atomic safe-stop changes both the failing stage and workflow to
+`SAFE_STOPPED`, retains `stop_reason` and `last_successful_stage`, and disables
+all further claims. `POST /api/v1/workflows/{id}/resume` requires an authenticated
+human, explicit cause resolution, the current workflow version and the exact
+latest stopped attempt. It revalidates exact current input artifact versions and
+creates a fresh attempt rather than rewriting stopped evidence.
+
+**Verification record:** Failure-injection tests prove timeout retry followed by
+success, exactly two primary attempts, exhaustion without fallback, separately
+identified deterministic fallback success, immediate stop for policy/test/
+requirement/security/tool/state/lineage failures, descendant suppression,
+retained last-success state, and denied non-human/premature recovery. Ruff and
+format checks passed; 176 offline tests passed; all 42 PostgreSQL integration
+tests passed; the Python sdist and wheel built successfully. See
+`docs/evidence/phase-16-recovery/manifest.json`.
+
+**Scope boundary:** Recovery scheduling is cycle-driven; a long-running daemon,
+expired-lease reconciliation, graceful shutdown/drain, metrics and a general
+workflow status projection remain assigned to later operational/observability
+phases. Existing UUID claim fencing rejects late commits, while automatic
+reconciliation of uncertain external side effects remains open.
 
 ## PHASE 17 — Rollback/compensation
 

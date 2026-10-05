@@ -285,7 +285,9 @@ class WorkflowOrchestrator:
             )
             if workflow is None:
                 raise KeyError(f"Unknown workflow {workflow_id}")
-            if target is StageStatus.RUNNING and workflow.status is not WorkflowStatus.RUNNING:
+            if target in {StageStatus.RUNNING, StageStatus.FALLBACK_RUNNING} and (
+                workflow.status is not WorkflowStatus.RUNNING
+            ):
                 raise InvalidTransitionError(
                     f"Cannot start stage while workflow is {workflow.status.value}"
                 )
@@ -301,7 +303,9 @@ class WorkflowOrchestrator:
             with orchestrator_transition():
                 stage._status = target
             stage.version += 1
-            if target == StageStatus.RUNNING and stage.started_at is None:
+            if target in {StageStatus.RUNNING, StageStatus.FALLBACK_RUNNING} and (
+                stage.started_at is None
+            ):
                 stage.started_at = now
             if target in {
                 StageStatus.SUCCEEDED,
@@ -376,13 +380,18 @@ class WorkflowOrchestrator:
                 raise ClaimUnavailableError("Stage attempt is not in the current generation")
             if stage.status is not StageStatus.READY or stage.lease_token is not None:
                 raise ClaimUnavailableError(f"Stage {stage.stage_name} is not available for claim")
-            require_stage_transition(stage.status, StageStatus.RUNNING)
+            target = (
+                StageStatus.FALLBACK_RUNNING
+                if stage.execution_mode == "FALLBACK"
+                else StageStatus.RUNNING
+            )
+            require_stage_transition(stage.status, target)
             now = datetime.now(UTC)
             token = uuid.uuid4()
             expires_at = now + timedelta(seconds=lease_seconds)
             previous = stage.status
             with orchestrator_transition():
-                stage._status = StageStatus.RUNNING
+                stage._status = target
             stage.version += 1
             stage.started_at = stage.started_at or now
             stage.lease_token = token
@@ -396,12 +405,13 @@ class WorkflowOrchestrator:
                 stage_run_id=stage.id,
                 trace_id=context.trace_id,
                 before_state=previous.value,
-                after_state=StageStatus.RUNNING.value,
+                after_state=target.value,
                 payload={
                     "entity_version": stage.version,
                     "stage_name": stage.stage_name,
                     "generation": stage.generation,
                     "attempt": stage.attempt,
+                    "execution_mode": stage.execution_mode,
                     "claim_owner": owner,
                     "claim_token": str(token),
                     "lease_expires_at": expires_at.isoformat(),
@@ -414,6 +424,7 @@ class WorkflowOrchestrator:
                 executor=stage.executor,
                 generation=stage.generation,
                 attempt=stage.attempt,
+                execution_mode=stage.execution_mode,
                 token=token,
                 owner=owner,
                 lease_expires_at=expires_at,
@@ -462,6 +473,12 @@ class WorkflowOrchestrator:
                 if stage is None:
                     continue
                 decision = decisions[stage_name]
+                if (
+                    stage.retry_due_at is not None
+                    and stage.retry_due_at > datetime.now(UTC)
+                    and decision.status is StageStatus.READY
+                ):
+                    continue
                 if decision.status is stage.status:
                     continue
                 previous = stage.status
@@ -504,6 +521,8 @@ class WorkflowOrchestrator:
         succeeded: bool,
         result: dict | None,
         error_message: str | None,
+        failure_code: str | None = None,
+        recommended_action: str | None = None,
         context: TransitionContext,
     ) -> StageCompletion:
         """Commit a claimed result only when its exact token remains current."""
@@ -522,7 +541,12 @@ class WorkflowOrchestrator:
                 workflow.status is not WorkflowStatus.RUNNING
                 or workflow.generation != claim.generation
                 or stage.generation != claim.generation
-                or stage.status is not StageStatus.RUNNING
+                or stage.status
+                is not (
+                    StageStatus.FALLBACK_RUNNING
+                    if claim.execution_mode == "FALLBACK"
+                    else StageStatus.RUNNING
+                )
                 or stage.lease_token != claim.token
                 or stage.claim_owner != claim.owner
                 or stage.lease_expires_at is None
@@ -538,6 +562,8 @@ class WorkflowOrchestrator:
             stage.completed_at = now
             stage.result = result
             stage.error_message = error_message
+            stage.failure_code = failure_code
+            stage.recommended_action = recommended_action
             stage.lease_token = None
             stage.claim_owner = None
             stage.lease_expires_at = None
@@ -558,6 +584,8 @@ class WorkflowOrchestrator:
                     "stage_name": stage.stage_name,
                     "generation": stage.generation,
                     "attempt": stage.attempt,
+                    "execution_mode": stage.execution_mode,
+                    "failure_code": failure_code,
                     "claim_owner": claim.owner,
                     "claim_token": str(claim.token),
                 },
@@ -568,6 +596,336 @@ class WorkflowOrchestrator:
                 succeeded=succeeded,
                 version=stage.version,
             )
+
+    async def schedule_retry(
+        self,
+        stage_run_id: uuid.UUID,
+        *,
+        due_at: datetime,
+        context: TransitionContext,
+    ) -> uuid.UUID:
+        """Close one failed attempt and create its distinct durable successor."""
+
+        async with session_scope(self.session_factory) as session:
+            stage = await session.scalar(
+                select(StageRun).where(StageRun.id == stage_run_id).with_for_update()
+            )
+            if stage is None:
+                raise KeyError(f"Unknown stage run {stage_run_id}")
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == stage.workflow_id).with_for_update()
+            )
+            if workflow is None or workflow.status is not WorkflowStatus.RUNNING:
+                raise InvalidTransitionError("Retry requires a running workflow")
+            newer = await session.scalar(
+                select(StageRun)
+                .where(
+                    StageRun.workflow_id == stage.workflow_id,
+                    StageRun.generation == stage.generation,
+                    StageRun.stage_name == stage.stage_name,
+                    StageRun.attempt > stage.attempt,
+                )
+                .order_by(StageRun.attempt.desc())
+                .limit(1)
+                .with_for_update()
+            )
+            if newer is not None:
+                return newer.id
+            if stage.status is not StageStatus.FAILED or stage.execution_mode != "PRIMARY":
+                raise InvalidTransitionError("Only a failed primary attempt can be retried")
+            require_stage_transition(stage.status, StageStatus.RETRY_PENDING)
+            previous = stage.status
+            with orchestrator_transition():
+                stage._status = StageStatus.RETRY_PENDING
+            stage.version += 1
+            stage.retry_due_at = due_at
+            successor = StageRun(
+                workflow_id=stage.workflow_id,
+                stage_name=stage.stage_name,
+                generation=stage.generation,
+                attempt=stage.attempt + 1,
+                _status=StageStatus.PENDING,
+                executor=stage.executor,
+                input_artifact_refs=stage.input_artifact_refs,
+                retry_due_at=due_at,
+                execution_mode="PRIMARY",
+                version=1,
+            )
+            session.add(successor)
+            await session.flush()
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_RETRY_SCHEDULED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=stage.id,
+                trace_id=context.trace_id,
+                before_state=previous.value,
+                after_state=StageStatus.RETRY_PENDING.value,
+                reason=stage.error_message,
+                payload={
+                    "failure_code": stage.failure_code,
+                    "completed_attempt": stage.attempt,
+                    "next_attempt": successor.attempt,
+                    "next_stage_run_id": str(successor.id),
+                    "retry_due_at": due_at.isoformat(),
+                },
+            )
+            return successor.id
+
+    async def schedule_fallback(
+        self,
+        stage_run_id: uuid.UUID,
+        *,
+        fallback_executor: str,
+        context: TransitionContext,
+    ) -> uuid.UUID:
+        """Create a separately claimed fallback attempt with source provenance."""
+
+        async with session_scope(self.session_factory) as session:
+            stage = await session.scalar(
+                select(StageRun).where(StageRun.id == stage_run_id).with_for_update()
+            )
+            if stage is None:
+                raise KeyError(f"Unknown stage run {stage_run_id}")
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == stage.workflow_id).with_for_update()
+            )
+            if workflow is None or workflow.status is not WorkflowStatus.RUNNING:
+                raise InvalidTransitionError("Fallback requires a running workflow")
+            existing = await session.scalar(
+                select(StageRun)
+                .where(StageRun.fallback_source_stage_run_id == stage.id)
+                .with_for_update()
+            )
+            if existing is not None:
+                return existing.id
+            if stage.status is not StageStatus.FAILED or stage.execution_mode != "PRIMARY":
+                raise InvalidTransitionError(
+                    "Fallback requires an exhausted failed primary attempt"
+                )
+            fallback = StageRun(
+                workflow_id=stage.workflow_id,
+                stage_name=stage.stage_name,
+                generation=stage.generation,
+                attempt=stage.attempt + 1,
+                _status=StageStatus.PENDING,
+                executor=fallback_executor,
+                input_artifact_refs=stage.input_artifact_refs,
+                execution_mode="FALLBACK",
+                fallback_source_stage_run_id=stage.id,
+                version=1,
+            )
+            session.add(fallback)
+            await session.flush()
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_FALLBACK_SCHEDULED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=fallback.id,
+                trace_id=context.trace_id,
+                after_state=StageStatus.PENDING.value,
+                reason=stage.error_message,
+                payload={
+                    "failure_code": stage.failure_code,
+                    "fallback_executor": fallback_executor,
+                    "source_stage_run_id": str(stage.id),
+                    "source_attempt": stage.attempt,
+                    "fallback_attempt": fallback.attempt,
+                },
+            )
+            return fallback.id
+
+    async def safe_stop(
+        self,
+        stage_run_id: uuid.UUID,
+        *,
+        failure_reason: str,
+        failure_code: str,
+        recommended_action: str,
+        context: TransitionContext,
+    ) -> None:
+        """Atomically stop the failing stage and workflow with actionable evidence."""
+
+        async with session_scope(self.session_factory) as session:
+            stage = await session.scalar(
+                select(StageRun).where(StageRun.id == stage_run_id).with_for_update()
+            )
+            if stage is None:
+                raise KeyError(f"Unknown stage run {stage_run_id}")
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == stage.workflow_id).with_for_update()
+            )
+            if workflow is None:
+                raise KeyError(f"Unknown workflow {stage.workflow_id}")
+            if (
+                stage.status is StageStatus.SAFE_STOPPED
+                and workflow.status is WorkflowStatus.SAFE_STOPPED
+            ):
+                return
+            require_stage_transition(stage.status, StageStatus.SAFE_STOPPED)
+            if workflow.status not in {WorkflowStatus.RUNNING, WorkflowStatus.SAFE_STOPPED}:
+                raise InvalidTransitionError(
+                    f"Cannot safe-stop a stage while workflow is {workflow.status.value}"
+                )
+            previous_stage = stage.status
+            with orchestrator_transition():
+                stage._status = StageStatus.SAFE_STOPPED
+            stage.version += 1
+            stage.completed_at = datetime.now(UTC)
+            stage.error_message = failure_reason
+            stage.failure_code = failure_code
+            stage.recommended_action = recommended_action
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_SAFE_STOPPED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=stage.id,
+                trace_id=context.trace_id,
+                before_state=previous_stage.value,
+                after_state=StageStatus.SAFE_STOPPED.value,
+                reason=failure_reason,
+                payload={
+                    "failure_code": failure_code,
+                    "recommended_human_action": recommended_action,
+                    "attempt": stage.attempt,
+                },
+            )
+            if workflow.status is WorkflowStatus.RUNNING:
+                workflow.stop_reason = failure_reason
+                workflow.recommended_human_action = recommended_action
+                await self._transition_workflow_record(
+                    session,
+                    workflow,
+                    WorkflowStatus.SAFE_STOPPED,
+                    TransitionContext(
+                        actor_type=context.actor_type,
+                        actor_id=context.actor_id,
+                        reason=failure_reason,
+                        trace_id=context.trace_id,
+                    ),
+                    completion_verified=False,
+                )
+
+    async def resume_safe_stopped(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        stage_run_id: uuid.UUID,
+        resolution: str,
+        context: TransitionContext,
+    ) -> TransitionResult:
+        """Resume only an exact latest stopped attempt after a human records resolution."""
+
+        if context.actor_type != "HUMAN" or not resolution.strip():
+            raise InvalidTransitionError("Recovery requires a human resolution")
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            stage = await session.scalar(
+                select(StageRun)
+                .where(StageRun.id == stage_run_id, StageRun.workflow_id == workflow_id)
+                .with_for_update()
+            )
+            if workflow is None or stage is None:
+                raise KeyError("Workflow or stopped stage was not found")
+            self._require_version(workflow.version, context.expected_version)
+            latest_attempt = await session.scalar(
+                select(func.max(StageRun.attempt)).where(
+                    StageRun.workflow_id == workflow_id,
+                    StageRun.generation == workflow.generation,
+                    StageRun.stage_name == stage.stage_name,
+                )
+            )
+            if (
+                workflow.status is not WorkflowStatus.SAFE_STOPPED
+                or stage.status is not StageStatus.SAFE_STOPPED
+                or latest_attempt != stage.attempt
+            ):
+                raise InvalidTransitionError("Only the latest safe-stopped attempt can resume")
+            await self._validate_recovery_inputs(session, workflow, stage)
+            successor = StageRun(
+                workflow_id=stage.workflow_id,
+                stage_name=stage.stage_name,
+                generation=stage.generation,
+                attempt=stage.attempt + 1,
+                _status=StageStatus.PENDING,
+                executor=stage.executor,
+                input_artifact_refs=stage.input_artifact_refs,
+                execution_mode=stage.execution_mode,
+                fallback_source_stage_run_id=stage.fallback_source_stage_run_id,
+                version=1,
+            )
+            session.add(successor)
+            await session.flush()
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_RECOVERY_APPROVED",
+                actor_type="HUMAN",
+                actor_id=context.actor_id,
+                stage_run_id=successor.id,
+                trace_id=context.trace_id,
+                before_state=stage.status.value,
+                after_state=StageStatus.PENDING.value,
+                reason=resolution,
+                payload={
+                    "failure_code": stage.failure_code,
+                    "stopped_stage_run_id": str(stage.id),
+                    "stopped_attempt": stage.attempt,
+                    "recovery_stage_run_id": str(successor.id),
+                    "recovery_attempt": successor.attempt,
+                },
+            )
+            return await self._transition_workflow_record(
+                session,
+                workflow,
+                WorkflowStatus.RUNNING,
+                TransitionContext(
+                    actor_type="HUMAN",
+                    actor_id=context.actor_id,
+                    reason=resolution,
+                    trace_id=context.trace_id,
+                ),
+                completion_verified=False,
+            )
+
+    @staticmethod
+    async def _validate_recovery_inputs(
+        session: AsyncSession, workflow: WorkflowRun, stage: StageRun
+    ) -> None:
+        """Reject recovery when an exact input disappeared or has a newer version."""
+
+        for ref in stage.input_artifact_refs:
+            try:
+                artifact_id = uuid.UUID(str(ref["id"]))
+                version = int(ref["version"])
+                digest = str(ref["sha256"])
+            except (KeyError, TypeError, ValueError) as error:
+                raise InvalidTransitionError("Recovery input lineage is malformed") from error
+            artifact = await session.scalar(
+                select(Artifact).where(
+                    Artifact.id == artifact_id,
+                    Artifact.workflow_id == workflow.id,
+                    Artifact.version == version,
+                    Artifact.content_sha256 == digest,
+                )
+            )
+            if artifact is None:
+                raise InvalidTransitionError("Recovery input artifact is missing or corrupt")
+            newer = await session.scalar(
+                select(func.count())
+                .select_from(Artifact)
+                .where(
+                    Artifact.workflow_id == workflow.id,
+                    Artifact.logical_name == artifact.logical_name,
+                    Artifact.version > artifact.version,
+                )
+            )
+            if newer:
+                raise InvalidTransitionError("Recovery input artifact is no longer current")
 
     async def _apply_approval_decision(
         self,

@@ -50,7 +50,7 @@ def test_clean_alembic_upgrade(
                 .scalars()
                 .all()
             )
-        assert version == "0004_stage_claims"
+        assert version == "0005_recovery"
         assert set(tables) == {
             "alembic_version",
             "workflow_runs",

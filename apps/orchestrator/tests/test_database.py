@@ -50,7 +50,7 @@ def test_clean_alembic_upgrade(
                 .scalars()
                 .all()
             )
-        assert version == "0006_compensations"
+        assert version == "0007_lineage_indexes"
         assert set(tables) == {
             "alembic_version",
             "workflow_runs",

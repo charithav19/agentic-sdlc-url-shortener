@@ -6,12 +6,12 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.artifacts.candidate_refs import CandidateReferenceStore
+from app.artifacts.lineage import ArtifactLineageService
 from app.artifacts.store import ArtifactStore
 from app.observability.audit_store import AuditStore
 from app.persistence.repositories import (
     ApprovalRepository,
     DecisionRepository,
-    LineageRepository,
     StageRunRepository,
     WorkflowRepository,
 )
@@ -25,7 +25,7 @@ class UnitOfWork:
         self.stages = StageRunRepository(session)
         self.artifacts = ArtifactStore(session)
         self.candidates = CandidateReferenceStore(session)
-        self.lineage = LineageRepository(session)
+        self.lineage = ArtifactLineageService(session)
         self.decisions = DecisionRepository(session)
         self.approvals = ApprovalRepository(session)
         self.audit = AuditStore(session)

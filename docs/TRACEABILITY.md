@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 and the requested Phase 12 gate, Phase 13 approval, and Phases 14–15 parallel/join scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification and the broader recovery/candidate-assembly scope remain open; Phases 16–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9 and the requested Phase 12–18 scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification, candidate assembly, Phase 18 decision/API work, and Phases 19–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -35,7 +35,7 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-16 | Sequential execution paths (p2 continuation §4.4) | P8–9; dependency resolver/state machine | `OT/test_dependency_resolver.py::a_before_b` | E05: B remains blocked until A succeeds |
 | SW-17 | Parallel execution paths (p2 §4.4) | P14; scheduler/claims | `OT/test_parallel_execution.py::overlap_and_concurrency_cap`; `OT/test_stage_claims.py::single_active_claim` | E05: real overlapping start/end intervals and bounded active count |
 | SW-18 | Synchronization of parallel paths (p2 §4.4) | P8, P15; joins/candidate assembly | `OT/test_synchronization_joins.py::delayed_parent_blocks_join`; `OT/test_candidate_assembly.py::conflicting_overlays` | E05: delayed branch blocks build/final-doc join; compatible candidate assembly manifest |
-| SW-19 | Preserve cross-stage context (p2 §4.4) | P6, P10–11, P18; immutable inputs/provider context | `OT/test_lineage.py::exact_inputs_and_producer_attempts` | E10: exact requirement/design/candidate/evidence version chain |
+| SW-19 | Preserve cross-stage context (p2 §4.4) | P6, P10–11, P18; immutable inputs/provider context | `OT/test_lineage.py::test_multi_level_branching_parents_children_and_descendants` | E10: exact requirement/design/candidate/evidence version chain |
 | SW-20 | Preserve decision lineage (p2 §4.4) | P6, P18; decisions/lineage | `OT/test_lineage.py::decision_rationale_and_alternatives` | E10: decision tree with reasons, alternatives, actors and source artifacts |
 | SW-21 | Human approvals for high-impact actions (p2 §4.4) | P13, P20; approvals/auth/policy | `OT/test_approvals.py::architecture_high_impact_assumption_release`; `OT/test_reviewer_auth.py::agent_cannot_approve` | E06 + E03: exact-version decisions before implementation/schema/API/security change and release |
 | SW-22 | Bounded retries (p2 §4.4) | P16; retry policy/failure classifier | `OT/test_retry_policy.py::test_temporary_failure_retries_once_and_preserves_both_attempts`; `::test_retry_exhaustion_without_fallback_safe_stops` | E07: attempt history, persisted delay, success after transient error and exhaustion stop |
@@ -95,7 +95,7 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-22 | Explicit fallback only, same gates/provenance, no manufactured validation/approval (spec §10.2) | P16 | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07 |
 | SP-23 | Semantic rollback preserves candidate/evidence; idempotent restore; no prior candidate and compensation-failure cases (spec §10.3) | P17 | `OT/test_compensation.py::test_security_failure_rolls_back_candidate_and_preserves_approved_state` | E08; no-prior and injected compensation-failure variants remain open |
 | SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_safe_stop_retains_last_successful_stage`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07 |
-| SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py` | E10 |
+| SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py::test_multi_level_branching_parents_children_and_descendants`, `::test_supersedes_requires_newer_exact_version_and_relationships_are_typed` | E10; typed artifact lineage verified, decision lineage remains open |
 | SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py`, `test_replan_races.py`, scenario ambiguous test | E04 + E10 |
 | SP-27 | Versioned ALLOW/DENY/REQUIRE_APPROVAL policies; instruction injection untrusted; scanner severity/evidence (spec §12) | P11, P20 | `OT/test_policy_engine.py`, `test_guardrail_abuse.py` | E09 |
 | SP-28 | Complete /api/v1 workflow APIs, fast return, invalid/stale rejection, pagination (spec §13.1) | P7, P9, P13, P16, P18–19, P21 | `OT/test_workflow_api.py`, `test_artifact_api.py`, API-specific tests | E06 + E10–E12 |
@@ -143,6 +143,23 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 18 artifact versioning and lineage verification record
+
+Phase 18 is **VERIFIED on 2026-10-04 for the requested artifact versioning and
+lineage scope**. The result exposes a typed application service; the planned
+HTTP inventory/query API and decision-lineage work remain open.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-19, SP-25 | `test_multi_level_branching_parents_children_and_descendants` | Requirement → Plan → Architecture branches to Code, Test Plan, and Documentation; direct parents/children and deterministic transitive descendants retain exact versions, hashes and stable requirement/component IDs | Bind lineage query results to specialist producer-attempt context and HTTP API |
+| SW-19, SP-25 | Both PostgreSQL lineage scenarios plus persistence isolation tests | All five relationships are typed; self, cross-workflow and cycle-producing edges are rejected; repeated identical edge creation is idempotent | Phase 19 impact analysis and stale-descendant propagation |
+| SP-25 | `test_supersedes_requires_newer_exact_version_and_relationships_are_typed` and artifact immutability suite | Immutable v1/v2 artifacts are connected by `SUPERSEDES`; reversed version order and unknown relationships are rejected | Lifecycle history/API and decision lineage |
+| SW-28, SP-13 | Migration and audit assertions | DB vocabulary constraint, parent/child indexes, historical `REVISES` normalization and lineage-creation audit payload are persisted transactionally | Phase 21 audit query/metrics |
+
+The complete PostgreSQL suite passed 45 tests; the offline suite passed 176
+tests with one opt-in live smoke skipped. See the [Phase 18 evidence
+manifest](evidence/phase-18-lineage/manifest.json).
 
 ## Phase 17 semantic rollback verification record
 

@@ -662,7 +662,31 @@ artifact invalidation remains part of Phase 18 lineage work.
 
 **Risks:** Only storing prose lineage, overly broad dependencies preventing reuse, leaking artifact secrets, and durable URI content changing beneath a stable hash.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** REQUESTED_SCOPE_COMPLETE — immutable artifact versions now have a
+typed `ArtifactLineageService` for `DERIVED_FROM`, `IMPLEMENTS`, `VALIDATES`,
+`DOCUMENTS`, and `SUPERSEDES`. Parent, child, and cycle-safe transitive-
+descendant queries return exact artifact IDs, versions, hashes, producer stage,
+and stable requirement/component IDs in deterministic order. PostgreSQL
+constraints and indexes enforce the relationship vocabulary and support both
+directions; the migration converts the historical `REVISES` spelling to
+`SUPERSEDES`.
+
+**Verification:** A real PostgreSQL branching scenario constructs Requirement
+v1 → Plan v1 → Architecture v1, then fans out to Code v1, Test Plan v1, and
+Documentation v1. It verifies direct parents/children, breadth-first descendants
+and depths, exact version/hash context, typed edges, cycle safety,
+and invalid edge rejection. A second scenario verifies immutable v1/v2
+supersession and rejects reversed version order and unknown relationships. The
+complete PostgreSQL suite passed 45 tests; the offline suite passed 176 with one
+opt-in live smoke skipped. Ruff, formatting, lock, package build, migration-head,
+structure, and diff checks passed. See the [Phase 18 evidence
+manifest](docs/evidence/phase-18-lineage/manifest.json).
+
+**Scope boundary:** This requested increment covers artifact versioning and
+typed lineage storage/query behavior. Artifact/lineage HTTP APIs, decision and
+lifecycle services, CLI tree rendering, authorization/pagination, lineage-driven
+impact analysis, and dynamic selective replanning remain in their later or
+full-phase scopes.
 
 ## PHASE 19 — Dynamic selective re-planning
 

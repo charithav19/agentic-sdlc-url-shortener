@@ -289,6 +289,13 @@ class ArtifactLineage(Base):
             "parent_artifact_id", "child_artifact_id", "relationship", name="uq_lineage_edge"
         ),
         CheckConstraint("parent_artifact_id <> child_artifact_id", name="ck_lineage_distinct"),
+        CheckConstraint(
+            "relationship IN ('DERIVED_FROM', 'IMPLEMENTS', 'VALIDATES', 'DOCUMENTS', "
+            "'SUPERSEDES')",
+            name="ck_lineage_relationship",
+        ),
+        Index("ix_lineage_workflow_parent", "workflow_id", "parent_artifact_id"),
+        Index("ix_lineage_workflow_child", "workflow_id", "child_artifact_id"),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=new_id)

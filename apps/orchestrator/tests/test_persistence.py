@@ -108,7 +108,7 @@ async def test_all_entities_round_trip_and_reload(
         workflow_id,
         parent_artifact_id=first.id,
         child_artifact_id=second.id,
-        relationship="REVISES",
+        relationship="SUPERSEDES",
         requirement_ids=["REQ-1"],
         component_ids=["url-api"],
     )

@@ -195,7 +195,7 @@ class WorkflowPersistenceService:
         component_ids: list[str] | None = None,
     ) -> uuid.UUID:
         async with UnitOfWork.open(self.session_factory) as unit:
-            edge = await unit.lineage.add(
+            edge = await unit.lineage.add_relationship(
                 workflow_id,
                 parent_artifact_id=parent_artifact_id,
                 child_artifact_id=child_artifact_id,
@@ -212,6 +212,12 @@ class WorkflowPersistenceService:
                     {"id": str(parent_artifact_id)},
                     {"id": str(child_artifact_id)},
                 ],
+                payload={
+                    "edge_id": str(edge.id),
+                    "relationship": edge.relationship,
+                    "requirement_ids": edge.requirement_ids,
+                    "component_ids": edge.component_ids,
+                },
             )
             return edge.id
 

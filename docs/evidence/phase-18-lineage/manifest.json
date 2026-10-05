@@ -1,0 +1,43 @@
+{
+  "phase": 18,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_ARTIFACT_VERSIONING_AND_LINEAGE_SCOPE_VERIFIED",
+  "base_commit": "9017e94",
+  "source_state": "Uncommitted Phase 18 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / SQLAlchemy 2 / asyncio",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff check app tests && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run pytest -m 'not integration and not runner'",
+      "passed": 176,
+      "skipped": 1,
+      "failed": 0,
+      "deselected": 52
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache scripts/test-postgres.sh",
+      "passed": 45,
+      "failed": 0,
+      "deselected": 184
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv lock --check && UV_CACHE_DIR=/tmp/schwab-uv-cache uv build --no-sources && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run alembic heads",
+      "result": "passed; migration head 0007_lineage_indexes"
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make structure",
+      "result": "passed"
+    }
+  ],
+  "requirements": ["SW-19", "SW-28", "SP-13", "SP-25", "SP-34"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "Artifact and lineage HTTP APIs are not part of this requested increment",
+    "Decision and lifecycle services remain in the broader Phase 18 plan",
+    "Lineage-driven impact analysis and stale-descendant propagation remain Phase 19 work",
+    "No live OpenAI provider execution is represented by this evidence"
+  ]
+}

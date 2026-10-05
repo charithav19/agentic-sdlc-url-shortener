@@ -14,7 +14,6 @@ from app.orchestration.contracts import ScenarioType, StageStatus, WorkflowStatu
 from app.persistence.models import (
     Approval,
     Artifact,
-    ArtifactLineage,
     Decision,
     StageRun,
     WorkflowRun,
@@ -103,39 +102,6 @@ class StageRunRepository:
         if stage is None:
             raise KeyError(f"Unknown stage run {stage_run_id}")
         return stage
-
-
-class LineageRepository:
-    def __init__(self, session: AsyncSession) -> None:
-        self.session = session
-
-    async def add(
-        self,
-        workflow_id: uuid.UUID,
-        *,
-        parent_artifact_id: uuid.UUID,
-        child_artifact_id: uuid.UUID,
-        relationship: str,
-        requirement_ids: list[str] | None = None,
-        component_ids: list[str] | None = None,
-    ) -> ArtifactLineage:
-        if parent_artifact_id == child_artifact_id:
-            raise ValueError("Lineage parent and child must differ")
-        for artifact_id in (parent_artifact_id, child_artifact_id):
-            artifact = await self.session.get(Artifact, artifact_id)
-            if artifact is None or artifact.workflow_id != workflow_id:
-                raise ValueError("Lineage artifacts must belong to the workflow")
-        edge = ArtifactLineage(
-            workflow_id=workflow_id,
-            parent_artifact_id=parent_artifact_id,
-            child_artifact_id=child_artifact_id,
-            relationship=relationship,
-            requirement_ids=requirement_ids or [],
-            component_ids=component_ids or [],
-        )
-        self.session.add(edge)
-        await self.session.flush()
-        return edge
 
 
 class DecisionRepository:

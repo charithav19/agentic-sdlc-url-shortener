@@ -1,0 +1,40 @@
+{
+  "phase": 22,
+  "scope": "requested Typer and Rich terminal CLI command surface",
+  "verified_at": "2026-10-04",
+  "base_commit": "996a983",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && python -m pytest tests/test_cli.py tests/test_cli_api_contract.py -q",
+      "outcome": "41 passed"
+    },
+    {
+      "command": "cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration and not runner'",
+      "outcome": "252 passed, 1 skipped, 57 deselected"
+    },
+    {
+      "command": "cd apps/orchestrator && ruff check app/cli tests/test_cli.py tests/test_cli_api_contract.py && ruff format --check <same paths>",
+      "outcome": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && uv run --locked agentic --help",
+      "outcome": "installed entry point executed and listed all requested command groups"
+    }
+  ],
+  "verified": [
+    "all requested command names have Typer help and dispatch",
+    "workflow, artifact, approval, clarification, audit and metrics views use Rich panels, tables, trees and status symbols",
+    "the CLI sends requests through httpx and never imports persistence repositories",
+    "approval decisions require explicit confirmation and exact artifact/workflow versions",
+    "reviewer credentials are sent only in HTTP headers and omitted from output",
+    "watch polling is bounded and does not cancel workflows",
+    "structured API errors preserve safe messages, trace IDs and stable exit codes",
+    "demo commands delegate selection and execution to the workflow API"
+  ],
+  "limitations": [
+    "workflow resume and cancel remain in the full Phase 22 plan but were outside the user's requested command list",
+    "some SP-28 FastAPI read/create routes are not implemented yet, so their CLI contracts are verified with an HTTP mock transport",
+    "packaged greenfield, brownfield and ambiguous demo execution remains Phases 23 through 25",
+    "no live OpenAI provider execution is claimed"
+  ]
+}

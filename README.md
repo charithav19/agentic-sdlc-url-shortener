@@ -148,6 +148,20 @@ FastAPI serves `GET /health`, `/docs` and `/openapi.json` on port 8000.
 Health returns 200 after a PostgreSQL query or 503 when unavailable. Workflow
 APIs remain for later phases.
 
+The orchestrator package installs the `agentic` Typer/Rich HTTP client:
+
+```sh
+cd apps/orchestrator
+uv run --locked agentic --help
+uv run --locked agentic metrics
+uv run --locked agentic workflow status <workflow-uuid>
+```
+
+Set `ORCHESTRATOR_BASE_URL` to select FastAPI. Human approval, clarification,
+and requirement decisions use `ORCHESTRATOR_LOCAL_REVIEWER_TOKEN` and
+`AGENTIC_REVIEWER_ID`; credentials are sent only as headers. The CLI never
+opens the orchestrator database or changes workflow state directly.
+
 ## Compose skeleton
 
 `docker-compose.yml` provisions **only two development PostgreSQL services**:

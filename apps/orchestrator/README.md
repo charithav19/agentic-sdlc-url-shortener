@@ -167,3 +167,29 @@ validation after build. Build remains blocked until both implementation and test
 design succeed. This phase does not reclaim expired/uncertain claims or assemble
 parallel workspace overlays; those paths remain disabled pending later recovery
 and candidate-assembly work.
+
+## Terminal CLI
+
+The package installs the `agentic` executable. It is an HTTP client for FastAPI
+and has no database credentials or direct persistence access.
+
+```sh
+export ORCHESTRATOR_BASE_URL=http://127.0.0.1:8000
+uv run --locked agentic --help
+uv run --locked agentic workflow status <workflow-uuid>
+uv run --locked agentic metrics
+```
+
+Human decisions use `ORCHESTRATOR_LOCAL_REVIEWER_TOKEN` and
+`AGENTIC_REVIEWER_ID`. Approval commands display the exact artifact ID/version
+and require interactive confirmation unless `--yes` is supplied explicitly.
+Tokens stay in HTTP headers and are never printed. Root options include
+`--json`, `--no-color`, and `--base-url`. `workflow watch` uses bounded polling
+and exits without cancelling the workflow when interrupted.
+
+The CLI targets the versioned workflow, graph, approval, artifact, lineage,
+clarification, requirement, audit, and metrics API contracts. Read/create routes
+that remain in the open SP-28 API scope return FastAPI's structured error and
+trace ID. Demo commands delegate to `POST /api/v1/workflows` with a server-owned
+demo selector; scenario packages arrive in Phases 23–25 and the CLI contains no
+canned workflow results.

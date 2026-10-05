@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. The requested Phase 21 orchestration-metrics scope is implemented and verified offline; its PostgreSQL endpoint test is present but was blocked by sandbox denial of the Docker socket. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, the rest of Phase 21, Phase 25 demo packaging, and Phases 22–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. The requested Phase 21 metrics and Phase 22 CLI command scopes are implemented and verified offline. The Phase 21 PostgreSQL endpoint test was blocked by sandbox denial of the Docker socket; Phase 22 live-server coverage awaits the SP-28 read/create routes. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, the rest of Phases 21–22, Phase 25 demo packaging, and Phases 23–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -184,6 +184,25 @@ passed 211 tests with one opt-in live SDK test skipped. Ruff and formatting pass
 for the metrics, API, migration, and test files; Alembic generated the complete
 PostgreSQL upgrade SQL through revision `0009_observability_indexes`.
 See the [Phase 21 metrics evidence manifest](evidence/phase-21-metrics/manifest.json).
+
+## Phase 22 terminal CLI verification record
+
+The user-requested Phase 22 command surface is **IMPLEMENTED and VERIFIED
+OFFLINE on 2026-10-04**. Every command uses the versioned FastAPI HTTP boundary;
+the CLI imports no persistence repository or orchestration state authority.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SP-01, SP-29 | Parameterized help tests and installed `agentic --help` | Typer exposes workflow create/status/watch/graph, approval list/approve/reject, artifact list/show, lineage, clarification list/answer, requirement update, audit, metrics, and three demo commands | Full-plan resume/cancel commands remain open because they were outside the requested command list |
+| SW-21, SW-37, SP-16, SP-29 | Approval confirmation and HTTP contract tests | Exact approval/artifact/workflow versions are posted only after explicit confirmation; rejection requires a reason; reviewer token and identity travel only in headers | Live FastAPI reviewer round trip and production identity |
+| SW-28, SW-29–33, SP-29 | Status/graph/lineage/audit/metrics rendering tests | Rich panels, tables, trees and status symbols expose stages, blockers, lineage, audit pages and Prometheus values; JSON and no-color modes remain available | SP-28 read/create API routes and live-server contract coverage |
+| SW-05, SW-06, SW-08, SP-29–32 | Demo delegation tests | Demo commands call the workflow API with a server-owned selector and contain no canned outcomes or direct scenario execution logic | Packaged scenario services and evidence arrive in Phases 23–25 |
+| SW-45, SP-29 | Structured error, bounded watch, pagination and secret assertions | Connection/4xx/5xx failures have stable exit codes; trace IDs remain visible; watch is bounded and never sends cancellation; secrets are absent from output | Ctrl-C subprocess rehearsal against a live server |
+
+The focused CLI suite passed 41 tests. The complete offline suite passed 252
+tests with one opt-in live SDK test skipped. Ruff and formatting pass for all
+CLI and CLI-test files; the locked package installs and runs the `agentic`
+entry point. See the [Phase 22 CLI evidence manifest](evidence/phase-22-cli/manifest.json).
 
 ## Phase 25 ambiguous requirement checkpoint verification record
 

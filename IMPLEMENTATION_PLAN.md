@@ -791,13 +791,13 @@ revision persistence remain in the full Phase 19 plan.
 
 **Dependencies:** Phases 13, 18, 19, 21.
 
-**Tests:** CliRunner plus API contract tests: approval artifact/diff/risk/version display, no automatic accept, stale decision conflict, structured errors/exit codes, JSON and no-color, narrow terminal, bounded polling/backoff, Ctrl-C watch leaves workflow running, pagination, secrets absent.
+**Tests:** `test_cli.py` and `test_cli_api_contract.py` use CliRunner and an HTTP mock transport to cover every requested command, workflow panels/stage tables, graph/lineage trees, artifact/clarification/audit/metrics tables, JSON output, bounded watch polling, demo delegation, exact-version approval payloads, no automatic approval, human-only headers, requirement files, pagination, structured errors/exit codes and secret exclusion.
 
 **Acceptance criteria:** Status shows scenario/provider/stages/blocked reasons/next action; graph and lineage readable; explicit human decisions carry version preconditions; CLI uses no private state shortcuts.
 
 **Risks:** Pretty output hiding failure, approval against a refreshed artifact without consent, endless polling, and credentials in command history.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** IN_PROGRESS — the user-requested command surface is implemented and verified offline on 2026-10-04. The installed `agentic` entry point is a Typer application; Rich owns panels, tables, trees and status symbols; `httpx` is a runtime dependency; all state-changing calls go through FastAPI with reviewer credentials in headers. The focused CLI suite passed 41 tests and the full offline suite passed 252 tests with one opt-in live SDK test skipped. The executable help and package entry point run successfully. Full-plan Phase 22 remains open for `workflow resume|cancel`, live-server contract verification, and the read/create FastAPI routes tracked by SP-28. Demo commands delegate to the workflow API but packaged scenario execution remains Phases 23–25. See the [CLI evidence manifest](docs/evidence/phase-22-cli/manifest.json).
 
 ## PHASE 23 — Greenfield scenario
 

@@ -82,6 +82,7 @@ STAGE_TRANSITIONS = MappingProxyType(
             {
                 StageStatus.BLOCKED,
                 StageStatus.READY,
+                StageStatus.STALE,
                 StageStatus.SKIPPED,
                 StageStatus.CANCELLED,
             }
@@ -89,6 +90,7 @@ STAGE_TRANSITIONS = MappingProxyType(
         StageStatus.BLOCKED: frozenset(
             {
                 StageStatus.READY,
+                StageStatus.STALE,
                 StageStatus.SKIPPED,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
@@ -99,6 +101,7 @@ STAGE_TRANSITIONS = MappingProxyType(
                 StageStatus.BLOCKED,
                 StageStatus.RUNNING,
                 StageStatus.FALLBACK_RUNNING,
+                StageStatus.STALE,
                 StageStatus.SKIPPED,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
@@ -109,6 +112,7 @@ STAGE_TRANSITIONS = MappingProxyType(
                 StageStatus.WAITING_APPROVAL,
                 StageStatus.SUCCEEDED,
                 StageStatus.FAILED,
+                StageStatus.STALE,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
             }
@@ -118,6 +122,7 @@ STAGE_TRANSITIONS = MappingProxyType(
                 StageStatus.READY,
                 StageStatus.SUCCEEDED,
                 StageStatus.FAILED,
+                StageStatus.STALE,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
             }
@@ -128,6 +133,7 @@ STAGE_TRANSITIONS = MappingProxyType(
                 StageStatus.RETRY_PENDING,
                 StageStatus.FALLBACK_RUNNING,
                 StageStatus.ROLLED_BACK,
+                StageStatus.STALE,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
             }
@@ -136,6 +142,7 @@ STAGE_TRANSITIONS = MappingProxyType(
             {
                 StageStatus.READY,
                 StageStatus.FALLBACK_RUNNING,
+                StageStatus.STALE,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
             }
@@ -144,6 +151,7 @@ STAGE_TRANSITIONS = MappingProxyType(
             {
                 StageStatus.SUCCEEDED,
                 StageStatus.FAILED,
+                StageStatus.STALE,
                 StageStatus.SAFE_STOPPED,
                 StageStatus.CANCELLED,
             }

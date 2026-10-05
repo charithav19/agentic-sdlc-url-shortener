@@ -1,0 +1,44 @@
+{
+  "phase": 19,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_REQUIREMENT_UPDATE_AND_SELECTIVE_REPLAN_SCOPE_VERIFIED",
+  "base_commit": "759725d",
+  "source_state": "Uncommitted Phase 19 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / FastAPI / SQLAlchemy 2 / asyncio",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff check app tests && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv run pytest -m 'not integration and not runner'",
+      "passed": 176,
+      "skipped": 1,
+      "failed": 0,
+      "deselected": 53
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache scripts/test-postgres.sh",
+      "passed": 46,
+      "failed": 0,
+      "deselected": 184
+    },
+    {
+      "command": "cd apps/orchestrator && UV_CACHE_DIR=/tmp/schwab-uv-cache uv lock --check && UV_CACHE_DIR=/tmp/schwab-uv-cache uv build --no-sources",
+      "result": "passed"
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make structure",
+      "result": "passed"
+    }
+  ],
+  "requirements": ["SW-13", "SW-21", "SW-34", "SP-13", "SP-16", "SP-19", "SP-26"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "The endpoint prepares a new generation; the scheduler executes planning and design asynchronously",
+    "A revised architecture and renewed human approval are required but are not manufactured by the update endpoint",
+    "Aggregate validation and release approval for the revised candidate remain open",
+    "The test preserves unrelated analytics by lineage isolation and lifecycle state; a separate reuse-reference record is not yet persisted",
+    "No live OpenAI provider execution is represented by this evidence"
+  ]
+}

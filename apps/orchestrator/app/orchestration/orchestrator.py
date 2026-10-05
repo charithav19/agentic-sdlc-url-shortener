@@ -8,6 +8,11 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
+from app.artifacts.candidate_refs import ArtifactStatus
+from app.artifacts.impact import ArtifactImpactAnalyzer
+from app.artifacts.lineage import ArtifactLineageService, LineageRelationship
+from app.artifacts.schemas import ArtifactInput
+from app.artifacts.store import ArtifactStore
 from app.governance.approvals import (
     ApprovalConflictError,
     ApprovalDecision,
@@ -28,7 +33,9 @@ from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import StageStatus, WorkflowStatus
 from app.orchestration.dependencies import StageDependencyResolver
 from app.orchestration.graph import WorkflowGraph
+from app.orchestration.graph_loader import load_graph
 from app.orchestration.readiness import ReadinessChange, StageSnapshot
+from app.orchestration.replanning import ReplanResult, SelectiveReplanPlanner
 from app.orchestration.state_authority import orchestrator_transition
 from app.orchestration.state_machine import (
     InvalidTransitionError,
@@ -36,7 +43,15 @@ from app.orchestration.state_machine import (
     require_stage_transition,
     require_workflow_transition,
 )
-from app.persistence.models import Approval, Artifact, StageRun, WorkflowRun
+from app.persistence.models import (
+    Approval,
+    Artifact,
+    ArtifactLifecycle,
+    AuditEvent,
+    CandidateReference,
+    StageRun,
+    WorkflowRun,
+)
 from app.persistence.session import session_scope
 
 AuditStoreFactory = Callable[[AsyncSession], AuditStore]
@@ -87,6 +102,413 @@ class WorkflowOrchestrator:
                 target,
                 context,
                 completion_verified=verified,
+            )
+
+    async def update_requirement(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        requirement: str,
+        update_id: uuid.UUID,
+        context: TransitionContext,
+        graph: WorkflowGraph | None = None,
+    ) -> ReplanResult:
+        """Version one requirement and prepare only its affected DAG closure."""
+
+        if context.actor_type != "HUMAN":
+            raise InvalidTransitionError("Requirement updates require a human actor")
+        normalized = requirement.strip()
+        if not normalized:
+            raise ValueError("Requirement text is required")
+        graph = graph or load_graph()
+        planner = SelectiveReplanPlanner(graph)
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            if workflow is None:
+                raise KeyError(f"Unknown workflow {workflow_id}")
+            completed_replan = await session.scalar(
+                select(AuditEvent)
+                .where(
+                    AuditEvent.workflow_id == workflow_id,
+                    AuditEvent.event_type == "REPLAN_COMPLETED",
+                    AuditEvent.payload["update_id"].as_string() == str(update_id),
+                )
+                .order_by(AuditEvent.sequence.desc())
+                .limit(1)
+            )
+            if completed_replan is not None:
+                payload = completed_replan.payload
+                requirement_artifact_id = uuid.UUID(payload["requirement_artifact_id"])
+                existing_requirement = await session.get(Artifact, requirement_artifact_id)
+                if (
+                    existing_requirement is None
+                    or existing_requirement.content.get("requirement") != normalized
+                ):
+                    raise InvalidTransitionError(
+                        "Requirement update ID was already used for different content"
+                    )
+                return ReplanResult(
+                    workflow_id=workflow_id,
+                    update_id=update_id,
+                    workflow_status=WorkflowStatus(payload["workflow_status"]),
+                    workflow_version=int(payload["workflow_version"]),
+                    generation=int(payload["generation"]),
+                    requirement_artifact_id=requirement_artifact_id,
+                    requirement_version=int(payload["requirement_version"]),
+                    superseded_requirement_artifact_id=uuid.UUID(
+                        payload["superseded_requirement_artifact_id"]
+                    ),
+                    stale_artifact_ids=tuple(
+                        uuid.UUID(value) for value in payload["affected_artifact_ids"]
+                    ),
+                    invalidated_approval_ids=tuple(
+                        uuid.UUID(value) for value in payload["invalidated_approval_ids"]
+                    ),
+                    affected_stages=tuple(payload["affected_stages"]),
+                    current_stage=payload["current_stage"],
+                    architecture_approval_required=bool(payload["architecture_approval_required"]),
+                )
+            self._require_version(workflow.version, context.expected_version)
+            if workflow.status not in {
+                WorkflowStatus.RUNNING,
+                WorkflowStatus.WAITING_FOR_CLARIFICATION,
+                WorkflowStatus.WAITING_FOR_APPROVAL,
+                WorkflowStatus.SAFE_STOPPED,
+            }:
+                raise InvalidTransitionError(
+                    f"Cannot update requirements while workflow is {workflow.status.value}"
+                )
+            previous_requirement = await session.scalar(
+                select(Artifact)
+                .where(
+                    Artifact.workflow_id == workflow_id,
+                    Artifact.logical_name == "requirement",
+                    Artifact.artifact_type == "requirement",
+                )
+                .order_by(Artifact.version.desc())
+                .limit(1)
+                .with_for_update()
+            )
+            if previous_requirement is None:
+                raise KeyError("Workflow has no current requirement artifact")
+
+            lineage = ArtifactLineageService(session)
+            impact = await ArtifactImpactAnalyzer(lineage).downstream(
+                workflow_id, previous_requirement.id
+            )
+            producer_stages = (
+                list(
+                    await session.scalars(
+                        select(StageRun).where(StageRun.id.in_(impact.producer_stage_run_ids))
+                    )
+                )
+                if impact.producer_stage_run_ids
+                else []
+            )
+            affected_stages = planner.affected_stages(
+                {stage.stage_name for stage in producer_stages}
+            )
+            audit = self.audit_store_factory(session)
+            await audit.append(
+                workflow_id,
+                event_type="REPLAN_STARTED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                trace_id=context.trace_id,
+                artifact_refs=[self._artifact_ref(previous_requirement)],
+                reason=context.reason or "Requirement changed",
+                payload={
+                    "update_id": str(update_id),
+                    "from_requirement_version": previous_requirement.version,
+                    "affected_artifact_ids": [str(value) for value in impact.artifact_ids],
+                    "affected_stages": list(affected_stages),
+                },
+            )
+            await self._transition_workflow_record(
+                session,
+                workflow,
+                WorkflowStatus.REPLANNING,
+                context,
+                completion_verified=False,
+            )
+
+            current_requirement = await ArtifactStore(session).put(
+                workflow_id,
+                ArtifactInput(
+                    logical_name="requirement",
+                    artifact_type="requirement",
+                    schema_version=previous_requirement.schema_version,
+                    content={"requirement": normalized, "updateId": str(update_id)},
+                    requirement_ids=list(previous_requirement.requirement_ids),
+                    component_ids=list(previous_requirement.component_ids),
+                ),
+            )
+            supersedes = await lineage.add_relationship(
+                workflow_id,
+                parent_artifact_id=previous_requirement.id,
+                child_artifact_id=current_requirement.id,
+                relationship=LineageRelationship.SUPERSEDES,
+                requirement_ids=list(previous_requirement.requirement_ids),
+                component_ids=list(previous_requirement.component_ids),
+            )
+            await audit.append(
+                workflow_id,
+                event_type="REQUIREMENT_UPDATED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                trace_id=context.trace_id,
+                artifact_refs=[
+                    self._artifact_ref(previous_requirement),
+                    self._artifact_ref(current_requirement),
+                ],
+                reason=context.reason,
+                payload={
+                    "update_id": str(update_id),
+                    "lineage_edge_id": str(supersedes.id),
+                    "relationship": LineageRelationship.SUPERSEDES.value,
+                },
+            )
+
+            stale_artifact_ids = impact.artifact_ids
+            for artifact_id in stale_artifact_ids:
+                lifecycle = await session.scalar(
+                    select(ArtifactLifecycle)
+                    .where(ArtifactLifecycle.artifact_id == artifact_id)
+                    .with_for_update()
+                )
+                if lifecycle is None:
+                    lifecycle = ArtifactLifecycle(
+                        artifact_id=artifact_id,
+                        workflow_id=workflow_id,
+                        status=ArtifactStatus.STALE.value,
+                        active=False,
+                        version=1,
+                    )
+                    session.add(lifecycle)
+                elif lifecycle.status != ArtifactStatus.STALE.value or lifecycle.active:
+                    lifecycle.status = ArtifactStatus.STALE.value
+                    lifecycle.active = False
+                    lifecycle.version += 1
+                await audit.append(
+                    workflow_id,
+                    event_type="ARTIFACT_STALE",
+                    actor_type="SYSTEM",
+                    actor_id="selective-replanner",
+                    trace_id=context.trace_id,
+                    artifact_refs=[{"id": str(artifact_id)}],
+                    reason="Descends from a superseded requirement",
+                    payload={"update_id": str(update_id)},
+                )
+
+            stale_set = set(stale_artifact_ids)
+            references = list(
+                await session.scalars(
+                    select(CandidateReference)
+                    .where(CandidateReference.workflow_id == workflow_id)
+                    .with_for_update()
+                )
+            )
+            for reference in references:
+                changed = False
+                if reference.active_artifact_id in stale_set:
+                    reference.active_artifact_id = None
+                    changed = True
+                if reference.approved_artifact_id in stale_set:
+                    reference.approved_artifact_id = None
+                    changed = True
+                if changed:
+                    reference.version += 1
+
+            invalidated: list[Approval] = []
+            if stale_artifact_ids:
+                invalidated = list(
+                    await session.scalars(
+                        select(Approval)
+                        .where(
+                            Approval.workflow_id == workflow_id,
+                            Approval.artifact_id.in_(stale_artifact_ids),
+                            Approval.status.in_(
+                                (ApprovalStatus.PENDING.value, ApprovalStatus.APPROVED.value)
+                            ),
+                        )
+                        .with_for_update()
+                    )
+                )
+            now = datetime.now(UTC)
+            for approval in invalidated:
+                approval.status = ApprovalStatus.INVALIDATED.value
+                approval.reason = "Approved artifact depends on a superseded requirement"
+                approval.decided_at = now
+                await audit.append(
+                    workflow_id,
+                    event_type="APPROVAL_INVALIDATED",
+                    actor_type="SYSTEM",
+                    actor_id="selective-replanner",
+                    trace_id=context.trace_id,
+                    artifact_refs=[
+                        {
+                            "id": str(approval.artifact_id),
+                            "version": approval.artifact_version,
+                            "sha256": approval.artifact_hash,
+                        }
+                    ],
+                    reason=approval.reason,
+                    payload={
+                        "approval_id": str(approval.id),
+                        "update_id": str(update_id),
+                    },
+                )
+
+            async def move_stage(stage: StageRun, target: StageStatus, event_type: str) -> None:
+                previous = stage.status
+                require_stage_transition(previous, target)
+                with orchestrator_transition():
+                    stage._status = target
+                stage.version += 1
+                if target in {StageStatus.RUNNING, StageStatus.FALLBACK_RUNNING}:
+                    stage.started_at = stage.started_at or now
+                if target in {
+                    StageStatus.SUCCEEDED,
+                    StageStatus.STALE,
+                    StageStatus.CANCELLED,
+                }:
+                    stage.completed_at = now
+                if target is StageStatus.STALE:
+                    stage.lease_token = None
+                    stage.claim_owner = None
+                    stage.lease_expires_at = None
+                await audit.append(
+                    workflow_id,
+                    event_type=event_type,
+                    actor_type="SYSTEM",
+                    actor_id="selective-replanner",
+                    stage_run_id=stage.id,
+                    trace_id=context.trace_id,
+                    before_state=previous.value,
+                    after_state=target.value,
+                    reason="Requirement update changed stage inputs",
+                    payload={
+                        "update_id": str(update_id),
+                        "stage_name": stage.stage_name,
+                        "generation": stage.generation,
+                        "attempt": stage.attempt,
+                        "entity_version": stage.version,
+                    },
+                )
+
+            old_generation = workflow.generation
+            old_stages = list(
+                await session.scalars(
+                    select(StageRun)
+                    .where(
+                        StageRun.workflow_id == workflow_id,
+                        StageRun.generation == old_generation,
+                        StageRun.stage_name.in_(affected_stages),
+                    )
+                    .with_for_update()
+                )
+            )
+            for stage in old_stages:
+                if stage.status not in {
+                    StageStatus.STALE,
+                    StageStatus.ROLLED_BACK,
+                    StageStatus.CANCELLED,
+                    StageStatus.SAFE_STOPPED,
+                }:
+                    await move_stage(stage, StageStatus.STALE, "STAGE_STALE")
+
+            workflow.generation += 1
+            workflow.requirement_version = current_requirement.version
+            workflow.graph_hash = graph.sha256
+            workflow.last_successful_stage = "REQUIREMENT_ANALYSIS"
+            new_generation = workflow.generation
+            requirement_ref = self._artifact_ref(current_requirement)
+            analysis = StageRun(
+                workflow_id=workflow_id,
+                stage_name="REQUIREMENT_ANALYSIS",
+                generation=new_generation,
+                attempt=1,
+                _status=StageStatus.PENDING,
+                executor=graph.stage("REQUIREMENT_ANALYSIS").executor,
+                input_artifact_refs=[requirement_ref],
+                result={"source": "human_requirement_update", "update_id": str(update_id)},
+                version=1,
+            )
+            session.add(analysis)
+            await session.flush()
+            for status in (StageStatus.READY, StageStatus.RUNNING, StageStatus.SUCCEEDED):
+                await move_stage(analysis, status, "STAGE_REPLAN_CREATED")
+
+            for stage_name in affected_stages:
+                definition = graph.stage(stage_name)
+                stage = StageRun(
+                    workflow_id=workflow_id,
+                    stage_name=stage_name,
+                    generation=new_generation,
+                    attempt=1,
+                    _status=StageStatus.PENDING,
+                    executor=definition.executor,
+                    input_artifact_refs=[requirement_ref],
+                    version=1,
+                )
+                session.add(stage)
+                await session.flush()
+                target = (
+                    StageStatus.READY if stage_name == "TASK_DECOMPOSITION" else StageStatus.BLOCKED
+                )
+                await move_stage(stage, target, "STAGE_REPLAN_CREATED")
+
+            await audit.append(
+                workflow_id,
+                event_type="REPLAN_COMPLETED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                trace_id=context.trace_id,
+                artifact_refs=[self._artifact_ref(current_requirement)],
+                reason="Selective replan generation prepared",
+                payload={
+                    "update_id": str(update_id),
+                    "generation": new_generation,
+                    "workflow_status": WorkflowStatus.RUNNING.value,
+                    "workflow_version": workflow.version + 1,
+                    "requirement_artifact_id": str(current_requirement.id),
+                    "requirement_version": current_requirement.version,
+                    "superseded_requirement_artifact_id": str(previous_requirement.id),
+                    "current_stage": "TASK_DECOMPOSITION",
+                    "affected_artifact_ids": [str(value) for value in stale_artifact_ids],
+                    "invalidated_approval_ids": [str(item.id) for item in invalidated],
+                    "affected_stages": list(affected_stages),
+                    "architecture_approval_required": True,
+                },
+            )
+            await self._transition_workflow_record(
+                session,
+                workflow,
+                WorkflowStatus.RUNNING,
+                TransitionContext(
+                    actor_type=context.actor_type,
+                    actor_id=context.actor_id,
+                    trace_id=context.trace_id,
+                    reason="Selective replan is ready for task decomposition",
+                ),
+                completion_verified=False,
+            )
+            return ReplanResult(
+                workflow_id=workflow_id,
+                update_id=update_id,
+                workflow_status=workflow.status,
+                workflow_version=workflow.version,
+                generation=new_generation,
+                requirement_artifact_id=current_requirement.id,
+                requirement_version=current_requirement.version,
+                superseded_requirement_artifact_id=previous_requirement.id,
+                stale_artifact_ids=stale_artifact_ids,
+                invalidated_approval_ids=tuple(item.id for item in invalidated),
+                affected_stages=affected_stages,
+                current_stage="TASK_DECOMPOSITION",
+                architecture_approval_required=True,
             )
 
     async def request_approval_checkpoint(

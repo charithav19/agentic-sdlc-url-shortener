@@ -24,6 +24,7 @@ def test_required_legal_stage_transition_rules() -> None:
         (StageStatus.READY, StageStatus.RUNNING),
         (StageStatus.RUNNING, StageStatus.SUCCEEDED),
         (StageStatus.RUNNING, StageStatus.FAILED),
+        (StageStatus.RUNNING, StageStatus.STALE),
         (StageStatus.FAILED, StageStatus.RETRY_PENDING),
         (StageStatus.SUCCEEDED, StageStatus.STALE),
     }

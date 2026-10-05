@@ -11,6 +11,7 @@ from app.api.approvals import router as approvals_router
 from app.api.errors import register_error_handlers
 from app.api.health import router as health_router
 from app.api.recovery import router as recovery_router
+from app.api.requirements import router as requirements_router
 from app.config import get_settings
 from app.observability.logging import configure_logging
 from app.persistence.session import create_database_engine, create_session_factory
@@ -38,6 +39,7 @@ app = FastAPI(
 app.include_router(health_router)
 app.include_router(approvals_router)
 app.include_router(recovery_router)
+app.include_router(requirements_router)
 register_error_handlers(app)
 
 

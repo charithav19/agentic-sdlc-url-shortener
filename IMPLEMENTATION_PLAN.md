@@ -706,7 +706,38 @@ full-phase scopes.
 
 **Risks:** Under-invalidation, indiscriminate full reruns, new-generation cycles, and treating component reuse as whole-release validation.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** REQUESTED_SCOPE_COMPLETE — the authenticated requirement endpoint
+creates an immutable requirement version and `SUPERSEDES` edge under a locked
+workflow. `ArtifactImpactAnalyzer` traverses the prior requirement's lineage;
+`SelectiveReplanPlanner` expands producer stages through the validated DAG.
+The orchestrator atomically enters `REPLANNING`, stales affected artifacts and
+old stage attempts, clears stale candidate pointers, invalidates exact-version
+approvals, increments the generation, and emits `REPLAN_STARTED` and
+`REPLAN_COMPLETED`. It then returns to `RUNNING` with the new
+`TASK_DECOMPOSITION` attempt `READY`; architecture design, a new architecture
+approval checkpoint, and affected descendants are `BLOCKED` in dependency
+order. The update ID is idempotent, and optimistic workflow versions serialize
+different concurrent updates.
+
+**Verification:** The required PostgreSQL integration scenario starts with
+“Expired links return 404.” and an approved Architecture V1, then posts “Expired
+links return 410 Gone.” It proves Requirement V1 remains unchanged, Requirement
+V2 is version 2, the supersession edge exists, architecture/implementation/test/
+documentation artifacts are `STALE`, the architecture approval is
+`INVALIDATED`, and independent analytics lifecycle and stage state remain
+active/succeeded. It verifies generation fencing, the new planning/design/
+approval stage states, audit ordering, and idempotent request replay. The full
+PostgreSQL suite passed 46 tests; the offline suite passed 176 with one opt-in
+live smoke skipped. Ruff, formatting, lock, package build, structure, and diff
+checks passed. See the [Phase 19 evidence
+manifest](docs/evidence/phase-19-replanning/manifest.json).
+
+**Scope boundary:** The endpoint prepares the fresh selective generation; the
+existing scheduler executes its ready planning/design attempts asynchronously.
+This increment does not claim completed revised implementation, aggregate
+validation, renewed release approval, a live-provider run, or the broader
+ambiguous-requirement demonstration. Additional race fault injection and graph-
+revision persistence remain in the full Phase 19 plan.
 
 ## PHASE 20 — Policy guardrails
 

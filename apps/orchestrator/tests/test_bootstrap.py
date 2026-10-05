@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def test_openapi_exposes_health_and_approval_decisions(client: TestClient) -> None:
+def test_openapi_exposes_current_endpoints(client: TestClient) -> None:
     response = client.get("/openapi.json")
     assert response.status_code == 200
     schema = response.json()
@@ -13,6 +13,7 @@ def test_openapi_exposes_health_and_approval_decisions(client: TestClient) -> No
     assert set(schema["paths"]) == {
         "/health",
         "/api/v1/workflows/{workflow_id}/approvals",
+        "/api/v1/workflows/{workflow_id}/requirements",
         "/api/v1/workflows/{workflow_id}/resume",
     }
 

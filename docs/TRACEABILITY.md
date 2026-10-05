@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 and the requested Phase 12–18 scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification, candidate assembly, Phase 18 decision/API work, and Phases 19–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9 and the requested Phase 12–19 scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification, candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, and Phases 20–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -50,7 +50,7 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-31 | Rollback frequency metric (p2 §4.4) | P17, P21 | `OT/test_metrics.py::workflows_compensated_over_started_cohort` | E11: declared cohort, workflow count (not compensation-event count) and ratio |
 | SW-32 | MTTR metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::resolved_incident_duration_unresolved_separate` | E11: controlled failure/recovery timestamps and unresolved incident count |
 | SW-33 | End-to-end latency metric (p2 §4.4) | P21 | `OT/test_metrics.py::creation_to_completion_includes_human_wait` | E11: total plus execution/wait components with defined overlap accounting |
-| SW-34 | Dynamic replanning on upstream changes while preserving governance (p2 §4.4) | P18–19, P25; impact/replan/generation fencing | `OT/test_replanning.py::expiry_change_selective_reuse`; `OT/test_replan_races.py::obsolete_result_rejected` | E04 + E10: 404→410 update, stale descendants/approvals, analytics reuse, renewed aggregate validation/release |
+| SW-34 | Dynamic replanning on upstream changes while preserving governance (p2 §4.4) | P18–19, P25; impact/replan/generation fencing | `OT/test_replanning.py::test_requirement_update_selectively_stales_descendants_and_returns_to_planning`; `OT/test_replan_races.py::obsolete_result_rejected` | E04 + E10: 404→410 update, stale descendants/approvals and analytics reuse verified; renewed aggregate validation/release remains open |
 | SW-35 | Produce quality code, API/schema definitions, unit/integration tests and docs (p2 §4.5) | P2–4, P11–12, P23–24, P27–28 | `JT/LinkApiTest.java`, `LinkPersistenceTest.java`; all candidate tests; CI build/lint and review | E01–E03 + E14: actual code/migration/OpenAPI/test/doc diffs and executable reports |
 | SW-36 | Identify risks/tradeoffs/failure scenarios and validation/safety guardrails (p2 §4.6) | Every phase's risks; P12, P16–17, P20, P28 | Gate/retry/compensation/abuse tests; `docs/FINAL_REVIEW.md` risk-to-test review | E06–E09 + E16: fault-injection outcomes, ADR consequences and explicit limitations |
 | SW-37 | Agents execute multi-step work; humans retain oversight/approvals/final quality (p2 §4.7; p3 §7) | P9–13, P20, P23, P28 | `OT/test_state_machine.py::agent_cannot_transition`; `OT/test_reviewer_auth.py`; live workflow approval checkpoints | E02 + E06 + E15: agent tool work bounded by deterministic engine and authenticated decisions |
@@ -96,7 +96,7 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-23 | Semantic rollback preserves candidate/evidence; idempotent restore; no prior candidate and compensation-failure cases (spec §10.3) | P17 | `OT/test_compensation.py::test_security_failure_rolls_back_candidate_and_preserves_approved_state` | E08; no-prior and injected compensation-failure variants remain open |
 | SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_safe_stop_retains_last_successful_stage`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07 |
 | SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py::test_multi_level_branching_parents_children_and_descendants`, `::test_supersedes_requires_newer_exact_version_and_relationships_are_typed` | E10; typed artifact lineage verified, decision lineage remains open |
-| SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py`, `test_replan_races.py`, scenario ambiguous test | E04 + E10 |
+| SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py::test_requirement_update_selectively_stales_descendants_and_returns_to_planning`, `test_replan_races.py`, scenario ambiguous test | E10 selective invalidation/reuse verified; aggregate rerun and scenario proof remain open |
 | SP-27 | Versioned ALLOW/DENY/REQUIRE_APPROVAL policies; instruction injection untrusted; scanner severity/evidence (spec §12) | P11, P20 | `OT/test_policy_engine.py`, `test_guardrail_abuse.py` | E09 |
 | SP-28 | Complete /api/v1 workflow APIs, fast return, invalid/stale rejection, pagination (spec §13.1) | P7, P9, P13, P16, P18–19, P21 | `OT/test_workflow_api.py`, `test_artifact_api.py`, API-specific tests | E06 + E10–E12 |
 | SP-29 | All CLI commands, exact approval details, JSON/no-color/narrow display, watch interruption, explicit CI actors (spec §13.2) | P22–25 | `OT/test_cli.py`, `test_cli_api_contract.py`, scenario tests | E02–E04 CLI transcripts |
@@ -143,6 +143,24 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 19 selective dynamic replanning verification record
+
+Phase 19 is **VERIFIED on 2026-10-04 for the requested requirement-update and
+selective generation scope**. The endpoint prepares the new generation for the
+scheduler; it does not represent completion of that generation's specialist or
+validation work.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-34, SP-26 | `test_requirement_update_selectively_stales_descendants_and_returns_to_planning` | `404` Requirement V1 remains immutable; `410 Gone` becomes V2 with `SUPERSEDES`; request replay with the same update ID returns the same result | Conflicting concurrent update fault injection |
+| SW-34, SP-25–26 | Same PostgreSQL scenario | Lineage and DAG closure stale architecture, implementation, expiry tests and API documentation while analytics remains active and its stage remains succeeded | Explicit persisted reuse-reference record beyond unchanged lifecycle |
+| SW-21, SW-34, SP-16 | Same PostgreSQL scenario | Exact Architecture V1 approval becomes `INVALIDATED`; generation 2 contains a blocked architecture approval stage requiring a new architecture version | Execute design and obtain renewed human decision |
+| SW-13, SW-28, SP-13, SP-19 | Stage and audit assertions | Old affected attempts become `STALE`, generation increments, and task decomposition alone is `READY`; ordered `REPLAN_STARTED`/`REPLAN_COMPLETED` events retain the impact set | Inject an in-flight old-generation result, then execute aggregate validation and renewed release gate |
+
+The complete PostgreSQL suite passed 46 tests; the offline suite passed 176
+tests with one opt-in live smoke skipped. See the [Phase 19 evidence
+manifest](evidence/phase-19-replanning/manifest.json).
 
 ## Phase 18 artifact versioning and lineage verification record
 

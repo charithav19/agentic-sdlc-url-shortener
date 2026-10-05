@@ -324,6 +324,23 @@ def test_release_readiness_rejects_stale_or_blocked_policy_evidence() -> None:
     )
 
 
+@pytest.mark.parametrize(
+    ("stage_name", "rule_id"),
+    [
+        ("UNIT_TEST", "MANDATORY_TESTS_PASS"),
+        ("SECURITY_VALIDATION", "SECURITY_RELEASE_BLOCK"),
+    ],
+)
+def test_release_failures_are_explained_by_versioned_policy(stage_name: str, rule_id: str) -> None:
+    verdict = ReleaseReadinessEntryGate().evaluate(
+        GateContext(
+            stages=release_stages(override_name=stage_name, override_status=StageStatus.FAILED)
+        )
+    )
+    assert verdict.result is GateResult.FAIL
+    assert f"{rule_id}@1" in verdict.reasons[0]
+
+
 def test_executable_gate_registry_binds_phase_12_boundaries() -> None:
     assert DEFAULT_GATE_REGISTRY.names == {
         "requirements_analyzed",

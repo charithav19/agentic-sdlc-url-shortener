@@ -1,0 +1,44 @@
+{
+  "phase": 20,
+  "scope": "deterministic policy guardrails",
+  "verified_at": "2026-10-04",
+  "base_commit": "c33b6c910acade3afdaffe494047682329aa0d46",
+  "provider_mode": "fake and deterministic local policy evaluation",
+  "policy_set_version": "1.0.0",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration and not runner'",
+      "outcome": "207 passed, 1 skipped, 56 deselected"
+    },
+    {
+      "command": "scripts/test-postgres.sh",
+      "outcome": "49 passed, 215 deselected"
+    },
+    {
+      "command": "cd apps/orchestrator && .venv/bin/ruff check app alembic/versions/0008_policy_events.py tests/test_policy_engine.py tests/test_guardrail_abuse.py tests/test_tools.py tests/test_gates.py tests/test_database.py && .venv/bin/ruff format --check <same Phase 20 paths>",
+      "outcome": "passed; repository-wide Ruff separately reports three pre-existing E501 findings in alembic/versions/0006_compensations.py"
+    },
+    {
+      "command": "cd apps/orchestrator && UV_PYTHON=.venv/bin/python uv lock --check && UV_PYTHON=.venv/bin/python uv build --no-sources",
+      "outcome": "lock verified; wheel and source distribution built"
+    },
+    {
+      "command": "make structure && git diff --check",
+      "outcome": "passed"
+    }
+  ],
+  "verified": [
+    "ALLOW, DENY and REQUIRE_APPROVAL are typed deterministic outcomes",
+    "generated file secrets, path traversal, outside writes and arbitrary commands are denied",
+    "schema and breaking API changes require exact current human approvals",
+    "mandatory test and security failures block release through versioned rules",
+    "policy violations create append-only policy and audit records atomically",
+    "untrusted repository, tool-output and generated policy text cannot expand authority"
+  ],
+  "limitations": [
+    "the lightweight secret scanner is heuristic and not comprehensive",
+    "production identity, policy administration and regulatory certification are outside this local prototype",
+    "the audit query API, complete event coverage and policy metrics remain Phase 21 work",
+    "no live OpenAI provider execution is claimed by this evidence"
+  ]
+}

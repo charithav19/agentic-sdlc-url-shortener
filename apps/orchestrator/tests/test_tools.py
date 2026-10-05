@@ -38,6 +38,13 @@ def test_files_write_read_search_patch_and_archive(workspace):
         assert archive.extractfile("src/app.py").read().endswith(b"return 2\n")
 
 
+def test_generated_secret_is_rejected_before_workspace_write(workspace):
+    fake_credential = "FAKE_TEST_TOKEN_123456789"
+    with pytest.raises(AgentToolDenied, match="credential-like"):
+        workspace.write_file("src/generated.py", f"token={fake_credential}")
+    assert workspace.list_files() == []
+
+
 @pytest.mark.parametrize(
     "path",
     [

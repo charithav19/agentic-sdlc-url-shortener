@@ -50,7 +50,7 @@ def test_clean_alembic_upgrade(
                 .scalars()
                 .all()
             )
-        assert version == "0007_lineage_indexes"
+        assert version == "0008_policy_events"
         assert set(tables) == {
             "alembic_version",
             "workflow_runs",
@@ -63,6 +63,7 @@ def test_clean_alembic_upgrade(
             "artifact_lifecycle",
             "candidate_references",
             "compensations",
+            "policy_events",
         }
     finally:
         engine.dispose()

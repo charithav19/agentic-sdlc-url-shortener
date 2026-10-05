@@ -417,6 +417,47 @@ class AuditEvent(Base):
     payload: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
 
 
+class PolicyEvent(Base):
+    __tablename__ = "policy_events"
+    __table_args__ = (
+        CheckConstraint(
+            "result IN ('ALLOW', 'DENY', 'REQUIRE_APPROVAL')",
+            name="ck_policy_event_result",
+        ),
+        CheckConstraint(
+            "actor_type IN ('SYSTEM', 'AGENT', 'HUMAN')",
+            name="ck_policy_event_actor_type",
+        ),
+        CheckConstraint(
+            "policy_set_hash ~ '^[0-9a-f]{64}$'",
+            name="ck_policy_event_set_hash",
+        ),
+        Index("ix_policy_event_workflow_created", "workflow_id", "created_at"),
+        Index("ix_policy_event_workflow_result", "workflow_id", "result"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=new_id)
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT")
+    )
+    stage_run_id: Mapped[uuid.UUID | None] = mapped_column(
+        Uuid, ForeignKey("stage_runs.id", ondelete="RESTRICT"), nullable=True
+    )
+    policy_set_version: Mapped[str] = mapped_column(String(32))
+    policy_set_hash: Mapped[str] = mapped_column(String(64))
+    rule_id: Mapped[str] = mapped_column(String(128))
+    rule_version: Mapped[str] = mapped_column(String(32))
+    result: Mapped[str] = mapped_column(String(32))
+    action: Mapped[str] = mapped_column(String(128))
+    actor_type: Mapped[str] = mapped_column(String(16))
+    actor_id: Mapped[str] = mapped_column(String(128))
+    reason: Mapped[str] = mapped_column(Text)
+    blocking: Mapped[bool] = mapped_column()
+    artifact_refs: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
+    evidence: Mapped[dict[str, Any]] = mapped_column(JSONB, default=dict)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 def _guard_status_mutation(target: Any, value: Any, old_value: Any, _initiator: Any) -> Any:
     state = inspect(target)
     if old_value is NO_VALUE and (state.transient or state.pending):

@@ -15,6 +15,7 @@ from app.persistence.models import (
     Approval,
     Artifact,
     Decision,
+    PolicyEvent,
     StageRun,
     WorkflowRun,
 )
@@ -194,3 +195,55 @@ class ApprovalRepository:
         if invalidated:
             await self.session.flush()
         return invalidated
+
+
+class PolicyEventRepository:
+    """Append-only storage for one deterministic policy evaluation."""
+
+    def __init__(self, session: AsyncSession) -> None:
+        self.session = session
+
+    async def add(
+        self,
+        workflow_id: uuid.UUID,
+        *,
+        stage_run_id: uuid.UUID | None,
+        policy_set_version: str,
+        policy_set_hash: str,
+        rule_id: str,
+        rule_version: str,
+        result: str,
+        action: str,
+        actor_type: str,
+        actor_id: str,
+        reason: str,
+        blocking: bool,
+        artifact_refs: list[dict[str, Any]],
+        evidence: dict[str, Any],
+    ) -> PolicyEvent:
+        workflow = await self.session.get(WorkflowRun, workflow_id)
+        if workflow is None:
+            raise KeyError(f"Unknown workflow {workflow_id}")
+        if stage_run_id is not None:
+            stage = await self.session.get(StageRun, stage_run_id)
+            if stage is None or stage.workflow_id != workflow_id:
+                raise ValueError("Policy stage must belong to the workflow")
+        event = PolicyEvent(
+            workflow_id=workflow_id,
+            stage_run_id=stage_run_id,
+            policy_set_version=policy_set_version,
+            policy_set_hash=policy_set_hash,
+            rule_id=rule_id,
+            rule_version=rule_version,
+            result=result,
+            action=action,
+            actor_type=actor_type,
+            actor_id=actor_id,
+            reason=reason,
+            blocking=blocking,
+            artifact_refs=artifact_refs,
+            evidence=evidence,
+        )
+        self.session.add(event)
+        await self.session.flush()
+        return event

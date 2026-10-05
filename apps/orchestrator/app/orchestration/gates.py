@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from app.agents.output_schemas import ArchitectureOutput, PlanningOutput, RequirementOutput
+from app.governance.policy import PolicyAction, PolicyEngine, PolicyInput, PolicyResult
 from app.orchestration.contracts import StageStatus
 from app.orchestration.evidence_validation import (
     ApprovalStatus,
@@ -212,6 +213,8 @@ class ReleaseReadinessEntryGate(StageGate):
             return _fail("Release evidence contains duplicate stage records")
 
         references: list[str] = []
+        mandatory_failures: list[str] = []
+        security_violations: list[str] = []
         for stage_name in self._required_stages:
             stage = stages_by_name.get(stage_name)
             if stage is None:
@@ -223,7 +226,24 @@ class ReleaseReadinessEntryGate(StageGate):
                 continue
             if stage.status in self._waiting_statuses:
                 return _wait(f"{stage_name} has not succeeded", *references)
-            return _fail(f"{stage_name} ended with {stage.status.value}", *references)
+            mandatory_failures.append(f"{stage_name}:{stage.status.value}")
+            if stage_name == "SECURITY_VALIDATION":
+                security_violations.append(f"{stage_name}:{stage.status.value}")
+
+        if mandatory_failures:
+            policy = PolicyEngine().evaluate(
+                PolicyInput(
+                    action=PolicyAction.RELEASE.value,
+                    mandatory_test_failures=tuple(mandatory_failures),
+                    security_violations=tuple(security_violations),
+                )
+            )
+            if policy.result is PolicyResult.DENY:
+                finding = policy.decisive_finding
+                return _fail(
+                    f"{finding.reason} ({finding.rule_id}@{finding.rule_version})",
+                    *references,
+                )
 
         active_blockers = tuple(
             violation

@@ -1,6 +1,6 @@
 # Implementation Plan
 
-Planning baseline: 2026-10-04. Current status: **Phases 1–9 VERIFIED for their requested scopes; Phases 10–11 requested provider/specialist scope implemented and tested offline, with full-plan acceptance still IN_PROGRESS; Phases 12–28 NOT_STARTED**.
+Planning baseline: 2026-10-04. Current status: **Phases 1–9 and the requested Phases 12–20 and 25 scopes are VERIFIED; Phases 10–11 have tested provider/specialist contracts with live acceptance still IN_PROGRESS; Phases 21–24 and 26–28 are NOT_STARTED**.
 
 Execute only an explicitly requested phase after its prerequisites pass. The user authorized Phases 1–11; their actual implementation, tests and scope limits are recorded below. Phases 12–28 remain proposed deliverables.
 
@@ -743,21 +743,21 @@ revision persistence remain in the full Phase 19 plan.
 
 **Objective:** Unify security, local compliance controls, change control, and controlled autonomy under versioned deterministic policies.
 
-**Exact modules/files expected:** `O/governance/policy.py`, `O/governance/rules.py`, `O/governance/security_findings.py`, `apps/orchestrator/config/policies.yaml`, `OT/test_policy_engine.py`, `OT/test_guardrail_abuse.py`, `docs/SECURITY.md`; extend Phase 11 tool policy/auth/redaction and all gates.
+**Exact modules/files expected:** `O/governance/policy.py`, `O/governance/rules.py`, `O/governance/security_findings.py`, `apps/orchestrator/config/policies.yaml`, `M/0008_policy_events.py`, `OT/test_policy_engine.py`, `OT/test_guardrail_abuse.py`, `docs/SECURITY.md`; extend Phase 11 tool controls and the release gate.
 
-**Data model changes:** Version/hash every policy set; persist `ALLOW`, `DENY`, `REQUIRE_APPROVAL` with rule ID/version, actor/tool, reason, artifact refs and audit event. Clarify distinction from gate PASS/FAIL/WAIT.
+**Data model changes:** `policy_events` stores an append-only policy-set version/hash, decisive rule/version, `ALLOW`/`DENY`/`REQUIRE_APPROVAL`, action, actor, optional stage/artifact references, sanitized evidence and blocking status. A matching audit event is committed in the same transaction. Policy decisions remain distinct from gate `PASS`/`FAIL`/`WAIT`.
 
-**APIs:** Internal policy evaluation at tool, stage, approval, replan, recovery and release boundaries; structured denial or approval-needed response. Do not add arbitrary policy execution from YAML.
+**APIs:** Internal typed `PolicyEngine.evaluate` and atomic `evaluate_and_record`; generated-file and fixed-command tool enforcement; exact-artifact architecture/high-impact approval checks; release policy consumed by the release-readiness gate. `policies.yaml` is packaged metadata and cannot execute or redefine rules.
 
 **Dependencies:** Phases 11, 12, 13, 16, 19.
 
-**Tests:** Traversal/symlink/secret/host-mount/socket escape, forbidden command/argument, resource budget, spoofed reviewer, stale approval, cross-workflow access, instructions embedded in repository/requirements/tool output, tampered scanner evidence, severity blocking rules, redaction.
+**Tests:** `test_policy_engine.py` covers the result vocabulary, policy hash/version, fake credential shapes, path traversal/outside writes, shell denial, exact and stale approvals, test/security release blockers, append-only persistence, redaction and atomic audit evidence. `test_guardrail_abuse.py` proves a generated policy file and tool-output instructions cannot expand authority and a denied secret patch leaves the file unchanged. Existing Phase 11/13 suites retain symlink/socket/host-mount/resource, cross-workflow, reviewer and approval abuse coverage.
 
-**Acceptance criteria:** Default deny for unregistered capabilities; high-impact actions require human authorization; tool outputs cannot modify rules; model-only security review is labeled distinctly from scanners; security/compliance/change-control rules are explicit without claiming regulatory certification.
+**Acceptance criteria:** Unknown capabilities and non-allowlisted commands deny by default. Generated writes are contained and scanned before mutation. Schema and breaking API changes require an exact approved artifact version. Failed mandatory tests and security validation block release through versioned rules. Untrusted repository content cannot modify policy. Scanner findings retain only type, line and a truncated hash fingerprint; fake credentials alone are used in tests.
 
-**Risks:** Prompt instructions masquerading as authority, inconsistent enforcement across call sites, arbitrary-code config, and undocumented production identity/network gaps.
+**Risks:** The scanner is intentionally heuristic and is not a substitute for a maintained enterprise secret scanner. The local reviewer token is not production identity. The policy manifest is descriptive; code-owned rules prevent arbitrary execution but require a deployment for rule changes. Phase 21 still owns complete audit APIs and metrics.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED on 2026-10-04 for the requested deterministic policy scope. The full offline suite passed 207 tests with one opt-in live SDK smoke skipped; the PostgreSQL suite passed 49 tests. Phase 20 Python sources pass Ruff and formatting; lock, package build, structure and diff checks pass. Repository-wide Ruff still reports three pre-existing line-length findings in `0006_compensations.py`, which this phase did not modify. See the [Phase 20 evidence manifest](docs/evidence/phase-20-policy/manifest.json).
 
 ## PHASE 21 — Audit trail and reliability metrics
 
@@ -765,7 +765,7 @@ revision persistence remain in the full Phase 19 plan.
 
 **Exact modules/files expected:** `O/observability/events.py`, `O/observability/metrics.py`, `O/observability/reporting.py`, `O/api/audit.py`, `O/api/metrics.py`, `OT/test_audit_coverage.py`, `OT/test_metrics.py`, `docs/METRICS.md`.
 
-**Data model changes:** Add reporting indexes via `M/0008_observability_indexes.py`; record missing wait/incident interval boundaries in existing audit/incident records; derived reporting may be rebuilt from durable data. No high-cardinality workflow labels.
+**Data model changes:** Add reporting indexes via `M/0009_observability_indexes.py`; record missing wait/incident interval boundaries in existing audit/incident records; derived reporting may be rebuilt from durable data. No high-cardinality workflow labels.
 
 **APIs:** Paginated GET `/api/v1/workflows/{id}/audit`, root GET `/metrics`; add GET `/api/v1/metrics/summary` for CLI ratios/windows/N/A where raw Prometheus text is insufficient (explicit plan extension). Restrict detail access and sanitize metadata.
 

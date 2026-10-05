@@ -12,6 +12,7 @@ from app.observability.audit_store import AuditStore
 from app.persistence.repositories import (
     ApprovalRepository,
     DecisionRepository,
+    PolicyEventRepository,
     StageRunRepository,
     WorkflowRepository,
 )
@@ -28,6 +29,7 @@ class UnitOfWork:
         self.lineage = ArtifactLineageService(session)
         self.decisions = DecisionRepository(session)
         self.approvals = ApprovalRepository(session)
+        self.policies = PolicyEventRepository(session)
         self.audit = AuditStore(session)
 
     @classmethod

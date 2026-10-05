@@ -11,6 +11,7 @@ from contextlib import contextmanager
 from pathlib import Path, PurePosixPath
 
 from app.agents.errors import AgentToolDenied
+from app.governance.policy import DEFAULT_POLICY_ENGINE, PolicyAction, PolicyInput, PolicyResult
 
 MAX_FILE_BYTES = 256_000
 MAX_WORKSPACE_BYTES = 8_000_000
@@ -219,6 +220,18 @@ class Workspace:
         return result
 
     def write_file(self, path: str, content: str) -> dict[str, str]:
+        decision = DEFAULT_POLICY_ENGINE.evaluate(
+            PolicyInput(
+                action=PolicyAction.WRITE_FILE.value,
+                actor_type="AGENT",
+                actor_id="workspace-tool",
+                workspace_root=str(self.path),
+                target_path=path,
+                content=content,
+            )
+        )
+        if decision.result is not PolicyResult.ALLOW:
+            raise AgentToolDenied(decision.decisive_finding.reason)
         data = content.encode("utf-8")
         if len(data) > MAX_FILE_BYTES:
             raise AgentToolDenied("File size limit exceeded")

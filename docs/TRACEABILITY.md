@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9, the requested Phase 12–19 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, Phase 25 demo packaging, and Phases 20–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9, the requested Phase 12–20 scopes, and the requested Phase 25 ambiguity checkpoint are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Candidate assembly, Phase 18 decision/API work, Phase 19 aggregate rerun/release completion, Phase 25 demo packaging, and Phases 21–24 and 26–28 remain open.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -37,13 +37,13 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-18 | Synchronization of parallel paths (p2 §4.4) | P8, P15; joins/candidate assembly | `OT/test_synchronization_joins.py::delayed_parent_blocks_join`; `OT/test_candidate_assembly.py::conflicting_overlays` | E05: delayed branch blocks build/final-doc join; compatible candidate assembly manifest |
 | SW-19 | Preserve cross-stage context (p2 §4.4) | P6, P10–11, P18; immutable inputs/provider context | `OT/test_lineage.py::test_multi_level_branching_parents_children_and_descendants` | E10: exact requirement/design/candidate/evidence version chain |
 | SW-20 | Preserve decision lineage (p2 §4.4) | P6, P18; decisions/lineage | `OT/test_lineage.py::decision_rationale_and_alternatives` | E10: decision tree with reasons, alternatives, actors and source artifacts |
-| SW-21 | Human approvals for high-impact actions (p2 §4.4) | P13, P20; approvals/auth/policy | `OT/test_approvals.py::architecture_high_impact_assumption_release`; `OT/test_reviewer_auth.py::agent_cannot_approve` | E06 + E03: exact-version decisions before implementation/schema/API/security change and release |
+| SW-21 | Human approvals for high-impact actions (p2 §4.4) | P13, P20; approvals/auth/policy | `OT/test_approvals.py`; `OT/test_policy_engine.py::test_high_impact_changes_require_exact_current_approval` | E06 + E09: exact-version decisions before implementation/schema/API changes and release |
 | SW-22 | Bounded retries (p2 §4.4) | P16; retry policy/failure classifier | `OT/test_retry_policy.py::test_temporary_failure_retries_once_and_preserves_both_attempts`; `::test_retry_exhaustion_without_fallback_safe_stops` | E07: attempt history, persisted delay, success after transient error and exhaustion stop |
 | SW-23 | Fallback (p2 §4.4) | P16; fallback registry | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07: labeled configured fallback with source-attempt provenance |
 | SW-24 | Rollback (p2 §4.4) | P17; semantic compensation | `OT/test_compensation.py::test_security_failure_rolls_back_candidate_and_preserves_approved_state` | E08: candidate rejected, previous approved reference restored, failed evidence retained and replay idempotent |
 | SW-25 | Safe-stop controls (p2 §4.4) | P14, P16–17; cancellation/recovery | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07–E08: persisted reason, last successful stage, action required and validated recovery |
-| SW-26 | Security policy guardrails (p2 §4.4) | P11, P20; runner/tool policy/rules | `OT/test_runner_isolation.py`; `OT/test_guardrail_abuse.py::escape_secrets_commands_injection` | E09: denied attacks, runner restrictions and structured policy records |
-| SW-27 | Compliance and change-control policy guardrails (p2 §4.4) | P13, P19–20; versioned policies/approvals/replan | `OT/test_policy_engine.py::versioned_rule_and_change_approval`; `OT/test_replanning.py::approval_invalidation` | E06 + E09 + E10: rule/version decisions and renewed approval on affected changes; scope explicitly local, no regulatory certification claimed |
+| SW-26 | Security policy guardrails (p2 §4.4) | P11, P20; runner/tool policy/rules | `OT/test_tools.py`, `test_runner_isolation.py`, `test_policy_engine.py`, `test_guardrail_abuse.py` | E09: denied paths/secrets/commands/injection, runner restrictions and structured policy records |
+| SW-27 | Compliance and change-control policy guardrails (p2 §4.4) | P13, P19–20; versioned policies/approvals/replan | `OT/test_policy_engine.py::test_high_impact_changes_require_exact_current_approval`; `OT/test_replanning.py` | E06 + E09 + E10: rule/version decisions and exact renewed approval on affected changes; scope explicitly local, no regulatory certification claimed |
 | SW-28 | Audit-grade observability and traceability (p2 §4.4) | P6, P9, P18, P21; atomic audit/lineage | `OT/test_transition_atomicity.py`; `OT/test_audit_coverage.py::all_event_types_causal_order_redaction` | E11: sanitized causal audit with actors, versions, reasons and trace IDs; atomicity fault report |
 | SW-29 | Success rate metric (p2 §4.4) | P21; metrics/reporting | `OT/test_metrics.py::success_rate_cohort_and_zero_denominator` | E11: completed/(completed+failed), declared window, cancelled/stopped counts and N/A |
 | SW-30 | Retry frequency metric (p2 §4.4) | P16, P21 | `OT/test_metrics.py::retry_attempts_over_initial_attempts` | E11: raw counts and ratio reconciled with injected attempts |
@@ -97,7 +97,7 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_safe_stop_retains_last_successful_stage`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07 |
 | SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py::test_multi_level_branching_parents_children_and_descendants`, `::test_supersedes_requires_newer_exact_version_and_relationships_are_typed` | E10; typed artifact lineage verified, decision lineage remains open |
 | SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py::test_requirement_update_selectively_stales_descendants_and_returns_to_planning`, `test_replan_races.py`, scenario ambiguous test | E10 selective invalidation/reuse verified; aggregate rerun and scenario proof remain open |
-| SP-27 | Versioned ALLOW/DENY/REQUIRE_APPROVAL policies; instruction injection untrusted; scanner severity/evidence (spec §12) | P11, P20 | `OT/test_policy_engine.py`, `test_guardrail_abuse.py` | E09 |
+| SP-27 | Versioned ALLOW/DENY/REQUIRE_APPROVAL policies; instruction injection untrusted; scanner evidence (spec §12) | P11, P20 | `OT/test_policy_engine.py`, `test_guardrail_abuse.py`, `test_gates.py::test_release_failures_are_explained_by_versioned_policy` | E09: Phase 20 policy manifest, assertions and test counts |
 | SP-28 | Complete /api/v1 workflow APIs, fast return, invalid/stale rejection, pagination (spec §13.1) | P7, P9, P13, P16, P18–19, P21 | `OT/test_workflow_api.py`, `test_artifact_api.py`, API-specific tests | E06 + E10–E12 |
 | SP-29 | All CLI commands, exact approval details, JSON/no-color/narrow display, watch interruption, explicit CI actors (spec §13.2) | P22–25 | `OT/test_cli.py`, `test_cli_api_contract.py`, scenario tests | E02–E04 CLI transcripts |
 | SP-30 | Minimal greenfield seed; real generated files/tests/docs; separate live proof (spec §14.1) | P23 | `OT/scenarios/test_greenfield.py`, `OT/live/test_live_engineering_workflow.py` | E02 + E15 |
@@ -143,6 +143,26 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 20 policy guardrails verification record
+
+Phase 20 is **VERIFIED on 2026-10-04 for the requested deterministic policy
+scope**. Rules are code-owned and versioned; the packaged YAML file contains
+metadata only and cannot register executable behavior.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-26, SP-18, SP-27 | `test_policy_engine.py`, `test_tools.py`, `test_guardrail_abuse.py` | Generated files are workspace-contained and scanned before mutation; traversal, outside writes, credential-like content and arbitrary commands deny; rejected patches preserve the prior file | Replace the lightweight scanner with maintained production scanning and add durable records for every low-level preflight denial |
+| SW-21, SW-27, SP-16, SP-27 | `test_high_impact_changes_require_exact_current_approval` plus Phase 13 approval tests | Schema changes require exact current `ARCHITECTURE` approval; breaking API changes require exact current `HIGH_IMPACT_CHANGE` approval; stale versions do not authorize | Production identity/authorization and policy administration |
+| SW-12, SW-26, SP-15, SP-27 | `test_release_failures_are_explained_by_versioned_policy` and release gate tests | Mandatory test failures resolve to `MANDATORY_TESTS_PASS@1`; security failures resolve to `SECURITY_RELEASE_BLOCK@1`; either blocks release | Full scenario release assembly and live evidence |
+| SW-28, SP-13, SP-27 | PostgreSQL policy audit test and clean migration test | Append-only `policy_events` retain policy/rule versions and sanitized evidence; `POLICY_VIOLATION` is committed atomically and references the policy event | Phase 21 audit query API, complete event coverage and metrics |
+| SW-26, SW-36, SP-27 | Instruction/policy-manifest abuse tests | Repository requirements, tool output and generated `policies.yaml` text cannot expand registered actions or grant shell authority | Broader maintained adversarial corpus |
+
+The complete PostgreSQL suite passed 49 tests. The offline suite passed 207
+tests with one opt-in live SDK smoke skipped. Phase 20 sources pass Ruff and
+formatting; lock, package build, structure and diff checks pass. Repository-wide
+Ruff retains three pre-existing line-length findings in `0006_compensations.py`.
+See the [Phase 20 policy evidence manifest](evidence/phase-20-policy/manifest.json).
 
 ## Phase 25 ambiguous requirement checkpoint verification record
 

@@ -15,6 +15,32 @@ Implementation can edit/build/test; testing can edit/test; documentation can
 edit. Requirement/release specialists remain artifact-only. No tool receives
 workflow-state, database, human-approval or Docker control capabilities.
 
+## Deterministic policy engine
+
+`PolicyEngine` returns `ALLOW`, `DENY`, or `REQUIRE_APPROVAL` from trusted typed
+facts. Those decisions are separate from stage-gate `PASS`, `FAIL`, and `WAIT`.
+The policy set and every rule have stable versions; a canonical hash identifies
+the complete code-owned rule set. `config/policies.yaml` is packaged metadata
+for reviewers. It is never interpreted as code and generated copies in a
+workflow workspace have no authority.
+
+The registered rules enforce these boundaries:
+
+- generated files contain no credential-like values;
+- write paths contain no traversal and stay within the assigned workspace;
+- commands match one of the three fixed profiles;
+- schema changes have exact current `ARCHITECTURE` approval;
+- breaking API changes have exact current `HIGH_IMPACT_CHANGE` approval;
+- mandatory test or security-validation failures deny release; and
+- unknown capabilities deny by default.
+
+An audited evaluation appends a `policy_events` row and matching audit event in
+one PostgreSQL transaction. Records include policy-set and rule versions,
+action, actor, optional stage/artifact references, reason, result and sanitized
+evidence. A denial emits `POLICY_VIOLATION`; an approval requirement emits
+`POLICY_APPROVAL_REQUIRED`. Policy events are protected by the same database
+append-only trigger used for immutable audit and artifact history.
+
 ## Filesystem enforcement
 
 Paths are validated before access. Traversal components, outside absolute
@@ -29,8 +55,14 @@ Listings, searches and candidate archives exclude credential paths, symlinks,
 hardlinks, sockets and FIFOs. Denials include `.env*`, credential/secret files,
 private-key extensions, SSH/AWS/Docker/Kubernetes/configuration directories,
 Git credentials, service-account JSON, token JSON and Docker socket paths.
-The trusted caller must avoid putting secrets in ordinary source files: path
-filters are not general secret-content detection.
+
+Before `write_file` or `apply_patch` mutates a regular source file, a lightweight
+scanner checks common access-key, private-key, provider-token and secret
+assignment shapes. Findings contain only a category, line number and truncated
+SHA-256 fingerprint; matched text is never copied into policy or audit records.
+The scanner is a deterministic local safeguard, not comprehensive secret
+detection or regulatory certification. A production deployment should add a
+maintained scanner and response process while retaining the pre-write check.
 
 Limits are 256,000 bytes per file, 512 files, 1,024 traversed entries, 16 path
 components, and 8,000,000 bytes per candidate snapshot. Searches are literal
@@ -93,8 +125,9 @@ The image includes Java 21/Maven, Python/pytest and a small prepared Maven
 dependency cache. Candidate execution is offline. Other dependencies require
 a trusted image rebuild; agents cannot install them or enable network access.
 Build outputs are ephemeral and not copied back to the host workspace.
-Tool receipts are attached to provider results; durable invocation storage,
-broader redaction/governance and candidate artifact retention remain planned.
+Tool receipts are attached to provider results. Durable policy decisions and
+violations are implemented; durable per-invocation storage, candidate artifact
+retention and the complete Phase 21 audit API/metrics remain planned.
 
 ## Verification
 
@@ -102,6 +135,9 @@ broader redaction/governance and candidate artifact retention remain planned.
 pytest fixtures. Security tests verify host-secret exclusion, inaccessible
 Docker socket/host paths, read-only root, disabled network, capability and
 resource settings, real failure exit codes, timeout/output limits, cancellation,
-and cleanup after rejected isolation. `tests/test_tools.py` verifies filesystem
-and SDK allowlist denials. This is local Docker isolation evidence, not a claim
-of protection from Docker/kernel vulnerabilities or hostile host administrators.
+and cleanup after rejected isolation. `tests/test_tools.py`,
+`tests/test_policy_engine.py`, and `tests/test_guardrail_abuse.py` verify
+filesystem, SDK, secret, change-control, release, injection and audit behavior.
+All test credential strings are visibly fake fixtures. This is local Docker
+isolation evidence, not a claim of protection from Docker/kernel vulnerabilities
+or hostile host administrators.

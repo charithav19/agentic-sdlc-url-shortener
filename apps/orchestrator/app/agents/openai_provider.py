@@ -18,6 +18,7 @@ from app.agents.errors import (
     AgentTransientError,
 )
 from app.agents.provider import AgentProvider, validate_request, validated_result
+from app.governance.policy import PolicyEngine
 from app.tools.engineering import engineering_tools
 from app.tools.runner import DockerRunner
 from app.tools.workspaces import Workspace, WorkspaceManager
@@ -31,6 +32,7 @@ class OpenAIAgentProvider(AgentProvider):
         api_key: str,
         workspaces: WorkspaceManager | None = None,
         runner: DockerRunner | None = None,
+        policy_engine: PolicyEngine | None = None,
     ) -> None:
         if not model.strip() or not api_key.strip():
             raise AgentConfigurationError("OPENAI_MODEL and OPENAI_API_KEY are required")
@@ -38,6 +40,7 @@ class OpenAIAgentProvider(AgentProvider):
         self._api_key = api_key
         self.workspaces = workspaces or WorkspaceManager()
         self.runner = runner or DockerRunner()
+        self.policy_engine = policy_engine
 
     async def run[T: BaseModel](
         self, specialist: Specialist[T], context: AgentContext
@@ -54,7 +57,14 @@ class OpenAIAgentProvider(AgentProvider):
             name=specialist.name,
             instructions=specialist.instructions,
             output_type=specialist.output_type,
-            tools=engineering_tools(specialist, context, workspace, self.runner, receipts),
+            tools=engineering_tools(
+                specialist,
+                context,
+                workspace,
+                self.runner,
+                receipts,
+                policy_engine=self.policy_engine,
+            ),
             handoffs=[],
             mcp_servers=[],
             model=self.model,

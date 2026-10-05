@@ -1,0 +1,24 @@
+policy_set:
+  id: default
+  version: 1.0.0
+  implementation: app.governance.policy.PolicyEngine
+  note: Rule behavior is code-owned; this file is declarative metadata only.
+rules:
+  - id: FILE_NO_SECRETS
+    version: "1"
+  - id: PATH_NO_TRAVERSAL
+    version: "1"
+  - id: WRITE_WORKSPACE_ONLY
+    version: "1"
+  - id: COMMAND_ALLOWLIST
+    version: "1"
+  - id: SCHEMA_CHANGE_APPROVAL
+    version: "1"
+  - id: BREAKING_API_APPROVAL
+    version: "1"
+  - id: MANDATORY_TESTS_PASS
+    version: "1"
+  - id: SECURITY_RELEASE_BLOCK
+    version: "1"
+  - id: UNREGISTERED_CAPABILITY
+    version: "1"

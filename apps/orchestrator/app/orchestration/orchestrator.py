@@ -3,7 +3,7 @@
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -18,8 +18,17 @@ from app.governance.approvals import (
     StaleApprovalError,
 )
 from app.observability.audit_store import AuditStore
+from app.orchestration.claims import (
+    ClaimUnavailableError,
+    StageClaim,
+    StageCompletion,
+    StaleClaimError,
+)
 from app.orchestration.commands import TransitionContext
 from app.orchestration.contracts import StageStatus, WorkflowStatus
+from app.orchestration.dependencies import StageDependencyResolver
+from app.orchestration.graph import WorkflowGraph
+from app.orchestration.readiness import ReadinessChange, StageSnapshot
 from app.orchestration.state_authority import orchestrator_transition
 from app.orchestration.state_machine import (
     InvalidTransitionError,
@@ -328,6 +337,236 @@ class WorkflowOrchestrator:
                 current_status=target.value,
                 version=stage.version,
                 audit_event_id=event.id,
+            )
+
+    async def claim_stage(
+        self,
+        stage_run_id: uuid.UUID,
+        *,
+        owner: str,
+        lease_seconds: int,
+        context: TransitionContext,
+    ) -> StageClaim:
+        """Atomically claim one READY attempt and transition it to RUNNING."""
+
+        if not owner.strip():
+            raise ValueError("Claim owner is required")
+        if lease_seconds < 1:
+            raise ValueError("Claim lease must be positive")
+        async with session_scope(self.session_factory) as session:
+            stage_identity = await session.execute(
+                select(StageRun.workflow_id).where(StageRun.id == stage_run_id)
+            )
+            workflow_id = stage_identity.scalar_one_or_none()
+            if workflow_id is None:
+                raise KeyError(f"Unknown stage run {stage_run_id}")
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            stage = await session.scalar(
+                select(StageRun).where(StageRun.id == stage_run_id).with_for_update()
+            )
+            if workflow is None or stage is None:
+                raise KeyError(f"Unknown stage run {stage_run_id}")
+            if workflow.status is not WorkflowStatus.RUNNING:
+                raise ClaimUnavailableError(
+                    f"Workflow is {workflow.status.value}; stage claims are disabled"
+                )
+            if stage.generation != workflow.generation:
+                raise ClaimUnavailableError("Stage attempt is not in the current generation")
+            if stage.status is not StageStatus.READY or stage.lease_token is not None:
+                raise ClaimUnavailableError(f"Stage {stage.stage_name} is not available for claim")
+            require_stage_transition(stage.status, StageStatus.RUNNING)
+            now = datetime.now(UTC)
+            token = uuid.uuid4()
+            expires_at = now + timedelta(seconds=lease_seconds)
+            previous = stage.status
+            with orchestrator_transition():
+                stage._status = StageStatus.RUNNING
+            stage.version += 1
+            stage.started_at = stage.started_at or now
+            stage.lease_token = token
+            stage.claim_owner = owner
+            stage.lease_expires_at = expires_at
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_CLAIMED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=stage.id,
+                trace_id=context.trace_id,
+                before_state=previous.value,
+                after_state=StageStatus.RUNNING.value,
+                payload={
+                    "entity_version": stage.version,
+                    "stage_name": stage.stage_name,
+                    "generation": stage.generation,
+                    "attempt": stage.attempt,
+                    "claim_owner": owner,
+                    "claim_token": str(token),
+                    "lease_expires_at": expires_at.isoformat(),
+                },
+            )
+            return StageClaim(
+                stage_run_id=stage.id,
+                workflow_id=workflow.id,
+                stage_name=stage.stage_name,
+                executor=stage.executor,
+                generation=stage.generation,
+                attempt=stage.attempt,
+                token=token,
+                owner=owner,
+                lease_expires_at=expires_at,
+            )
+
+    async def synchronize_stage_readiness(
+        self,
+        workflow_id: uuid.UUID,
+        graph: WorkflowGraph,
+        context: TransitionContext,
+    ) -> tuple[ReadinessChange, ...]:
+        """Atomically apply dependency-derived READY/BLOCKED changes."""
+
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == workflow_id).with_for_update()
+            )
+            if workflow is None:
+                raise KeyError(f"Unknown workflow {workflow_id}")
+            if workflow.status is not WorkflowStatus.RUNNING:
+                return ()
+            rows = list(
+                await session.scalars(
+                    select(StageRun)
+                    .where(
+                        StageRun.workflow_id == workflow_id,
+                        StageRun.generation == workflow.generation,
+                    )
+                    .order_by(StageRun.stage_name, StageRun.attempt.desc())
+                    .with_for_update()
+                )
+            )
+            latest: dict[str, StageRun] = {}
+            for stage in rows:
+                latest.setdefault(stage.stage_name, stage)
+            snapshots = {
+                name: StageSnapshot(status=stage.status, generation=stage.generation)
+                for name, stage in latest.items()
+            }
+            decisions = StageDependencyResolver(graph).resolve(
+                snapshots, generation=workflow.generation
+            )
+            changes: list[ReadinessChange] = []
+            for stage_name in graph.topological_order:
+                stage = latest.get(stage_name)
+                if stage is None:
+                    continue
+                decision = decisions[stage_name]
+                if decision.status is stage.status:
+                    continue
+                previous = stage.status
+                require_stage_transition(previous, decision.status)
+                with orchestrator_transition():
+                    stage._status = decision.status
+                stage.version += 1
+                await self.audit_store_factory(session).append(
+                    workflow_id,
+                    event_type="STAGE_READINESS_CHANGED",
+                    actor_type=context.actor_type,
+                    actor_id=context.actor_id,
+                    stage_run_id=stage.id,
+                    trace_id=context.trace_id,
+                    before_state=previous.value,
+                    after_state=decision.status.value,
+                    payload={
+                        "entity_version": stage.version,
+                        "stage_name": stage.stage_name,
+                        "generation": stage.generation,
+                        "attempt": stage.attempt,
+                        "unmet_dependencies": list(decision.unmet_dependencies),
+                    },
+                )
+                changes.append(
+                    ReadinessChange(
+                        stage_run_id=stage.id,
+                        stage_name=stage.stage_name,
+                        previous_status=previous,
+                        current_status=decision.status,
+                        unmet_dependencies=decision.unmet_dependencies,
+                    )
+                )
+            return tuple(changes)
+
+    async def complete_stage_claim(
+        self,
+        claim: StageClaim,
+        *,
+        succeeded: bool,
+        result: dict | None,
+        error_message: str | None,
+        context: TransitionContext,
+    ) -> StageCompletion:
+        """Commit a claimed result only when its exact token remains current."""
+
+        async with session_scope(self.session_factory) as session:
+            workflow = await session.scalar(
+                select(WorkflowRun).where(WorkflowRun.id == claim.workflow_id).with_for_update()
+            )
+            stage = await session.scalar(
+                select(StageRun).where(StageRun.id == claim.stage_run_id).with_for_update()
+            )
+            if workflow is None or stage is None:
+                raise StaleClaimError("Claimed workflow or stage no longer exists")
+            now = datetime.now(UTC)
+            if (
+                workflow.status is not WorkflowStatus.RUNNING
+                or workflow.generation != claim.generation
+                or stage.generation != claim.generation
+                or stage.status is not StageStatus.RUNNING
+                or stage.lease_token != claim.token
+                or stage.claim_owner != claim.owner
+                or stage.lease_expires_at is None
+                or stage.lease_expires_at <= now
+            ):
+                raise StaleClaimError("Stage claim token is stale or expired")
+            target = StageStatus.SUCCEEDED if succeeded else StageStatus.FAILED
+            require_stage_transition(stage.status, target)
+            previous = stage.status
+            with orchestrator_transition():
+                stage._status = target
+            stage.version += 1
+            stage.completed_at = now
+            stage.result = result
+            stage.error_message = error_message
+            stage.lease_token = None
+            stage.claim_owner = None
+            stage.lease_expires_at = None
+            if succeeded:
+                workflow.last_successful_stage = stage.stage_name
+            await self.audit_store_factory(session).append(
+                workflow.id,
+                event_type="STAGE_CLAIM_COMPLETED" if succeeded else "STAGE_CLAIM_FAILED",
+                actor_type=context.actor_type,
+                actor_id=context.actor_id,
+                stage_run_id=stage.id,
+                trace_id=context.trace_id,
+                before_state=previous.value,
+                after_state=target.value,
+                reason=error_message,
+                payload={
+                    "entity_version": stage.version,
+                    "stage_name": stage.stage_name,
+                    "generation": stage.generation,
+                    "attempt": stage.attempt,
+                    "claim_owner": claim.owner,
+                    "claim_token": str(claim.token),
+                },
+            )
+            return StageCompletion(
+                stage_run_id=stage.id,
+                stage_name=stage.stage_name,
+                succeeded=succeeded,
+                version=stage.version,
             )
 
     async def _apply_approval_decision(

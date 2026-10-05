@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     db_connect_timeout_seconds: int = Field(default=3, ge=1, le=30)
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     local_reviewer_token: SecretStr = SecretStr("")
+    max_parallel_stages: int = Field(default=3, ge=1, le=32)
+    stage_claim_lease_seconds: int = Field(default=300, ge=30, le=3600)
 
     @property
     def database_url(self) -> URL:

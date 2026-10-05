@@ -1,5 +1,35 @@
 # Testing and verification
 
+## Phases 14–15 parallel scheduling and joins — verified on 2026-10-04
+
+Five focused PostgreSQL tests passed for the two configured fan-outs, bounded
+concurrency, competing claims, and the delayed mandatory build join. The full
+disposable PostgreSQL suite passed **29 tests**. The default offline suite passed
+**164 tests**, with one opt-in live SDK smoke skipped.
+
+```sh
+cd apps/orchestrator
+.venv/bin/ruff check app tests
+.venv/bin/ruff format --check app tests
+.venv/bin/pytest -q -m 'not integration and not runner'
+cd ../..
+UV=uv UV_CACHE_DIR=/tmp/schwab-uv-cache \
+  scripts/test-postgres.sh \
+  tests/test_parallel_execution.py tests/test_synchronization_joins.py -q
+UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db
+```
+
+The mandatory synchronization test completes `IMPLEMENTATION` quickly while an
+asyncio event holds `TEST_DESIGN` in `RUNNING`. A PostgreSQL read confirms
+`BUILD_VALIDATION` is still `BLOCKED`. After releasing test design, the scheduler
+commits its exact claim and the join transaction changes build to `READY`.
+Audit assertions verify both readiness transitions and claim lifecycle events.
+
+No live agent or candidate code ran. Lease recovery, cancellation, restart
+reconciliation, overlays, candidate assembly, and compatible-input hashes remain
+outside this requested scope. See
+[the evidence manifest](evidence/phase-14-15-parallel-joins/manifest.json).
+
 ## Phase 13 approvals — verified on 2026-10-04
 
 The default offline orchestrator suite passed **164 tests**, with one opt-in

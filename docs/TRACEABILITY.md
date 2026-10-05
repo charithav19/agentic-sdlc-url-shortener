@@ -2,7 +2,7 @@
 
 Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.md).
 
-**Phases 1–9 and the requested Phase 12 gate and Phase 13 approval-checkpoint scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. The Phase 13 clarification scope and Phases 14–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
+**Phases 1–9 and the requested Phase 12 gate, Phase 13 approval, and Phases 14–15 parallel/join scopes are VERIFIED. Phases 10–11 have tested provider/specialist contracts; full-plan live acceptance remains IN_PROGRESS. Clarification and the broader recovery/candidate-assembly scope remain open; Phases 16–28 remain PLANNED.** The tables describe complete scope; verification records below identify actual coverage. No live SDK run, end-to-end scenario, or performance result is claimed.
 
 ## Sources and notation
 
@@ -143,6 +143,24 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phases 14–15 parallel execution and synchronization verification record
+
+Phases 14–15 are **VERIFIED on 2026-10-04** for the requested bounded execution,
+duplicate-claim prevention, two fan-outs, and mandatory build synchronization.
+The tests use real PostgreSQL transactions and controlled asyncio barriers.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-17, SP-19 | Two parameterized fan-out tests | All three architecture children and all three post-build validators overlap | Scheduler daemon lifecycle and restart recovery |
+| SW-17, SP-19 | `test_scheduler_never_exceeds_configured_concurrency` | Three ready stages run with observed maximum two when configured to two | Runtime metrics and dynamic operational controls |
+| SW-18, SP-20 | `test_build_waits_for_delayed_test_design_then_becomes_ready` | Fast implementation cannot release build; delayed test design success changes build `BLOCKED → READY` | Candidate version compatibility and overlay assembly |
+| SW-13, SP-19 | `test_competing_schedulers_cannot_duplicate_a_stage_claim` | Two schedulers produce one UUID-fenced claim, one execution, one commit | Lease heartbeat and uncertain-effect recovery |
+| SW-28, SP-33 | Claim/readiness audit assertions | Claim, completion and join status events carry stage/generation/attempt and before/after state | Full metrics and audit API in Phase 21 |
+
+The focused suite passed five PostgreSQL tests, the complete PostgreSQL suite
+passed 29, and the offline suite passed 164 with one opt-in live smoke skipped.
+See [the Phases 14–15 evidence manifest](evidence/phase-14-15-parallel-joins/manifest.json).
 
 ## Phase 13 approval verification record
 

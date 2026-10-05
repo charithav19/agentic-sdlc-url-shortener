@@ -145,3 +145,25 @@ version of the same logical artifact invalidates its older pending or approved
 decisions. Completion additionally requires a current exact-version `RELEASE`
 approval. Approval request, decision/invalidation, and workflow state events are
 committed atomically where they occur.
+
+## Phases 14–15 scheduler and joins
+
+`WorkflowScheduler.run_cycle(workflow_id)` recomputes current-generation DAG
+readiness, runs the stages ready at cycle start with bounded `asyncio`
+concurrency, then recomputes mandatory fan-in joins. Construct it with
+`WorkflowScheduler.configured(...)` to use
+`ORCHESTRATOR_MAX_PARALLEL_STAGES` (default three) and
+`ORCHESTRATOR_STAGE_CLAIM_LEASE_SECONDS` (default 300).
+
+Each worker first obtains an exclusive PostgreSQL claim. The claim atomically
+changes `READY → RUNNING`, stores an owner, UUID token and expiry, and appends an
+audit event. Only the same unexpired token in the current workflow generation
+can commit `SUCCEEDED` or `FAILED`. The database also prevents two active claims
+for the same stage/generation.
+
+The configured DAG provides both parallel groups: implementation/test-design/
+documentation-draft after architecture approval, and unit/integration/security
+validation after build. Build remains blocked until both implementation and test
+design succeed. This phase does not reclaim expired/uncertain claims or assemble
+parallel workspace overlays; those paths remain disabled pending later recovery
+and candidate-assembly work.

@@ -478,7 +478,28 @@ lineage remain in their later authorized work. No Phase 14 scheduler was added.
 
 **Risks:** Duplicate execution after lease expiry, cancellation races, event-loop blocking, and falsely claiming exactly-once external effects.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED for the requested bounded-concurrency and exclusive-claim scope on 2026-10-04.
+
+**Implementation record:** Added `WorkflowScheduler`, `StageWorker`, UUID-fenced
+`StageClaim` contracts, and orchestrator-owned atomic claim/completion methods.
+Scheduler cycles recompute readiness, run only the attempts ready at cycle start
+through an `asyncio.Semaphore`, and recompute joins after all work settles.
+`ORCHESTRATOR_MAX_PARALLEL_STAGES` defaults to three. PostgreSQL stores claim
+owner/token/expiry and enforces one active claim per workflow generation and
+stage name. Claim, completion/failure, and readiness changes append before/after
+audit events. Exact tokens, current generation, unexpired leases, and a running
+workflow are required to commit results.
+
+**Verification:** Both required three-stage fan-outs started concurrently in
+real PostgreSQL tests. A separate test observed a maximum of two active stages
+with the cap set to two. Two competing scheduler instances saw one successful
+claim, one executor call, and one committed result. The complete PostgreSQL suite
+passed 29 tests; the offline suite passed 164 with one opt-in live skip. See
+`docs/evidence/phase-14-15-parallel-joins/`.
+
+**Scope boundary:** Lease heartbeat, expired/uncertain-effect reconciliation,
+restart recovery, scheduler shutdown/cancellation, retries, and safe-stop are
+reserved for Phase 16. An expired lease is deliberately not reclaimed here.
 
 ## PHASE 15 — Synchronization joins
 
@@ -498,7 +519,25 @@ lineage remain in their later authorized work. No Phase 14 scheduler was added.
 
 **Risks:** Merging unrelated generations, nondeterministic overlay order, treating “started” as “succeeded,” and stale join decisions.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** VERIFIED for the requested mandatory synchronization scope on 2026-10-04.
+
+**Implementation record:** Added `SynchronizationJoinCoordinator` backed by the
+existing explicit DAG and `StageDependencyResolver`. Readiness changes occur
+inside one orchestrator transaction with workflow/stage locks. Only current-
+generation `SUCCEEDED` mandatory predecessors release a child. The configured
+fan-ins remain unchanged: build requires implementation plus test design, and
+documentation finalization requires all validation branches plus its draft.
+
+**Mandatory verification:** In the required timing test, `IMPLEMENTATION`
+finished while `TEST_DESIGN` remained deliberately delayed and
+`BUILD_VALIDATION` persisted as `BLOCKED`. Releasing test design produced its
+`SUCCEEDED` claim event followed by the audited build transition
+`BLOCKED → READY`. The focused parallel/join suite passed five PostgreSQL tests.
+
+**Scope boundary:** This request did not add stage overlays, candidate manifest
+assembly, compatible-input hash checks, write-conflict resolution, or isolated
+validation output directories. Those broader Phase 15 plan items remain required
+before executing real engineering branches against one assembled candidate.
 
 ## PHASE 16 — Retry, fallback and safe-stop
 

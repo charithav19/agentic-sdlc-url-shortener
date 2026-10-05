@@ -1,0 +1,41 @@
+{
+  "phases": [14, 15],
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_PARALLEL_AND_SYNCHRONIZATION_SCOPE_VERIFIED",
+  "base_commit": "2beca69d7840714a0910a5070a08627d0d6fda90",
+  "source_state": "Uncommitted Phases 14–15 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / asyncio",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && .venv/bin/ruff check app tests && .venv/bin/ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && .venv/bin/pytest -q -m 'not integration and not runner'",
+      "passed": 164,
+      "failed": 0,
+      "skipped": 1,
+      "deselected": 36
+    },
+    {
+      "command": "UV=uv UV_CACHE_DIR=/tmp/schwab-uv-cache scripts/test-postgres.sh tests/test_parallel_execution.py tests/test_synchronization_joins.py -q",
+      "passed": 5,
+      "failed": 0
+    },
+    {
+      "command": "UV_CACHE_DIR=/tmp/schwab-uv-cache make test-db",
+      "passed": 29,
+      "failed": 0,
+      "deselected": 172
+    }
+  ],
+  "requirements": ["SW-13", "SW-17", "SW-18", "SW-28", "SP-19", "SP-20", "SP-33"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "Expired leases are fenced but not automatically reclaimed",
+    "Restart reconciliation, heartbeat, cancellation and graceful shutdown remain later work",
+    "No stage overlay or candidate manifest assembly is implemented",
+    "Compatible artifact/candidate hashes are not yet checked at joins",
+    "No real agent or candidate build executed through this scheduler"
+  ]
+}

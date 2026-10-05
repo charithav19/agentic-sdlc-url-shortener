@@ -80,6 +80,14 @@ class StageRun(Base):
         CheckConstraint("attempt > 0", name="ck_stage_attempt"),
         CheckConstraint("version > 0", name="ck_stage_version"),
         Index("ix_stage_workflow_status", "workflow_id", "status"),
+        Index(
+            "uq_stage_active_claim",
+            "workflow_id",
+            "generation",
+            "stage_name",
+            unique=True,
+            postgresql_where=text("lease_token IS NOT NULL"),
+        ),
     )
 
     id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=new_id)
@@ -97,6 +105,7 @@ class StageRun(Base):
     executor: Mapped[str] = mapped_column(String(128))
     input_artifact_refs: Mapped[list[dict[str, Any]]] = mapped_column(JSONB, default=list)
     lease_token: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    claim_owner: Mapped[str | None] = mapped_column(String(128), nullable=True)
     lease_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )

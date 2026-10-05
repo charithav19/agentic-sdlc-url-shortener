@@ -1,0 +1,40 @@
+{
+  "phase": 17,
+  "recorded_at": "2026-10-04",
+  "status": "REQUESTED_SEMANTIC_ROLLBACK_SCOPE_VERIFIED",
+  "base_commit": "f6362f6",
+  "source_state": "Uncommitted Phase 17 changes on the recorded base",
+  "runtime": "Python 3.12.13 / PostgreSQL 17.7 / asyncio",
+  "commands": [
+    {
+      "command": "cd apps/orchestrator && uv run --locked ruff check app tests && uv run --locked ruff format --check app tests",
+      "result": "passed"
+    },
+    {
+      "command": "cd apps/orchestrator && uv run --locked python -m pytest -m 'not integration and not runner' -q",
+      "passed": 176,
+      "skipped": 1,
+      "failed": 0,
+      "deselected": 50
+    },
+    {
+      "command": "scripts/test-postgres.sh",
+      "passed": 43,
+      "failed": 0,
+      "deselected": 184
+    },
+    {
+      "command": "cd apps/orchestrator && uv lock --check && uv build --no-sources",
+      "result": "passed"
+    }
+  ],
+  "requirements": ["SW-24", "SW-25", "SW-28", "SP-13", "SP-23", "SP-24"],
+  "reports": ["assertions.md"],
+  "limitations": [
+    "This is semantic artifact compensation, not distributed transaction rollback",
+    "No database migration, external deployment, or irreversible side effect is reversed",
+    "No-prior-approved and injected mid-compensation crash variants remain open",
+    "Recursive invalidation of artifacts derived from a rejected candidate remains Phase 18 work",
+    "Workspace snapshot restoration is not claimed"
+  ]
+}

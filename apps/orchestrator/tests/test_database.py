@@ -50,7 +50,7 @@ def test_clean_alembic_upgrade(
                 .scalars()
                 .all()
             )
-        assert version == "0005_recovery"
+        assert version == "0006_compensations"
         assert set(tables) == {
             "alembic_version",
             "workflow_runs",
@@ -60,6 +60,9 @@ def test_clean_alembic_upgrade(
             "decisions",
             "approvals",
             "audit_events",
+            "artifact_lifecycle",
+            "candidate_references",
+            "compensations",
         }
     finally:
         engine.dispose()

@@ -163,6 +163,113 @@ class Artifact(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
+class ArtifactLifecycle(Base):
+    __tablename__ = "artifact_lifecycle"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workflow_id", "artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_artifact_lifecycle_exact_artifact",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint(
+            "status IN ('CANDIDATE', 'APPROVED', 'ROLLED_BACK', 'STALE')",
+            name="ck_artifact_lifecycle_status",
+        ),
+        CheckConstraint("version > 0", name="ck_artifact_lifecycle_version"),
+        Index("ix_artifact_lifecycle_workflow_status", "workflow_id", "status"),
+    )
+
+    artifact_id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True)
+    workflow_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    status: Mapped[str] = mapped_column(String(32))
+    active: Mapped[bool] = mapped_column(default=False)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class CandidateReference(Base):
+    __tablename__ = "candidate_references"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workflow_id", "active_artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_candidate_ref_active",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["workflow_id", "approved_artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_candidate_ref_approved",
+            ondelete="RESTRICT",
+        ),
+        CheckConstraint("version > 0", name="ck_candidate_ref_version"),
+    )
+
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT"), primary_key=True
+    )
+    logical_name: Mapped[str] = mapped_column(String(128), primary_key=True)
+    active_artifact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    approved_artifact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    version: Mapped[int] = mapped_column(Integer, default=1)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+
+class Compensation(Base):
+    __tablename__ = "compensations"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["workflow_id", "candidate_artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_compensation_candidate",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["workflow_id", "previous_approved_artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_compensation_previous_approved",
+            ondelete="RESTRICT",
+        ),
+        ForeignKeyConstraint(
+            ["workflow_id", "restored_artifact_id"],
+            ["artifacts.workflow_id", "artifacts.id"],
+            name="fk_compensation_restored",
+            ondelete="RESTRICT",
+        ),
+        UniqueConstraint(
+            "workflow_id",
+            "candidate_artifact_id",
+            "cause_stage_run_id",
+            name="uq_compensation_cause",
+        ),
+        CheckConstraint(
+            "status IN ('STARTED', 'COMPLETED', 'FAILED')",
+            name="ck_compensation_status",
+        ),
+        Index("ix_compensation_workflow_status", "workflow_id", "status"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=new_id)
+    workflow_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("workflow_runs.id", ondelete="RESTRICT")
+    )
+    candidate_artifact_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    cause_stage_run_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid, ForeignKey("stage_runs.id", ondelete="RESTRICT")
+    )
+    previous_approved_artifact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    restored_artifact_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="STARTED")
+    failure_reason: Mapped[str] = mapped_column(Text)
+    started_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
 class ArtifactLineage(Base):
     __tablename__ = "artifact_lineage"
     __table_args__ = (

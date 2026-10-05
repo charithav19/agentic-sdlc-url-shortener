@@ -40,7 +40,7 @@ Baseline: 2026-10-04. Read with [IMPLEMENTATION_PLAN.md](../IMPLEMENTATION_PLAN.
 | SW-21 | Human approvals for high-impact actions (p2 §4.4) | P13, P20; approvals/auth/policy | `OT/test_approvals.py::architecture_high_impact_assumption_release`; `OT/test_reviewer_auth.py::agent_cannot_approve` | E06 + E03: exact-version decisions before implementation/schema/API/security change and release |
 | SW-22 | Bounded retries (p2 §4.4) | P16; retry policy/failure classifier | `OT/test_retry_policy.py::test_temporary_failure_retries_once_and_preserves_both_attempts`; `::test_retry_exhaustion_without_fallback_safe_stops` | E07: attempt history, persisted delay, success after transient error and exhaustion stop |
 | SW-23 | Fallback (p2 §4.4) | P16; fallback registry | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07: labeled configured fallback with source-attempt provenance |
-| SW-24 | Rollback (p2 §4.4) | P17; semantic compensation | `OT/test_compensation.py::restore_previous_approved_and_retain_failed`; `test_compensation_recovery.py::idempotent_restart` | E08: candidate rejected, previous approved reference restored, failed evidence retained |
+| SW-24 | Rollback (p2 §4.4) | P17; semantic compensation | `OT/test_compensation.py::test_security_failure_rolls_back_candidate_and_preserves_approved_state` | E08: candidate rejected, previous approved reference restored, failed evidence retained and replay idempotent |
 | SW-25 | Safe-stop controls (p2 §4.4) | P14, P16–17; cancellation/recovery | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07–E08: persisted reason, last successful stage, action required and validated recovery |
 | SW-26 | Security policy guardrails (p2 §4.4) | P11, P20; runner/tool policy/rules | `OT/test_runner_isolation.py`; `OT/test_guardrail_abuse.py::escape_secrets_commands_injection` | E09: denied attacks, runner restrictions and structured policy records |
 | SW-27 | Compliance and change-control policy guardrails (p2 §4.4) | P13, P19–20; versioned policies/approvals/replan | `OT/test_policy_engine.py::versioned_rule_and_change_approval`; `OT/test_replanning.py::approval_invalidation` | E06 + E09 + E10: rule/version decisions and renewed approval on affected changes; scope explicitly local, no regulatory certification claimed |
@@ -93,7 +93,7 @@ These rows trace the selected implementation contract. They must not be represen
 | SP-20 | Isolated overlays, conflict-aware candidate joins, read-only validations, separate build outputs (spec §9) | P11, P15 | `OT/test_candidate_assembly.py`, `test_synchronization_joins.py` | E05 candidate assembly/parallel validation records |
 | SP-21 | Two total attempts; classified transient errors; no retry multiplication or uncertain-effect replay (spec §10.1) | P10, P16 | `OT/test_retry_policy.py`; `OT/test_agent_provider.py` | E07 |
 | SP-22 | Explicit fallback only, same gates/provenance, no manufactured validation/approval (spec §10.2) | P16 | `OT/test_fallback.py::test_real_provider_exhaustion_uses_deterministic_fallback` | E07 |
-| SP-23 | Semantic rollback preserves candidate/evidence; idempotent restore; no prior candidate and compensation-failure cases (spec §10.3) | P17 | `OT/test_compensation.py`, `test_compensation_recovery.py` | E08 |
+| SP-23 | Semantic rollback preserves candidate/evidence; idempotent restore; no prior candidate and compensation-failure cases (spec §10.3) | P17 | `OT/test_compensation.py::test_security_failure_rolls_back_candidate_and_preserves_approved_state` | E08; no-prior and injected compensation-failure variants remain open |
 | SP-24 | Safe-stop persists cause/last success/action; no descendants; authenticated validated recovery (spec §10.4) | P16 | `OT/test_safe_stop.py::test_safe_stop_conditions_block_descendants_and_store_action`; `::test_safe_stop_retains_last_successful_stage`; `::test_only_human_can_resume_exact_latest_safe_stopped_attempt` | E07 |
 | SP-25 | Immutable hashed artifacts, typed lineage relationships, decisions and exact inputs (spec §11.1; AGENTS) | P6, P18 | `OT/test_artifact_immutability.py`, `test_lineage.py` | E10 |
 | SP-26 | Stable requirement/component selective impact; 404→410 example; reuse analytics; renew approvals and aggregate tests (spec §11.2) | P19, P25 | `OT/test_replanning.py`, `test_replan_races.py`, scenario ambiguous test | E04 + E10 |
@@ -143,6 +143,22 @@ Paths below are future run outputs. Store reports only after actual execution, s
 5. Replanning evidence must show affected descendants stale, affected approvals invalid, unrelated analytics reused, and whole-candidate validation rerun for the new hash. Retaining a file alone does not prove valid selective reuse.
 6. Final review addresses every SW/SP row, all specification §20 checklist items, and assignment evaluation criteria. A failed/blocked requirement stays open with its exact reason.
 7. The PDF's 2–3 day context is a schedule constraint to discuss, not permission to omit required capabilities. Its internal classification is preserved; no public publication is authorized by this plan.
+
+## Phase 17 semantic rollback verification record
+
+Phase 17 is **VERIFIED on 2026-10-04** for the requested semantic candidate
+rollback scenario. The behavior is PostgreSQL-backed compensation; it does not
+represent distributed database, deployment or migration rollback.
+
+| Requirements | Test evidence | Verified behavior | Remaining integration |
+|---|---|---|---|
+| SW-24, SP-23 | `test_security_failure_rolls_back_candidate_and_preserves_approved_state` | Succeeded implementation candidate enters validation; injected security rejection marks it `ROLLED_BACK`; immutable payload remains inspectable | No-prior-approved candidate variant |
+| SW-24, SP-23 | Same PostgreSQL scenario and replay assertion | Prior approved pointer, lifecycle and exact release approval remain active; duplicate compensation returns the original record and emits no duplicate rollback events | Crash-after-start recovery injection |
+| SW-28, SP-13 | Ordered audit assertions | `ROLLBACK_STARTED` and `ROLLBACK_COMPLETED` contain candidate, cause, compensation ID and restored reference in one transaction | Phase 21 audit API/metrics |
+| SW-25, SP-24 | Scheduler recovery assertion | Compensation completes before existing security safe-stop; workflow and failed validation stage stop after the approved reference is restored | Recursive derived-evidence invalidation in Phase 18 |
+
+The complete PostgreSQL suite passed 43 tests. See the
+[Phase 17 evidence manifest](evidence/phase-17-compensation/manifest.json).
 
 ## Phase 16 retry, fallback and safe-stop verification record
 

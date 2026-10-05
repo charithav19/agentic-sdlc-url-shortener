@@ -611,7 +611,38 @@ reconciliation of uncertain external side effects remains open.
 
 **Risks:** Deleting diagnostic artifacts, restoring unapproved candidate, pointer/filesystem divergence, and overclaiming distributed rollback.
 
-**Status:** NOT_STARTED — no implementation or tests executed.
+**Status:** COMPLETE — requested Phase 17 semantic rollback scope verified on
+2026-10-04.
+
+**Implementation record:** Migration `0006_compensations` adds candidate
+lifecycle metadata, an active/approved candidate reference, and idempotent
+compensation records keyed by workflow, candidate and failed validation stage.
+Immutable artifact payloads remain unchanged. A succeeded implementation can be
+staged as a `CANDIDATE`; a blocking mandatory validation failure invokes the
+compensation coordinator before safe-stop. It appends `ROLLBACK_STARTED`, marks
+the candidate `ROLLED_BACK`, restores the prior `APPROVED` reference when one
+exists, invalidates approvals attached to the rejected candidate, and appends
+`ROLLBACK_COMPLETED` in the same PostgreSQL transaction. Replaying the same
+compensation returns the completed record without duplicating events.
+
+Staging an unapproved implementation candidate does not invalidate the existing
+approved release decision. The old approval, artifact content and approved
+pointer therefore remain available if validation rejects the new candidate.
+Architecture and other artifact types retain the Phase 13 newer-version
+invalidation behavior.
+
+**Mandatory verification:** The PostgreSQL integration scenario creates an
+approved baseline implementation, stages a new candidate produced by a
+succeeded `IMPLEMENTATION` stage, injects a `SECURITY_VALIDATION` failure, and
+proves that the rejected artifact is retained with `ROLLED_BACK` status while
+the approved artifact and approval remain active. It also proves one ordered
+`ROLLBACK_STARTED`/`ROLLBACK_COMPLETED` pair and idempotent replay. The complete
+PostgreSQL suite passed 43 tests.
+
+**Scope boundary:** This is local semantic candidate compensation. It does not
+claim distributed transaction rollback, database migration reversal, external
+deployment rollback or filesystem snapshot restoration. Recursive derived-
+artifact invalidation remains part of Phase 18 lineage work.
 
 ## PHASE 18 — Artifact versioning and lineage
 

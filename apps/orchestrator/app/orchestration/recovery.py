@@ -8,6 +8,7 @@ from enum import StrEnum
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.orchestration.commands import TransitionContext
+from app.orchestration.compensation import CompensationCoordinator
 from app.orchestration.contracts import WorkflowStatus
 from app.orchestration.failure_classifier import FailureClassification
 from app.orchestration.fallback import fallback_after_exhaustion
@@ -29,6 +30,7 @@ class RecoveryResult:
     failed_stage_run_id: uuid.UUID
     action: RecoveryAction
     next_stage_run_id: uuid.UUID | None = None
+    compensation_id: uuid.UUID | None = None
 
 
 class RecoveryCoordinator:
@@ -44,6 +46,7 @@ class RecoveryCoordinator:
         self.graph = graph
         self.orchestrator = orchestrator
         self.retry_planner = retry_planner or RetryPlanner()
+        self.compensation = CompensationCoordinator(session_factory)
 
     async def recover(
         self,
@@ -72,6 +75,19 @@ class RecoveryCoordinator:
             trace_id=trace_id,
             reason=failure_reason,
         )
+        compensation_id: uuid.UUID | None = None
+        if not failure.retryable:
+            try:
+                compensated = await self.compensation.compensate_active_candidate_for_stage(
+                    stage_run_id,
+                    failure_reason=failure_reason,
+                    context=context,
+                )
+                compensation_id = compensated.compensation_id if compensated else None
+            except Exception as error:  # noqa: BLE001 - compensation failure must safe-stop
+                failure_reason = (
+                    f"{failure_reason}; compensation failed: {type(error).__name__}: {error}"
+                )[:2000]
         if not workflow_running:
             await self.orchestrator.safe_stop(
                 stage_run_id,
@@ -80,7 +96,11 @@ class RecoveryCoordinator:
                 recommended_action=failure.recommended_human_action,
                 context=context,
             )
-            return RecoveryResult(stage_run_id, RecoveryAction.SAFE_STOPPED)
+            return RecoveryResult(
+                stage_run_id,
+                RecoveryAction.SAFE_STOPPED,
+                compensation_id=compensation_id,
+            )
         if (
             failure.retryable
             and execution_mode == "PRIMARY"
@@ -123,4 +143,8 @@ class RecoveryCoordinator:
             recommended_action=failure.recommended_human_action,
             context=context,
         )
-        return RecoveryResult(stage_run_id, RecoveryAction.SAFE_STOPPED)
+        return RecoveryResult(
+            stage_run_id,
+            RecoveryAction.SAFE_STOPPED,
+            compensation_id=compensation_id,
+        )

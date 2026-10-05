@@ -94,7 +94,13 @@ class WorkflowPersistenceService:
                 stage_run_id=artifact.producer_stage_run_id,
                 artifact_refs=[ref.model_dump(mode="json")],
             )
-            invalidated = await unit.approvals.invalidate_for_new_artifact(artifact)
+            # A staged implementation candidate does not supersede the active approved
+            # release until it passes validation and receives its own approval.
+            invalidated = (
+                []
+                if artifact.artifact_type == "implementation_candidate"
+                else await unit.approvals.invalidate_for_new_artifact(artifact)
+            )
             for approval in invalidated:
                 await unit.audit.append(
                     workflow_id,
@@ -116,6 +122,45 @@ class WorkflowPersistenceService:
                     },
                 )
             return ref
+
+    async def activate_approved_candidate(
+        self, workflow_id: uuid.UUID, artifact_id: uuid.UUID
+    ) -> None:
+        async with UnitOfWork.open(self.session_factory) as unit:
+            reference = await unit.candidates.activate_approved(workflow_id, artifact_id)
+            await unit.audit.append(
+                workflow_id,
+                event_type="APPROVED_CANDIDATE_ACTIVATED",
+                actor_type="SYSTEM",
+                actor_id="orchestrator",
+                artifact_refs=[{"id": str(artifact_id)}],
+                payload={
+                    "logical_name": reference.logical_name,
+                    "reference_version": reference.version,
+                },
+            )
+
+    async def stage_candidate_for_validation(
+        self, workflow_id: uuid.UUID, artifact_id: uuid.UUID
+    ) -> None:
+        async with UnitOfWork.open(self.session_factory) as unit:
+            reference = await unit.candidates.stage_for_validation(workflow_id, artifact_id)
+            await unit.audit.append(
+                workflow_id,
+                event_type="CANDIDATE_STAGED_FOR_VALIDATION",
+                actor_type="SYSTEM",
+                actor_id="orchestrator",
+                artifact_refs=[{"id": str(artifact_id)}],
+                payload={
+                    "logical_name": reference.logical_name,
+                    "approved_artifact_id": (
+                        str(reference.approved_artifact_id)
+                        if reference.approved_artifact_id
+                        else None
+                    ),
+                    "reference_version": reference.version,
+                },
+            )
 
     async def request_approval(
         self,
